@@ -5,6 +5,7 @@ import R from '@dimforge/rapier3d-compat';
 import { bean, label, mat, orb } from './models';
 import { UI } from './ui';
 import { movement, acceleration, animateWalk } from './movement';
+import { setCharacterExpression } from './character';
 import { PuzzleAudio, type PuzzleSound } from './puzzle-audio';
 import { rounded, chickenCoop, gardenFlower, colorFlower, gateMesh, padlock, lantern, entranceArch, elbowCurve, waterPipe, animateWater } from './puzzle-art';
 
@@ -57,6 +58,8 @@ export class PuzzleGarden {
   keys = new Set<string>();
   stick = { x: 0, y: 0 };
   collected = [false, false, false];
+  happyUntil = 0;
+  solvedCount = 0;
   carryingGrain = false;
   grainPlaced = false;
   chickenState: 'idle' | 'following' | 'entering' | 'fetching' | 'returning' | 'delivered' = 'idle';
@@ -168,7 +171,7 @@ export class PuzzleGarden {
           this.camera.position.set(6, 77, 50); this.camera.lookAt(0, 0, -27);
           this.renderer.render(this.scene, this.camera);
         },
-        snapshot: () => ({ state: this.state, paused: this.paused, collected: [...this.collected], animal: { state: this.chickenState, mood: this.chickenMood, position: this.chicken.position.toArray(), carryingGrain: this.carryingGrain, grainPlaced: this.grainPlaced, grainPosition: this.grain.position.toArray(), solved: this.animalSolved, key: this.keyMeshes[2].position.toArray() }, pipeTurns: [...this.pipeTurns], pipesSolved: this.pipesSolved, carried: this.carried, carriedName: this.carried < 0 ? null : this.pieces[this.carried].name, placed: this.pieces.map(p => p.placed), position: this.body.translation(), region: this.region, hintActive: this.hintActive, gateOpen: this.pieces[0].placed, exitOpen: this.collected.every(Boolean), camera: { type: this.camera.type, fov: this.camera.fov, position: this.camera.position.toArray(), look: this.cameraLook.toArray(), playerNdc: this.player.position.clone().project(this.camera).toArray() } }),
+        snapshot: () => ({ state: this.state, paused: this.paused, expression: this.player.userData.expression, collected: [...this.collected], animal: { state: this.chickenState, mood: this.chickenMood, position: this.chicken.position.toArray(), carryingGrain: this.carryingGrain, grainPlaced: this.grainPlaced, grainPosition: this.grain.position.toArray(), solved: this.animalSolved, key: this.keyMeshes[2].position.toArray() }, pipeTurns: [...this.pipeTurns], pipesSolved: this.pipesSolved, carried: this.carried, carriedName: this.carried < 0 ? null : this.pieces[this.carried].name, placed: this.pieces.map(p => p.placed), position: this.body.translation(), region: this.region, hintActive: this.hintActive, gateOpen: this.pieces[0].placed, exitOpen: this.collected.every(Boolean), camera: { type: this.camera.type, fov: this.camera.fov, position: this.camera.position.toArray(), look: this.cameraLook.toArray(), playerNdc: this.player.position.clone().project(this.camera).toArray() } }),
         motion: () => ({ velocity: this.body.linvel(), heading: this.heading, rotation: this.player.rotation.y, gait: this.gait, bob: this.player.getObjectByName('avatar')!.position.y, roll: this.player.getObjectByName('avatar')!.rotation.z, feet: [-1, 1].map(s => this.player.getObjectByName('foot' + s)!.rotation.x), arms: [-1, 1].map(s => this.player.getObjectByName('arm' + s)!.rotation.x), carriedPosition: this.carried >= 0 ? this.pieces[this.carried].mesh.position.toArray() : null, playerPosition: this.player.position.toArray() }),
         warp: (x: number, z: number) => { this.body.setTranslation({ x, y: .8, z }, true); this.previous.copy(this.body.translation()); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); this.render(); },
       } });
@@ -547,6 +550,7 @@ export class PuzzleGarden {
     window.speechSynthesis?.cancel(); this.audio?.stop(); this.audio?.resume();
     this.state = 'racing'; this.paused = false; this.time = 0; this.accumulator = 0;
     this.collected.fill(false); this.carried = -1;
+    this.happyUntil = this.solvedCount = 0;
     this.carryingGrain = this.grainPlaced = this.animalSolved = false; this.chickenState = 'idle'; this.chickenMood = '';
     this.chicken.position.set(chickenHome.x, 0, chickenHome.z); this.chicken.rotation.set(0, 0, 0);
     this.pipeTurns = [1, 0, 3]; this.pipesSolved = false; this.pipeTouched = false; this.flowReached = 0;
@@ -760,10 +764,14 @@ export class PuzzleGarden {
       this.audio?.footstep(this.pavedBounds.some(bounds => walked.x >= bounds.min.x && walked.x <= bounds.max.x && walked.z >= bounds.min.z && walked.z <= bounds.max.z));
     }
     const available = this.solved();
+    const solvedCount = available.filter(Boolean).length;
+    if (solvedCount > this.solvedCount) this.happyUntil = this.time + 2.5;
+    this.solvedCount = solvedCount;
     keySpots.forEach((spot, index) => {
       const reachedHeight = index !== 1 || this.body.translation().y > .49 + 1.33 * this.waterFlower.scale.y + .35;
       if (available[index] && !this.collected[index] && reachedHeight && this.near(spot.x, spot.z, 1.3)) {
         this.collected[index] = true;
+        this.happyUntil = this.time + 2.5;
         this.hintActive = false;
         this.audio?.play('key');
         if (this.collected.every(Boolean)) this.audio?.play('gate');
@@ -794,6 +802,9 @@ export class PuzzleGarden {
     if (!this.paused) {
       const velocity = this.body.linvel();
       animateWalk(this.player, this.heading, this.gait, Math.hypot(velocity.x, velocity.z), this.grounded, this.reducedMotion, dt, this.carried >= 0 || this.carryingGrain);
+      setCharacterExpression(this.player, this.state === 'qualified' || this.time < this.happyUntil ? 'happy'
+        : this.state !== 'racing' ? 'neutral' : !this.grounded ? 'surprised'
+        : Math.hypot(velocity.x, velocity.z) > 2 ? 'determined' : 'neutral');
     }
     // Match the first level's third-person framing and frame-rate-independent follow.
     const portrait = innerWidth < innerHeight;

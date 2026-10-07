@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { animateCharacterDetails } from './character';
 
 // The original first-level locomotion, shared by both levels.
 export const movement = { speed: 7.2, step: 1 / 120, damping: .2, friction: .05, gait: 1.9 };
@@ -19,5 +20,6 @@ export function animateWalk(mesh: T.Group, heading: number, gait: number, speed:
     arm.rotation.x = carrying ? T.MathUtils.lerp(arm.rotation.x, 1.1, blend) : -swing * 1.45;
     arm.rotation.z = T.MathUtils.lerp(arm.rotation.z, side * .35, blend);
   }
+  if (mesh.name === 'character-a') animateCharacterDetails(mesh, gait, speed, grounded, reducedMotion, blend);
   return blend;
 }

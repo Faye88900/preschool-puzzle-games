@@ -31,7 +31,7 @@ export class UI {
         <div class="hud-tools"><button id="fullscreen" class="icon-button fullscreen" aria-label="全屏游戏" title="全屏">${icons.fullscreen}</button><button id="sound" class="icon-button" aria-label="关闭声音" title="关闭声音">${icons.sound}</button><button id="pause" class="icon-button" aria-label="暂停游戏" title="暂停">${icons.pause}</button></div>
       </header>
       <div class="race-stats"><span class="finish-badge">★ <b id="finished">0 / 8</b><small>已晋级</small></span><span class="race-clock" id="clock">1:30</span></div>
-      <div class="player-badge" aria-label="你的名次"><span class="player-face" aria-hidden="true">••</span><strong>第 <b id="rank">1</b> 名 <em>/ 12</em></strong></div>
+      <div class="player-badge" aria-label="你的名次"><span class="player-face" aria-hidden="true"><svg viewBox="0 0 64 64"><g fill="#bfe5d9" stroke="#b5a1d5" stroke-width="3"><path d="M18 34C0 31 0 20 7 21C0 3 12 0 18 13L24 33Z"/><path d="M46 34C64 31 64 20 57 21C64 3 52 0 46 13L40 33Z"/></g><ellipse cx="32" cy="39" rx="23" ry="22" fill="#f2eaf7"/><g fill="#352565"><ellipse cx="24" cy="37" rx="4" ry="7"/><ellipse cx="40" cy="37" rx="4" ry="7"/><path d="M28 49Q32 55 36 49Z"/></g><g fill="white"><circle cx="23" cy="34" r="1.6"/><circle cx="39" cy="34" r="1.6"/></g></svg></span><strong>第 <b id="rank">1</b> 名 <em>/ 12</em></strong></div>
       <div id="guidance" class="guidance" role="status"><span>↑</span><b id="cue">跟着箭头走！</b></div>
       <div id="countdown" class="countdown" aria-live="polite"></div>
       <div id="touch-controls" class="touch-controls">
@@ -39,7 +39,7 @@ export class UI {
         <div class="action-controls"><button id="dive" class="action-button dive"><span>➜</span><b>冲扑</b></button><button id="jump" class="action-button jump"><span>↑</span><b>跳跃</b></button></div>
       </div>
       <div class="keyboard-guide"><kbd>W A S D</kbd> / <kbd>↑ ↓ ← →</kbd> 移动 <i></i><kbd>空格</kbd> 跳跃 <i></i><kbd>Shift</kbd> 冲扑</div>
-      <div id="menu" class="menu-scrim"><section class="menu-card" aria-labelledby="menu-title"><span class="eyebrow" id="menu-eyebrow">12 个小伙伴 · 一场天空冒险</span><h1 id="menu-title">跌倒也要<br><span>冲向终点！</span></h1><p id="menu-description">跳过障碍，追上小伙伴。<br>粉色小软糖，准备出发！</p><div id="menu-tips" class="menu-tips"><span>↔<small>跑一跑</small></span><span>↑<small>跳一跳</small></span><span>⚑<small>前 8 名晋级</small></span></div><button id="primary" class="primary-button">开始玩 <span>➜</span></button><button id="restart" class="secondary-button" hidden>重新开始</button><small id="menu-footer" class="menu-footer">↓ 认准粉色小软糖和头顶箭头</small></section></div>`;
+      <div id="menu" class="menu-scrim"><section class="menu-card" aria-labelledby="menu-title"><span class="eyebrow" id="menu-eyebrow">12 个小伙伴 · 一场天空冒险</span><h1 id="menu-title">跌倒也要<br><span>冲向终点！</span></h1><p id="menu-description">跳过障碍，追上小伙伴。<br>紫耳小精灵，准备出发！</p><div id="menu-tips" class="menu-tips"><span>↔<small>跑一跑</small></span><span>↑<small>跳一跳</small></span><span>⚑<small>前 8 名晋级</small></span></div><button id="primary" class="primary-button">开始玩 <span>➜</span></button><button id="restart" class="secondary-button" hidden>重新开始</button><small id="menu-footer" class="menu-footer">↓ 认准紫耳小精灵和头顶箭头</small></section></div>`;
     document.body.append(this.root);
     const levelLink = document.createElement('a');
     levelLink.className = 'level-link';
@@ -153,10 +153,10 @@ export class UI {
     const paused = mode === 'paused';
     this.get('menu-title').innerHTML = this.puzzle ? (ready ? '找齐钥匙' : paused ? '休息一下' : '大门打开啦！') : ready ? '跌倒也要<br><span>冲向终点！</span>' : paused ? '休息一下' : won ? '晋级啦！' : '再来挑战吧！';
     this.get('menu-eyebrow').textContent = ready ? '12 个小伙伴 · 一场天空冒险' : paused ? '小小休息站' : won ? 'YOU DID IT! ★' : '再出发，一样很棒';
-    this.get('menu-description').innerHTML = ready ? '跳过障碍，追上小伙伴。<br>粉色小软糖，准备出发！' : paused ? '小软糖等着你，<br>准备好了就继续吧。' : won ? '好棒！你跑到了终点，<br>再来一场快乐冒险吧！' : '没关系，再试一次！<br>每次都会更厉害一点。';
+    this.get('menu-description').innerHTML = ready ? '跳过障碍，追上小伙伴。<br>紫耳小精灵，准备出发！' : paused ? '小软糖等着你，<br>准备好了就继续吧。' : won ? '好棒！你跑到了终点，<br>再来一场快乐冒险吧！' : '没关系，再试一次！<br>每次都会更厉害一点。';
     this.get('menu-tips').hidden = !ready;
     this.get('restart').hidden = !paused;
-    this.get('menu-footer').textContent = ready ? '↓ 认准粉色小软糖和头顶箭头' : won ? `第 ${snapshot.rank} 名到达 · 星星送给你` : '掉下来也没关系，我们一起再出发';
+    this.get('menu-footer').textContent = ready ? '↓ 认准紫耳小精灵和头顶箭头' : won ? `第 ${snapshot.rank} 名到达 · 星星送给你` : '掉下来也没关系，我们一起再出发';
     if (this.puzzle) {
       this.get('menu-eyebrow').textContent = '第二关 · 解谜花园';
       this.get('menu-description').textContent = ready ? '解开三个谜题，打开花园。' : paused ? '准备好，就继续找钥匙。' : '太棒了，三把钥匙找齐了！';

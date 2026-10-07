@@ -78,6 +78,36 @@ async function solve(page: Page, index: number) {
   await expect.poll(async () => (await snapshot(page)).collected[index]).toBe(true);
 }
 
+test('expressions follow running, jumping, solved tasks and keys, with paused celebration and clean restart', async ({ page }) => {
+  await start(page);
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('neutral');
+  await page.keyboard.down('KeyW');
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('determined');
+  await page.keyboard.up('KeyW');
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('neutral');
+  await page.keyboard.press('Space');
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('surprised');
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('neutral');
+  await beside(page, -29, -13); await action(page);
+  await warp(page, -24, -16); await action(page);
+  await expect.poll(async () => (await snapshot(page)).gateOpen).toBe(true);
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('happy');
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('neutral');
+  await warp(page, ...keySpots[0] as [number, number]);
+  await expect.poll(async () => (await snapshot(page)).collected[0]).toBe(true);
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('happy');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(2800);
+  expect((await snapshot(page)).expression).toBe('happy');
+  await page.locator('#primary').click();
+  expect((await snapshot(page)).expression).toBe('happy');
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('neutral');
+  await page.keyboard.press('Escape');
+  await page.locator('#restart').click();
+  await expect.poll(async () => (await snapshot(page)).expression).toBe('neutral');
+  expect((await snapshot(page)).collected).toEqual([false, false, false]);
+});
+
 test('local garden sounds follow puzzle events, loop once, and respect mute, pause and restart', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));

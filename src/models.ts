@@ -1,10 +1,12 @@
 import * as T from 'three';
+import { createPlayerCharacter } from './character';
 const materials = new Map<string, T.MeshStandardMaterial>();
 export function mat(color: string) { if (!materials.has(color))
     materials.set(color, new T.MeshStandardMaterial({ color, roughness: .56, metalness: 0 })); return materials.get(color)!; }
 const sphere = new T.SphereGeometry(1, 16, 12);
 export function orb(color: string, x: number, y: number, z: number, sx: number, sy = sx, sz = sx) { const m = new T.Mesh(sphere, mat(color)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); return m; }
 export function bean(color: string, player = false) {
+    if (player) return createPlayerCharacter();
     const root = new T.Group();
     const g = new T.Group();
     g.name = 'avatar';
@@ -27,29 +29,6 @@ export function bean(color: string, player = false) {
         const foot = orb(color, x * .22, -.61, -.1, .185, .15, .26);
         foot.name = 'foot' + x;
         g.add(foot);
-    }
-    if (player) {
-        const band = new T.Mesh(new T.TorusGeometry(.405, .055, 6, 20), mat('#fff2ad'));
-        band.rotation.x = Math.PI / 2;
-        band.position.y = .37;
-        g.add(band);
-        for (const x of [-.18, 0, .18]) {
-            const tip = new T.Mesh(new T.ConeGeometry(.1, .22, 4), mat('#ffcf45'));
-            tip.position.set(x, .76 + (x === 0 ? .06 : 0), 0);
-            g.add(tip);
-        }
-        const outline = new T.Mesh(body.geometry, new T.MeshBasicMaterial({ color: '#fff0a0', side: T.BackSide }));
-        outline.position.copy(body.position);
-        outline.scale.setScalar(1.065);
-        g.add(outline);
-        const ring = new T.Mesh(new T.TorusGeometry(.63, .045, 6, 32), new T.MeshBasicMaterial({ color: '#fff8ac' }));
-        ring.rotation.x = Math.PI / 2;
-        ring.position.y = -.67;
-        root.add(ring);
-        const arrow = new T.Mesh(new T.ConeGeometry(.24, .36, 3), new T.MeshBasicMaterial({ color: '#ffda39' }));
-        arrow.rotation.z = Math.PI;
-        arrow.position.y = 1.7;
-        root.add(arrow);
     }
     g.traverse(o => { if (o instanceof T.Mesh) o.castShadow = true; });
     return root;

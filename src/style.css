@@ -92,3 +92,6 @@
   #game-ui.puzzle-ui[data-state] .menu-footer{margin-top:6px;font-size:11px}
   #game-ui.puzzle-ui[data-state] .level-link{min-height:44px;margin-top:6px;padding:11px}
 }
+
+/* Match the player badge to the approved A character. */
+.player-face{background:transparent;border:0;box-shadow:none;border-radius:0}.player-face svg{display:block;width:100%;height:100%}

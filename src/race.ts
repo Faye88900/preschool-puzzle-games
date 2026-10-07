@@ -2,6 +2,7 @@ import * as T from 'three';
 import R from '@dimforge/rapier3d-compat';
 import { UI } from './ui';
 import { movement, acceleration, animateWalk } from './movement';
+import { setCharacterExpression } from './character';
 import { bean, mat, orb, label } from './models';
 import { decorateCourse, decorateHazard } from './scenery';
 import { createBrain, steerAI, type AIState, type AIRunner } from './ai';
@@ -489,6 +490,9 @@ export class Race {
             const v=c.body.linvel(),speed=Math.hypot(v.x,v.z);
             const oldLean=avatar.rotation.x;
             const blend=animateWalk(c.mesh,c.heading,c.gait,speed,c.grounded,this.reducedMotion,dt);
+            if(c.id===0&&!this.paused) setCharacterExpression(c.mesh, this.state==='qualified' ? 'happy'
+                : this.state!=='racing' ? 'neutral' : c.stun>0 ? 'surprised' : c.dive>0 ? 'determined'
+                : !c.grounded ? 'surprised' : speed>2 ? 'determined' : 'neutral');
             if(c.dive>0)avatar.rotation.x=T.MathUtils.lerp(oldLean,-1.15,blend);
             avatar.scale.set(1/Math.sqrt(c.squash),c.squash,1/Math.sqrt(c.squash));
             for (const side of [-1,1]) {
@@ -533,7 +537,7 @@ export class Race {
             models:{pendulumFrames:[129,139].filter(z=>this.scene.getObjectByName(`pendulum-frame-${z}`)).length,finishArch:!!this.scene.getObjectByName('finish-arch')},
             media:{plays:{...this.mediaPlays},countdown:{readyState:this.countdownSound.readyState,paused:this.countdownSound.paused,muted:this.countdownSound.muted},music:{readyState:this.raceMusic.readyState,paused:this.raceMusic.paused,muted:this.raceMusic.muted,loop:this.raceMusic.loop},finish:{readyState:this.finishHorn.readyState,paused:this.finishHorn.paused,muted:this.finishHorn.muted}},
             hazards:this.moving.map(m=>({kind:m.kind,position:m.body.translation(),renderPosition:{x:m.mesh.position.x,y:m.mesh.position.y,z:m.mesh.position.z},renderRotation:{x:m.mesh.rotation.x,y:m.mesh.rotation.y,z:m.mesh.rotation.z}})),
-            people:this.people.map(c=>({id:c.id,finish:c.finish,checkpoint:c.checkpoint,speed:c.speed,position:c.body.translation(),velocity:c.body.linvel(),renderPosition:{x:c.mesh.position.x,y:c.mesh.position.y,z:c.mesh.position.z},heading:c.heading,rotation:c.mesh.rotation.y,brain:{...c.brain},resets:c.resets})),
+            people:this.people.map(c=>({id:c.id,expression:c.mesh.userData.expression,finish:c.finish,checkpoint:c.checkpoint,speed:c.speed,position:c.body.translation(),velocity:c.body.linvel(),renderPosition:{x:c.mesh.position.x,y:c.mesh.position.y,z:c.mesh.position.z},heading:c.heading,rotation:c.mesh.rotation.y,brain:{...c.brain},resets:c.resets})),
             renderer:{calls:info.render.calls,triangles:info.render.triangles,geometries:info.memory.geometries,textures:info.memory.textures},
             speech:{available:'speechSynthesis' in window,chinese:typeof speechSynthesis!=='undefined'&&speechSynthesis.getVoices().some(v=>v.lang.startsWith('zh'))}}});
         requestAnimationFrame(v=>this.tick(v));

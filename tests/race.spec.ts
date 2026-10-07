@@ -75,10 +75,12 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   await page.keyboard.press('Space');
   await advance(page, .15);
   expect((await diagnostics(page)).people[0].position.y).toBeGreaterThan(moved.y + .5);
+  expect((await diagnostics(page)).people[0].expression).toBe('surprised');
   await page.keyboard.press('Shift');
   const beforeDive = (await diagnostics(page)).people[0].position.z;
   await advance(page, .3);
   expect((await diagnostics(page)).people[0].position.z).toBeLessThan(beforeDive - 1.8);
+  expect((await diagnostics(page)).people[0].expression).toBe('determined');
   await page.keyboard.up('ArrowUp');
   await page.getByRole('button', { name: '暂停游戏' }).click();
   await expect(page.locator('#menu-title')).toHaveText('休息一下');
@@ -127,6 +129,7 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   });
   expect(Math.max(...textAlignment)).toBeLessThan(2);
   expect((await snapshot(page)).state).toBe('qualified');
+  expect((await diagnostics(page)).people[0].expression).toBe('happy');
   expect((await diagnostics(page)).media.music.paused).toBe(true);
   expect((await diagnostics(page)).media.plays.finish).toBe(1);
   await page.getByRole('button', { name: '再玩一次' }).click();
