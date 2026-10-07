@@ -1,6 +1,7 @@
 import * as T from 'three';
 import R from '@dimforge/rapier3d-compat';
 import { UI } from './ui';
+import { readSettings, saveSettings } from './settings';
 import { movement, acceleration, animateWalk } from './movement';
 import { setCharacterExpression } from './character';
 import { bean, mat, orb, label } from './models';
@@ -76,7 +77,8 @@ export class Race {
     visualTime = 0;
     countdown = 3;
     paused = false;
-    muted = false;
+    settings = readSettings();
+    get muted() { return !this.settings.music && !this.settings.effects; }
     cue = '跟着箭头走！';
     finished = 0;
     keys = new Set<string>();
@@ -126,8 +128,11 @@ export class Race {
         this.scene.add(this.sun, this.sun.target);
         this.buildLevel();
         this.createPeople();
-        this.ui = new UI({ start: () => this.start(), pause: () => this.pause(), mute: () => { this.muted = !this.muted; for(const clip of [this.countdownSound,this.raceMusic,this.finishHorn])clip.muted=this.muted; if (this.muted)
-                speechSynthesis?.cancel(); else this.syncMusic(); }, jump: () => this.jump = true, dive: () => this.dive = true, move: (x, y) => this.stick = { x, y } });
+        this.applyAudioSettings();
+        this.ui = new UI({ start: () => this.start(), pause: () => this.pause(), mute: () => {
+            this.settings = { music: this.muted, effects: this.muted }; saveSettings(this.settings); this.applyAudioSettings();
+            if (!this.settings.effects) speechSynthesis?.cancel(); else this.syncMusic();
+        }, jump: () => this.jump = true, dive: () => this.dive = true, move: (x, y) => this.stick = { x, y } });
         addEventListener('keydown', e => { if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code))
             e.preventDefault(); this.keys.add(e.code); if (!e.repeat) {
             if (e.code === 'Space')
@@ -141,8 +146,10 @@ export class Race {
         } });
         addEventListener('keyup', e => this.keys.delete(e.code));
         addEventListener('blur', () => this.suspend());
-        document.addEventListener('visibilitychange', () => { if (document.hidden)
-            this.suspend(); });
+        document.addEventListener('visibilitychange', () => document.hidden ? this.suspend() : this.syncMusic());
+        addEventListener('pointerdown', () => this.syncMusic());
+        addEventListener('keydown', () => this.syncMusic());
+        this.syncMusic();
         addEventListener('resize', () => this.resize());
         this.resize();
         this.sync(0);
@@ -255,10 +262,11 @@ export class Race {
         this.people.push({ id, body, mesh, checkpoint: 0, finish: 0, speed: id === 0 ? movement.speed : 5.6 + (id % 5) * .28, lane: (id % 4 - 1.5) * 1.4, jumpCD: 0, diveCD: 0, dive: 0, stun: 0, stuck: 0, lastZ: 0, fall: 0, previous:new T.Vector3().copy(body.translation()),heading:0,grounded:false,coyote:0,jumpBuffer:0,gait:0,squash:1,brain:createBrain(id),resets:0 });
     } }
     media(path:string,volume:number,loop=false){const clip=new Audio(`${import.meta.env.BASE_URL}${path}`);clip.preload='auto';clip.volume=volume;clip.loop=loop;return clip;}
-    playMedia(kind:keyof typeof this.mediaPlays,clip:HTMLAudioElement){clip.currentTime=0;clip.muted=this.muted;this.mediaPlays[kind]++;void clip.play().catch(()=>{});}
+    applyAudioSettings(){this.raceMusic.muted=!this.settings.music;this.countdownSound.muted=this.finishHorn.muted=!this.settings.effects;}
+    playMedia(kind:keyof typeof this.mediaPlays,clip:HTMLAudioElement){clip.currentTime=0;clip.muted=!(kind==='music'?this.settings.music:this.settings.effects);this.mediaPlays[kind]++;void clip.play().catch(()=>{});}
     stopMedia(clip:HTMLAudioElement){clip.pause();clip.currentTime=0;}
-    syncMusic(){if(this.paused||!['countdown','racing'].includes(this.state))this.raceMusic.pause();else void this.raceMusic.play().catch(()=>{});}
-    start() { this.state = 'countdown'; this.countdown = 3; this.time = 0; this.finished = 0; this.paused = false; this.acc = 0; this.cueIndex = -1; this.cue = '准备——出发！'; this.keys.clear(); this.jump = this.dive = false; this.stick = { x: 0, y: 0 }; this.autoPlayer = false; this.testMode = false; speechSynthesis?.cancel(); this.stopMedia(this.finishHorn);this.stopMedia(this.raceMusic);this.stopMedia(this.countdownSound);this.playMedia('music',this.raceMusic); if (this.confetti) {
+    syncMusic(){const on=!this.paused&&!document.hidden&&['ready','countdown','racing'].includes(this.state);if(!on)this.raceMusic.pause();else if(this.raceMusic.paused)void this.raceMusic.play().catch(()=>{});}
+    start() { this.state = 'countdown'; this.countdown = 3; this.time = 0; this.finished = 0; this.paused = false; this.acc = 0; this.cueIndex = -1; this.cue = '准备——出发！'; this.keys.clear(); this.jump = this.dive = false; this.stick = { x: 0, y: 0 }; this.autoPlayer = false; this.testMode = false; speechSynthesis?.cancel(); this.stopMedia(this.finishHorn);this.stopMedia(this.countdownSound);if(this.raceMusic.paused)this.playMedia('music',this.raceMusic); if (this.confetti) {
         this.scene.remove(this.confetti);
         this.confetti.geometry.dispose();
         (this.confetti.material as T.Material).dispose();
@@ -284,7 +292,7 @@ export class Race {
     } }
     suspend() { this.keys.clear(); this.stick = { x: 0, y: 0 }; this.jump = this.dive = false; if (this.state === 'racing' || this.state === 'countdown')
         this.paused = true; speechSynthesis?.cancel(); this.syncMusic(); }
-    say(text: string) { this.cue = text; if (this.muted)
+    say(text: string) { this.cue = text; if (!this.settings.effects)
         return; this.tone(620, .08); if ('speechSynthesis' in window) {
         const voice = speechSynthesis.getVoices().find(v => v.lang.startsWith('zh'));
         if (voice) {
@@ -296,7 +304,7 @@ export class Race {
             speechSynthesis.speak(u);
         }
     } }
-    tone(freq: number, duration = .12) { if (this.muted || !this.audio)
+    tone(freq: number, duration = .12) { if (!this.settings.effects || !this.audio)
         return; const o = this.audio.createOscillator(), g = this.audio.createGain(); o.type = 'sine'; o.frequency.value = freq; g.gain.setValueAtTime(.08, this.audio.currentTime); g.gain.exponentialRampToValueAtTime(.001, this.audio.currentTime + duration); o.connect(g); g.connect(this.audio.destination); o.start(); o.stop(this.audio.currentTime + duration); }
     countdownBeat() { this.playMedia('countdown',this.countdownSound); }
     respawn(c: Contestant) { c.body.setTranslation({ x: c.id === 0 ? 0 : c.lane, y: 1.2, z: -c.checkpoint + 2 }, true); c.body.setLinvel({ x: 0, y: 0, z: 0 }, true); c.stuck = c.fall = c.stun = 0; c.lastZ = -c.checkpoint + 2; c.previous.copy(c.body.translation());c.mesh.position.copy(c.previous);c.coyote=c.jumpBuffer=0;c.resets++;c.brain=createBrain(c.id); if (c.id === 0)
@@ -535,7 +543,7 @@ export class Race {
         Object.assign(window,{__THREE_GAME_DIAGNOSTICS__:{...this.snapshot(),frame:this.frame,fps:this.fps,
             physics:{bodies:this.world.bodies.len(),colliders:this.world.colliders.len(),step:FIXED_DT},
             models:{pendulumFrames:[129,139].filter(z=>this.scene.getObjectByName(`pendulum-frame-${z}`)).length,finishArch:!!this.scene.getObjectByName('finish-arch')},
-            media:{plays:{...this.mediaPlays},countdown:{readyState:this.countdownSound.readyState,paused:this.countdownSound.paused,muted:this.countdownSound.muted},music:{readyState:this.raceMusic.readyState,paused:this.raceMusic.paused,muted:this.raceMusic.muted,loop:this.raceMusic.loop},finish:{readyState:this.finishHorn.readyState,paused:this.finishHorn.paused,muted:this.finishHorn.muted}},
+            media:{plays:{...this.mediaPlays},countdown:{readyState:this.countdownSound.readyState,paused:this.countdownSound.paused,muted:this.countdownSound.muted},music:{readyState:this.raceMusic.readyState,paused:this.raceMusic.paused,muted:this.raceMusic.muted,loop:this.raceMusic.loop,time:this.raceMusic.currentTime,src:this.raceMusic.src},finish:{readyState:this.finishHorn.readyState,paused:this.finishHorn.paused,muted:this.finishHorn.muted}},
             hazards:this.moving.map(m=>({kind:m.kind,position:m.body.translation(),renderPosition:{x:m.mesh.position.x,y:m.mesh.position.y,z:m.mesh.position.z},renderRotation:{x:m.mesh.rotation.x,y:m.mesh.rotation.y,z:m.mesh.rotation.z}})),
             people:this.people.map(c=>({id:c.id,expression:c.mesh.userData.expression,finish:c.finish,checkpoint:c.checkpoint,speed:c.speed,position:c.body.translation(),velocity:c.body.linvel(),renderPosition:{x:c.mesh.position.x,y:c.mesh.position.y,z:c.mesh.position.z},heading:c.heading,rotation:c.mesh.rotation.y,brain:{...c.brain},resets:c.resets})),
             renderer:{calls:info.render.calls,triangles:info.render.triangles,geometries:info.memory.geometries,textures:info.memory.textures},

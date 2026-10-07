@@ -420,7 +420,7 @@ test('both levels share running speed, with stable puzzle HUD text between chang
     observer.disconnect(); return count;
   });
   expect(mutations).toBe(0);
-  await page.goto('/?test=1');
+  await page.goto('/?level=1&test=1');
   await page.locator('#primary').click();
   await expect.poll(() => page.evaluate(() => (window as any).__THREE_GAME_DIAGNOSTICS__?.state)).toBe('racing');
   await page.evaluate(() => (window as any).__THREE_GAME_TEST_HOOKS__.teleport(0, .65, -4));
@@ -736,7 +736,7 @@ test('mobile: free exploration framing, local hints, touch interaction and map e
   await page.setViewportSize({ width: 844, height: 390 }); await page.waitForTimeout(1000);
   expect((await snapshot(page)).camera.position[2] - (await snapshot(page)).position.z).toBeCloseTo(16, 1);
   await page.screenshot({ path: resolve(outputs, 'exploration-landscape.png') });
-  await page.goto('/?test=1'); await expect(page.locator('.level-link')).toHaveAttribute('href', '?level=2');
+  await page.goto('/?level=1&test=1'); await expect(page.locator('.level-link')).toHaveAttribute('href', '?level=2');
 });
 
 

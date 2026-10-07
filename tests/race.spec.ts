@@ -8,7 +8,7 @@ const outputs = resolve(process.cwd(), 'test-results/outputs');
 const snapshot = (page: Page) => page.evaluate(() => (window as any).__THREE_GAME_TEST_HOOKS__.snapshot());
 const diagnostics = (page: Page) => page.evaluate(() => (window as any).__THREE_GAME_DIAGNOSTICS__);
 async function ready(page: Page) {
-  await page.goto('/?test=1');
+  await page.goto('/?level=1&test=1');
   await expect(page.locator('#primary')).toContainText('开始玩');
   await page.waitForFunction(() => !!(window as any).__THREE_GAME_TEST_HOOKS__);
   await page.evaluate(() => (window as any).__THREE_GAME_TEST_HOOKS__.setPausedForScreenshot(true));
@@ -46,6 +46,10 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   await mkdir(outputs, { recursive: true });
   await page.screenshot({ path: resolve(outputs, 'gummy-ready.png') });
   await expect(page.locator('#fullscreen svg')).toHaveAttribute('data-icon', 'maximize');
+  await expect(page.locator('#menu-badge')).toBeHidden();
+  await expect(page.locator('.level-link')).toBeHidden();
+  await expect(page.getByRole('link', { name: '返回首页' })).toHaveAttribute('href', './');
+  await expect(page.getByRole('link', { name: '返回首页' })).toBeVisible();
   expect(initial.people).toHaveLength(12);
   expect(Math.abs(initial.people[0].position.x)).toBeCloseTo(.85);
   expect(initial.people[0].position.z).toBe(0);
@@ -58,14 +62,21 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   await expect.poll(async () => Math.abs((await diagnostics(page)).hazards.find((h: any) => h.kind === 'spinner').renderRotation.y - spinnerY)).toBeGreaterThan(.05);
   await page.evaluate(() => (window as any).__THREE_GAME_TEST_HOOKS__.setPausedForScreenshot(true));
   await page.screenshot({ path: resolve(outputs, 'gummy-ready.png') });
+  await page.keyboard.press('Shift');
+  await expect.poll(async () => (await diagnostics(page)).media.music.time).toBeGreaterThan(0);
+  expect((await diagnostics(page)).media.music).toMatchObject({ paused: false, muted: false, loop: true });
+  expect((await diagnostics(page)).media.music.src.endsWith('/audio/race-sports-loop.mp3')).toBe(true);
+  const menuMusicTime = (await diagnostics(page)).media.music.time;
   await page.getByRole('button', { name: '开始玩' }).click();
   expect((await snapshot(page)).state).toBe('countdown');
   await expect.poll(async () => (await diagnostics(page)).media.music.readyState).toBeGreaterThanOrEqual(2);
   await expect.poll(async () => (await diagnostics(page)).media.countdown.readyState).toBeGreaterThanOrEqual(2);
-  expect((await diagnostics(page)).media.plays).toMatchObject({ countdown: 1, music: 1 });
+  expect((await diagnostics(page)).media.plays).toMatchObject({ countdown: 1, music: 0 });
   expect((await diagnostics(page)).media.music).toMatchObject({ paused: false, muted: false, loop: true });
+  expect((await diagnostics(page)).media.music.time).toBeGreaterThanOrEqual(menuMusicTime);
   await advance(page, 3.2);
   expect((await snapshot(page)).state).toBe('racing');
+  await expect(page.getByRole('link', { name: '返回首页' })).toBeHidden();
   expect((await diagnostics(page)).media.plays.countdown).toBe(3);
   const start = (await diagnostics(page)).people[0].position;
   await page.keyboard.down('ArrowUp');
@@ -116,13 +127,18 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   await page.evaluate(() => (window as any).__THREE_GAME_TEST_HOOKS__.teleport(0, 1, -149));
   await advance(page, .1);
   await expect(page.locator('#menu-title')).toHaveText('晋级啦！');
+  await expect(page.getByRole('link', { name: '下一关 · 解谜花园 →' })).toBeFocused();
+  await expect(page.locator('#menu-description')).toHaveText('你是第 1 名到达终点！');
+  await expect(page.locator('#primary')).toBeHidden();
+  await expect(page.locator('#menu-badge svg')).toHaveAttribute('data-icon', 'star');
+  await expect(page.getByRole('link', { name: '返回首页' })).toBeVisible();
   await page.screenshot({ path: resolve(outputs, 'gummy-qualified.png') });
   const textAlignment = await page.locator('.menu-card').evaluate(card => {
     const center = card.getBoundingClientRect().left + card.getBoundingClientRect().width / 2;
-    return ['#menu-eyebrow', '#menu-title', '#menu-description', '#primary', '#menu-footer'].map(selector => {
+    return ['#menu-title', '#menu-description', '.level-link', '#restart'].map(selector => {
       const element = card.querySelector(selector)!;
       const text = document.createRange();
-      selector === '#primary' ? text.selectNode(element.firstChild!) : text.selectNodeContents(element);
+      text.selectNodeContents(element);
       const box = text.getBoundingClientRect();
       return Math.abs(center - (box.left + box.width / 2));
     });

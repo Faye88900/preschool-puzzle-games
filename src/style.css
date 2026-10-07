@@ -15,10 +15,6 @@
 @media(max-height:550px){.guidance{top:92px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 
-#game-ui:not([data-state="ready"]):not([data-state="racing"]):not([data-state="countdown"]) .menu-card{display:flex;flex-direction:column;align-items:center;text-align:center}
-#game-ui:not([data-state="ready"]):not([data-state="racing"]):not([data-state="countdown"]) .menu-card :is(.eyebrow,h1,p,.menu-footer){width:100%;text-align:center}
-#game-ui:not([data-state="ready"]):not([data-state="racing"]):not([data-state="countdown"]) .primary-button{position:relative;justify-content:center}
-#game-ui:not([data-state="ready"]):not([data-state="racing"]):not([data-state="countdown"]) .primary-button span{position:absolute;right:25px}
 
 /* One-layer race HUD: rank, result and controls only. */
 #game-ui:is([data-state="racing"],[data-state="countdown"]) :is(.wordmark,.course-title){display:none}
@@ -58,40 +54,52 @@
 @media(pointer:coarse),(max-width:700px){#game-ui.puzzle-ui .guidance{top:max(88px,calc(env(safe-area-inset-top) + 78px));bottom:auto}#game-ui.puzzle-ui .race-stats{top:max(12px,env(safe-area-inset-top));left:16px}}
 @media(max-height:550px){#game-ui.puzzle-ui .guidance{top:max(12px,env(safe-area-inset-top));bottom:auto}}
 
-/* Garden cards share typography, spacing and button alignment in every state. */
-#game-ui.puzzle-ui[data-state] .menu-scrim{display:flex;justify-content:center;align-items:safe center;background:#365d5559;padding:max(88px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
-#game-ui.puzzle-ui[data-state] .menu-card{display:flex;flex-direction:column;align-items:center;width:min(420px,100%);padding:28px;border:5px solid white;border-radius:32px;background:#fffdf0;color:#365d55;text-align:center;box-shadow:0 8px 0 #365d551a,0 24px 64px #254b4326}
-#game-ui.puzzle-ui[data-state] .eyebrow{width:100%;font-size:11px;line-height:1.4;letter-spacing:1px;color:#507163}
-#game-ui.puzzle-ui[data-state] .menu-card h1{width:100%;font-size:36px;line-height:1.2;letter-spacing:0;margin:12px 0;color:#365d55;text-shadow:none;white-space:normal}
-#game-ui.puzzle-ui[data-state] .menu-card p{width:100%;font-size:15px;line-height:1.6;margin:0 0 20px;color:#507163;text-shadow:none}
-#game-ui.puzzle-ui[data-state] .menu-tips{display:flex;width:100%;gap:12px;justify-content:center;margin:0 0 20px;padding:0}
-#game-ui.puzzle-ui[data-state] .menu-tips>span{flex:1;min-width:0;color:#b87817}
-#game-ui.puzzle-ui[data-state] .menu-tips b{display:block;font-size:24px;font-weight:500;line-height:1}
-#game-ui.puzzle-ui[data-state] .menu-tips small{font-size:12px;line-height:1.5;margin-top:6px;color:#507163}
-#game-ui.puzzle-ui[data-state] .primary-button{position:relative;justify-content:center;width:100%;max-width:none;min-height:68px;padding:12px 48px;border:2px solid #fff7;border-bottom:5px solid #d8b735;border-radius:16px;background:#ffe654;color:#365d55;font-size:24px;box-shadow:0 6px 16px #365d5514}
-#game-ui.puzzle-ui[data-state] .primary-button span{position:absolute;right:25px;font-size:22px;line-height:1}
-#game-ui.puzzle-ui[data-state] .primary-button:hover{background:#ffed80}
-#game-ui.puzzle-ui[data-state] .secondary-button{width:100%;min-height:48px;margin-top:8px;border:1px solid #365d5533;border-radius:14px;background:transparent;color:#365d55;font-size:15px}
-#game-ui.puzzle-ui[data-state] .menu-footer{width:100%;margin-top:16px;font-size:12px;line-height:1.5;color:#507163}
-#game-ui.puzzle-ui[data-state] .level-link{width:100%;min-height:48px;margin-top:16px;padding:13px;border:1px solid #eadca9;border-radius:14px;background:#fff4ce;color:#365d55;font-size:14px;line-height:20px}
-#game-ui.puzzle-ui[data-state] .level-link:hover{background:#ffedb0}
-#game-ui.puzzle-ui .menu-card :is(button,a):focus-visible{outline:3px solid #365d55;outline-offset:3px}
-@media(pointer:coarse),(max-width:700px){
-  #game-ui.puzzle-ui[data-state] .menu-scrim{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
-  #game-ui.puzzle-ui[data-state] .menu-card{padding:24px 20px}
-  #game-ui.puzzle-ui[data-state] .menu-card h1{font-size:30px}
-}
-@media(max-height:550px){
-  #game-ui.puzzle-ui[data-state] .menu-scrim{padding-top:max(76px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
-  #game-ui.puzzle-ui[data-state] .menu-card{padding:12px 24px;border-radius:26px}
-  #game-ui.puzzle-ui[data-state] .menu-card h1{font-size:28px;margin:6px 0}
-  #game-ui.puzzle-ui[data-state] .menu-card p{font-size:14px;margin-bottom:10px}
-  #game-ui.puzzle-ui[data-state] .menu-tips{display:none}
-  #game-ui.puzzle-ui[data-state] .primary-button{min-height:52px;padding:8px 48px;font-size:22px}
-  #game-ui.puzzle-ui[data-state] .secondary-button{min-height:44px;margin-top:6px}
-  #game-ui.puzzle-ui[data-state] .menu-footer{margin-top:6px;font-size:11px}
-  #game-ui.puzzle-ui[data-state] .level-link{min-height:44px;margin-top:6px;padding:11px}
-}
-
 /* Match the player badge to the approved A character. */
 .player-face{background:transparent;border:0;box-shadow:none;border-radius:0}.player-face svg{display:block;width:100%;height:100%}
+#go-home{display:grid;place-items:center;pointer-events:auto}
+#go-home:focus-visible{outline:4px solid #253956;outline-offset:5px}
+.game-loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:18px 28px;border-radius:30px;background:#fffaf0;color:#645095;font-size:20px;z-index:20}
+
+
+@media(max-height:550px){#game-ui[data-state] .menu-card{max-height:calc(100dvh - 100px);overflow-y:auto}#game-ui[data-state] .menu-card>*{flex-shrink:0}}
+
+/* Level cards: both levels share one layout; the custom properties carry each level's palette. */
+#game-ui{--card-ink:#2e4d70;--card-soft:#56708c;--card-top:#ffffff;--card-bottom:#e9f4ff;--card-edge:#2d4f7a26;--card-line:#2e4d7033;--card-scrim:#2d568166;--tile:#ffffffcc;--tile-ink:#d98a12;--badge-bg:#d4eaff;--badge-ink:#2e4d70}
+#game-ui.puzzle-ui{--card-ink:#365d55;--card-soft:#507163;--card-top:#fffef6;--card-bottom:#eef5df;--card-edge:#365d5526;--card-line:#365d5533;--card-scrim:#365d5566;--tile-ink:#b87817;--badge-bg:#d6efc2;--badge-ink:#3c7449}
+#game-ui:is([data-state="eliminated"],[data-state="timeout"]){--badge-bg:#ffd6e6;--badge-ink:#b23a68}
+#game-ui[data-state="qualified"]{--badge-bg:#ffe14f;--badge-ink:#9a5b00}
+.menu-badge{display:none}
+#game-ui.card-mode[data-state] .menu-scrim{display:flex;justify-content:center;align-items:safe center;background:var(--card-scrim);padding:max(112px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+#game-ui.card-mode[data-state] .menu-card{position:relative;display:flex;flex-direction:column;align-items:center;width:min(400px,100%);padding:58px 28px 26px;border:5px solid #fff;border-radius:32px;background:linear-gradient(var(--card-top),var(--card-bottom));color:var(--card-ink);text-align:center;box-shadow:0 10px 0 var(--card-edge),0 28px 60px #1c344a33;animation:card-pop .34s cubic-bezier(.2,1.4,.4,1) both}
+#game-ui.card-mode[data-state] .menu-badge{position:absolute;top:-42px;left:50%;display:grid;place-items:center;width:84px;height:84px;margin-left:-42px;border:5px solid #fff;border-radius:50%;background:var(--badge-bg);color:var(--badge-ink);box-shadow:0 6px 0 var(--card-edge),0 12px 24px #1c344a26;animation:badge-pop .5s .08s cubic-bezier(.2,1.6,.4,1) both}
+#game-ui.card-mode[data-state] .menu-badge .control-icon{width:40px;height:40px;stroke-width:2.6}
+#game-ui.card-mode[data-state] .menu-badge .icon-fill{fill:currentColor}
+#game-ui.card-mode[data-state] .menu-card h1{width:100%;margin:0 0 8px;font-size:38px;line-height:1.2;letter-spacing:1px;color:var(--card-ink);text-shadow:none;white-space:normal}
+#game-ui.card-mode[data-state] .menu-card p{width:100%;margin:0 0 22px;font-size:16px;line-height:1.6;font-weight:500;color:var(--card-soft);text-shadow:none}
+#game-ui.card-mode[data-state] .menu-tips{display:flex;width:100%;gap:10px;justify-content:center;margin:0 0 22px;padding:0;border:0}
+#game-ui.card-mode[data-state] .menu-tips>span{display:grid;justify-items:center;gap:6px;flex:1;min-width:0;padding:12px 4px 10px;border-radius:18px;background:var(--tile);box-shadow:inset 0 0 0 2px var(--card-line);color:var(--tile-ink)}
+#game-ui.card-mode[data-state] .menu-tips small{margin:0;font-size:13px;color:var(--card-soft)}
+#game-ui.card-mode[data-state] :is(.primary-button,.level-link){order:1;position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:none;min-height:66px;margin:0;padding:12px 52px;border:2px solid #fff9;border-bottom:6px solid #d9ae2c;border-radius:20px;background:linear-gradient(#ffec70,#ffd83b);color:var(--card-ink);font-size:24px;text-decoration:none;box-shadow:0 8px 18px #b98a1a33;transition:transform .12s,filter .12s}
+#game-ui.card-mode[data-state] .primary-button span{position:absolute;right:24px;font-size:22px;line-height:1}
+#game-ui.card-mode[data-state] :is(.primary-button,.level-link):hover{filter:brightness(1.05);transform:translateY(-2px)}
+#game-ui.card-mode[data-state] :is(.primary-button,.level-link):active{transform:translateY(2px);border-bottom-width:3px}
+#game-ui.card-mode[data-state] .secondary-button{order:2;width:100%;min-height:50px;margin-top:12px;border:2px solid var(--card-line);border-radius:16px;background:#ffffff99;color:var(--card-ink);font-size:16px;transition:background .12s}
+#game-ui.card-mode[data-state] .secondary-button:hover{background:#fff}
+#game-ui.card-mode .menu-card :is(button,a):focus-visible{outline:3px solid var(--card-ink);outline-offset:3px}
+@keyframes card-pop{from{opacity:0;transform:translateY(18px) scale(.94)}}
+@keyframes badge-pop{from{opacity:0;transform:scale(.4) rotate(-18deg)}}
+@media(pointer:coarse),(max-width:700px){
+  #game-ui.card-mode[data-state] .menu-scrim{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+  #game-ui.card-mode[data-state] .menu-card{padding:54px 20px 22px}
+  #game-ui.card-mode[data-state] .menu-card h1{font-size:32px}
+}
+@media(max-height:550px){
+  #game-ui.card-mode[data-state] .menu-scrim{padding-top:max(76px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  #game-ui.card-mode[data-state] .menu-badge{display:none}
+  #game-ui.card-mode[data-state] .menu-card{padding:16px 24px;border-radius:26px}
+  #game-ui.card-mode[data-state] .menu-card h1{font-size:28px;margin:0 0 4px}
+  #game-ui.card-mode[data-state] .menu-card p{font-size:14px;margin-bottom:12px}
+  #game-ui.card-mode[data-state] .menu-tips{display:none}
+  #game-ui.card-mode[data-state] :is(.primary-button,.level-link){min-height:52px;font-size:21px}
+  #game-ui.card-mode[data-state] .secondary-button{min-height:44px;margin-top:8px}
+}

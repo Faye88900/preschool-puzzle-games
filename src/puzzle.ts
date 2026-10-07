@@ -4,6 +4,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import R from '@dimforge/rapier3d-compat';
 import { bean, label, mat, orb } from './models';
 import { UI } from './ui';
+import { readSettings, saveSettings } from './settings';
 import { movement, acceleration, animateWalk } from './movement';
 import { setCharacterExpression } from './character';
 import { PuzzleAudio, type PuzzleSound } from './puzzle-audio';
@@ -54,7 +55,8 @@ export class PuzzleGarden {
   ui!: UI;
   state = 'ready';
   paused = false;
-  muted = false;
+  settings = readSettings();
+  get muted() { return !this.settings.music && !this.settings.effects; }
   keys = new Set<string>();
   stick = { x: 0, y: 0 };
   collected = [false, false, false];
@@ -128,8 +130,9 @@ export class PuzzleGarden {
     this.world.createCollider(R.ColliderDesc.capsule(.25, .4).setMass(1).setFriction(movement.friction).setRestitution(0), this.body);
     this.scene.add(this.player);
     this.ui = new UI({ start: () => this.start(), pause: () => this.pause(), mute: () => {
-      this.muted = !this.muted; if (this.muted) window.speechSynthesis?.cancel();
-      this.audio?.mute(this.muted);
+      this.settings = { music: this.muted, effects: this.muted }; saveSettings(this.settings);
+      if (!this.settings.effects) window.speechSynthesis?.cancel();
+      this.audio?.applySettings(this.settings);
     }, move: (x, y) => this.stick = { x, y }, jump: () => this.jumpRequested = true, dive: () => this.interact(), hint: () => this.hint() });
     this.ui.configurePuzzle();
     document.querySelector('#game')!.setAttribute('aria-label', '第二关：三把钥匙的解谜花园');
@@ -711,7 +714,7 @@ export class PuzzleGarden {
   say(text: string, sound?: PuzzleSound) {
     if (sound !== 'hint') { this.hintActive = false; }
     this.cue = text;
-    if (this.muted) return;
+    if (!this.settings.effects) return;
     if (sound) this.audio?.play(sound);
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text);

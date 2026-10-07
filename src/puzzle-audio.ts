@@ -1,4 +1,5 @@
 // Local CC0 recordings and cues; sources and processing are in audio/puzzle/SOURCES.md.
+import { readSettings, type Settings } from './settings';
 const levels = {
   pickup: .32, drop: .4, switch: .35, gate: .2, pipe: .24, grain: .26, flow: .24,
   bloom: .38, key: .4, win: .65, jump: .22, land: .2, hint: .24, chick: .32, water: .16,
@@ -25,6 +26,7 @@ export class PuzzleAudio {
     this.effects.connect(this.master); this.waterGain.connect(this.master);
     this.master.connect(this.context.destination);
     this.waterGain.gain.value = 0;
+    this.applySettings(readSettings());
   }
   async load() {
     await Promise.all(Object.keys(levels).map(async key => {
@@ -44,11 +46,11 @@ export class PuzzleAudio {
     this.music.pause();
     void this.context.suspend().catch(error => console.warn('Cannot pause puzzle audio', error));
   }
-  mute(muted: boolean) {
-    this.muted = muted;
-    this.music.muted = muted;
+  applySettings(settings: Settings) {
+    this.muted = !settings.effects;
+    this.music.muted = !settings.music;
     this.master.gain.cancelScheduledValues(this.context.currentTime);
-    this.master.gain.setValueAtTime(muted ? 0 : 1, this.context.currentTime);
+    this.master.gain.setValueAtTime(settings.effects ? 1 : 0, this.context.currentTime);
   }
   play(id: PuzzleSound, rate = 1) {
     const buffer = this.buffers.get(id), now = this.context.currentTime;

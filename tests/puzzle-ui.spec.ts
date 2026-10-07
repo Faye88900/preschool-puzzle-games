@@ -29,8 +29,8 @@ test('garden cards share aligned text, buttons and responsive styling', async ({
       const layout = await page.locator('.menu-card').evaluate(card => {
         const rect = card.getBoundingClientRect();
         const center = rect.left + rect.width / 2;
-        const selectors = ['#menu-eyebrow', '#menu-title', '#menu-description', '#primary', '#menu-footer', '.level-link'];
-        const offsets = selectors.filter(selector => !(card.querySelector(selector) as HTMLElement).hidden).map(selector => {
+        const selectors = ['#menu-badge', '#menu-title', '#menu-description', '#primary', '.level-link'];
+        const offsets = selectors.filter(selector => card.querySelector(selector)!.getClientRects().length > 0).map(selector => {
           const element = card.querySelector(selector)!;
           const range = document.createRange();
           range.selectNodeContents(element);
@@ -38,21 +38,19 @@ test('garden cards share aligned text, buttons and responsive styling', async ({
           const box = range.getBoundingClientRect();
           return Math.abs(center - (box.left + box.width / 2));
         });
-        const primary = card.querySelector('#primary')!.getBoundingClientRect();
-        const link = card.querySelector('.level-link')!.getBoundingClientRect();
         const css = getComputedStyle(card);
-        return { offsets, top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, primaryWidth: primary.width, linkWidth: link.width, style: [rect.width, css.backgroundColor, css.borderRadius, getComputedStyle(card.querySelector('h1')!).fontSize] };
+        return { offsets, top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, style: [(card as HTMLElement).offsetWidth, css.backgroundImage, css.borderRadius, getComputedStyle(card.querySelector('h1')!).fontSize] };
       });
       expect(Math.max(...layout.offsets)).toBeLessThan(2);
       expect(layout.top).toBeGreaterThanOrEqual(0);
       expect(layout.bottom).toBeLessThanOrEqual(viewport.height);
       expect(layout.left).toBeGreaterThanOrEqual(0);
       expect(layout.right).toBeLessThanOrEqual(viewport.width);
-      expect(layout.linkWidth).toBe(layout.primaryWidth);
       styles.push(layout.style);
-      await expect(page.locator('.level-link')).toHaveAttribute('href', '?level=1');
+      await expect(page.locator('.level-link')).toBeHidden();
+      await expect(page.getByRole('link', { name: '返回首页' })).toBeVisible();
       await expect(page.locator('#restart')).toBeVisible({ visible: state === 'paused' });
-      await expect(page.locator('#menu-footer')).toBeVisible({ visible: state === 'qualified' });
+      if (viewport.height > 550) await expect(page.locator('#menu-badge svg')).toHaveAttribute('data-icon', state === 'ready' ? 'key' : state === 'paused' ? 'pause' : 'star');
       if (viewport.width === 390 || viewport.width === 1440) await page.screenshot({ path: resolve(outputs, `garden-card-${state}-${viewport.width}.png`) });
       await page.locator('#primary').click();
     }
