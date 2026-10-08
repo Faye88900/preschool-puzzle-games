@@ -1,3 +1,4 @@
+import { cloudTransfer } from './cloud-transfer';
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -178,6 +179,14 @@ export class PuzzleGarden {
         motion: () => ({ velocity: this.body.linvel(), heading: this.heading, rotation: this.player.rotation.y, gait: this.gait, bob: this.player.getObjectByName('avatar')!.position.y, roll: this.player.getObjectByName('avatar')!.rotation.z, feet: [-1, 1].map(s => this.player.getObjectByName('foot' + s)!.rotation.x), arms: [-1, 1].map(s => this.player.getObjectByName('arm' + s)!.rotation.x), carriedPosition: this.carried >= 0 ? this.pieces[this.carried].mesh.position.toArray() : null, playerPosition: this.player.position.toArray() }),
         warp: (x: number, z: number) => { this.body.setTranslation({ x, y: .8, z }, true); this.previous.copy(this.body.translation()); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); this.render(); },
       } });
+    }
+    if (new URLSearchParams(location.search).has('cloudArrival')) {
+      document.addEventListener('journey-arrival', () => {
+        this.start(); this.render(0);
+        this.transfer = cloudTransfer(this.scene, this.camera, this.player, true, () => {
+          this.clearInput(); this.last = performance.now(); this.accumulator = 0; this.transfer = undefined;
+        });
+      }, { once: true });
     }
     requestAnimationFrame(t => this.tick(t));
   }
@@ -885,7 +894,9 @@ export class PuzzleGarden {
     this.ui.updatePuzzle(this.state, this.paused, this.muted, cue, this.collected.filter(Boolean).length, action);
     this.renderer.render(this.scene, this.camera);
   }
+  transfer?: (now: number) => boolean;
   tick(now: number) {
+    if (this.transfer) { this.transfer(now); this.renderer.render(this.scene, this.camera); requestAnimationFrame(t => this.tick(t)); return; }
     if (this.overviewMode) {
       this.renderer.render(this.scene, this.camera); requestAnimationFrame(t => this.tick(t)); return;
     }
@@ -897,4 +908,3 @@ export class PuzzleGarden {
     this.render(dt); requestAnimationFrame(t => this.tick(t));
   }
 }
-

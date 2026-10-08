@@ -102,7 +102,7 @@ test('homepage routes, persisted audio settings, and responsive controls', async
   const colors = new Set<string>();
   for (let i = 0; i < pixels.data.length; i += 160) colors.add(pixels.data.subarray(i, i + 3).toString('hex'));
   expect(colors.size).toBeGreaterThan(100);
-  await page.screenshot({ path: 'artifacts/design/home-desktop.png' });
+  await page.screenshot({ path: 'test-results/outputs/home-desktop.png' });
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('switch', { name: '背景音乐' }).uncheck();
   await page.getByRole('button', { name: '完成' }).click();
@@ -128,7 +128,7 @@ test('homepage routes, persisted audio settings, and responsive controls', async
   await page.getByRole('switch', { name: '音效与语音' }).uncheck();
   await page.getByRole('button', { name: '完成' }).click();
   await page.getByRole('button', { name: '选择关卡' }).click();
-  await page.screenshot({ path: 'artifacts/design/home-levels.png' });
+  await page.screenshot({ path: 'test-results/outputs/home-levels.png' });
   await page.getByRole('link', { name: /第二关/ }).click();
   await expect(page).toHaveURL(/level=2/);
   await expect(page.locator('#primary')).toBeVisible();
@@ -147,7 +147,7 @@ test('homepage routes, persisted audio settings, and responsive controls', async
       expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
       expect(box.height).toBeGreaterThanOrEqual(44);
     }
-    await page.screenshot({ path: `artifacts/design/home-${viewport.width}.png` });
+    await page.screenshot({ path: `test-results/outputs/home-${viewport.width}.png` });
     await page.getByRole('button', { name: '设置', exact: true }).click();
     await expect(page.getByRole('switch', { name: '音效与语音' })).not.toBeChecked();
     await page.getByRole('button', { name: '完成' }).click();

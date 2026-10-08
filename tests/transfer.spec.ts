@@ -1,0 +1,46 @@
+import { test, expect } from '@playwright/test';
+ test.use({ video: 'on' });
+
+test('finish exit boards a cloud, flies to the garden, lands and restores movement', async ({ page }) => {
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?level=1&test=1');
+  await page.getByRole('button', { name: /跳过动画/ }).click();
+  await expect(page.locator('.cloud-journey')).toHaveCount(0);
+  await page.evaluate(() => {
+    const hooks = (window as any).__THREE_GAME_TEST_HOOKS__;
+    hooks.setState('racing'); hooks.teleport(0, 1, -149);
+  });
+  await expect(page.locator('#game-ui')).toHaveAttribute('data-state', 'qualified');
+  await expect(page.locator('#menu')).toBeVisible();
+  await page.waitForTimeout(1200);
+  expect(await page.evaluate(() => (window as any).__TRANSFER_STAGE__)).toBeUndefined();
+  await expect(page).toHaveURL(/level=1/);
+  await page.getByRole('link', { name: /下一关/ }).click();
+  await expect.poll(() => page.evaluate(() => (window as any).__TRANSFER_STAGE__)).toBe('waving');
+  await page.screenshot({ path: 'artifacts/transfer-wave.png' });
+  expect(await page.evaluate(() => (window as any).__TRANSFER_DIAGNOSTICS__.markerVisible)).toBe(false);
+  await expect.poll(() => page.evaluate(() => (window as any).__TRANSFER_STAGE__)).toBe('boarding');
+  await expect.poll(() => page.evaluate(() => (window as any).__TRANSFER_DIAGNOSTICS__?.jumpHeight), { intervals: [40] }).toBeGreaterThan(1);
+  await page.screenshot({ path: 'artifacts/transfer-board.png' });
+  await expect.poll(() => page.evaluate(() => (window as any).__TRANSFER_DIAGNOSTICS__?.touchdown), { intervals: [40] }).toBeGreaterThan(.8);
+  const contact = await page.evaluate(() => (window as any).__TRANSFER_DIAGNOSTICS__);
+  expect(contact.cloudHeight).toBeLessThan(.8);
+  expect(contact.contact).toBeGreaterThan(.2);
+  await page.screenshot({ path: 'artifacts/transfer-contact.png' });
+  await expect.poll(() => page.evaluate(() => (window as any).__TRANSFER_STAGE__)).toBe('following');
+  await page.screenshot({ path: 'artifacts/transfer-flight.png' });
+  await expect.poll(() => page.evaluate(() => (window as any).__TRANSFER_DIAGNOSTICS__?.elapsed), { intervals: [40] }).toBeGreaterThan(5.35);
+  await page.screenshot({ path: 'artifacts/transfer-flyby.png' });
+  expect(await page.evaluate(() => (window as any).__TRANSFER_DIAGNOSTICS__.cameraDistance)).toBeGreaterThan(2.5);
+  await expect(page).toHaveURL(/level=2&cloudArrival=1/);
+  await expect.poll(() => page.evaluate(() => (window as any).__TRANSFER_STAGE__)).toBe('landing');
+  await page.screenshot({ path: 'artifacts/transfer-land.png' });
+  await expect(page.locator('.cloud-journey')).toHaveCount(0);
+  await expect(page.locator('#game-ui')).toHaveAttribute('data-state', 'racing');
+  const before = await page.evaluate(() => (window as any).__PUZZLE_TEST__.snapshot().position.z);
+  await page.keyboard.press('ArrowUp', { delay: 600 });
+  const after = await page.evaluate(() => (window as any).__PUZZLE_TEST__.snapshot().position.z);
+  expect(after).toBeLessThan(before - .3);
+  await expect(page.locator('#game-ui')).toBeVisible();
+  expect(errors).toEqual([]);
+});

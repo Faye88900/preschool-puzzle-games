@@ -124,6 +124,7 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   await page.evaluate(() => (window as any).__THREE_GAME_TEST_HOOKS__.teleport(0, 1, -124));
   await advance(page, .1);
   await page.screenshot({ path: resolve(outputs, 'gummy-finish.png') });
+  const finishMusicTime = (await diagnostics(page)).media.music.time;
   await page.evaluate(() => (window as any).__THREE_GAME_TEST_HOOKS__.teleport(0, 1, -149));
   await advance(page, .1);
   await expect(page.locator('#menu-title')).toHaveText('晋级啦！');
@@ -146,11 +147,16 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   expect(Math.max(...textAlignment)).toBeLessThan(2);
   expect((await snapshot(page)).state).toBe('qualified');
   expect((await diagnostics(page)).people[0].expression).toBe('happy');
-  expect((await diagnostics(page)).media.music.paused).toBe(true);
+  expect((await diagnostics(page)).media.music).toMatchObject({ paused: false, muted: true });
+  await page.getByRole('button', { name: '打开声音' }).click();
+  await expect.poll(async () => (await diagnostics(page)).media.music).toMatchObject({ paused: false, muted: false });
+  await expect.poll(async () => (await diagnostics(page)).media.music.time).toBeGreaterThan(finishMusicTime);
   expect((await diagnostics(page)).media.plays.finish).toBe(1);
   await page.getByRole('button', { name: '再玩一次' }).click();
   await advance(page, .1);
   const reset = await diagnostics(page);
+  expect(reset.media.music.paused).toBe(false);
+  expect(reset.media.plays.music).toBe(0);
   expect(reset.physics).toEqual(initial.physics);
   expect(reset.people.every((p: any) => p.finish === 0 && p.checkpoint === 0)).toBe(true);
   expect(errors).toEqual([]);

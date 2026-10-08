@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 test('approved character renders all views, animates, and exports a self-contained GLB', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  const output = resolve('artifacts/design/character-a-3d');
+  const output = resolve('test-results/outputs/character-a-3d');
   await mkdir(output, { recursive: true });
   await page.goto('/?character=1&test=1');
   await page.waitForFunction(() => !!(window as any).__CHARACTER_PREVIEW__);

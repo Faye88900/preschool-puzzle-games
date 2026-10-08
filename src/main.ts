@@ -25,6 +25,7 @@ document.addEventListener('click', event => {
   if (!(event instanceof MouseEvent) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   const link = (event.target as Element | null)?.closest?.('a[href]');
   if (!(link instanceof HTMLAnchorElement) || link.target === '_blank' || link.hasAttribute('download')) return;
+  if (link.dataset.cloudTransfer === 'true') return;
   if (!readSettings().effects || buttonSoundHeard === buttonSoundPlay) return;
   event.preventDefault();
   const play = buttonSoundPlay;
@@ -37,11 +38,11 @@ document.addEventListener('click', event => {
 }, true);
 
 const params = new URLSearchParams(location.search);
-const loading = document.createElement('div');
+const loading = document.createElement('dialog');
 loading.className = 'game-loading';
-loading.setAttribute('role', 'status');
-loading.textContent = '正在前往空岛…';
+loading.setAttribute('aria-label', '加载中');
 document.body.append(loading);
+loading.showModal();
 async function boot() {
   if (params.has('character')) return (await import('./character-preview')).showCharacterPreview();
   const level = params.get('level');
@@ -49,7 +50,16 @@ async function boot() {
   if (level === '2') return new (await import('./puzzle')).PuzzleGarden().init();
   return (await import('./home')).showHome();
 }
-boot().catch(error => {
+async function start() {
+  // The character workbench is a utility page, not a trip to an island.
+  if (params.has('character')) return boot();
+  const { startJourney } = await import('./journey');
+  const destination = params.get('level') === '1' ? '天空赛道' : params.get('level') === '2' ? '解谜花园' : '空岛';
+  const journey = startJourney(loading, destination);
+  try { await boot(); await journey.arrive(); }
+  finally { journey.dispose(); }
+}
+start().catch(error => {
   document.body.innerHTML = '<main style="padding:40px;font:24px sans-serif">暂时无法打开游戏，请刷新再试一次。</main>';
   console.error(error);
-}).finally(() => loading.remove());
+}).finally(() => { loading.close(); loading.remove(); });

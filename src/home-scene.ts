@@ -270,6 +270,10 @@ export function createHomeScene(canvas: HTMLCanvasElement): () => void {
   let frame = 0;
   const diagnostics = new URLSearchParams(location.search).has('test');
   const start = performance.now();
+  const groundedY = player.position.y;
+  let arrivalStart: number | undefined;
+  const arrive = () => { arrivalStart = performance.now(); };
+  document.addEventListener('journey-arrival', arrive);
   function render(now: number) {
     const time = reducedMotion.matches ? 0 : (now - start) / 1000;
     const wave = Math.sin(time * 7) * Math.sin(Math.PI * Math.min((time % 6) / 3, 1));
@@ -277,6 +281,15 @@ export function createHomeScene(canvas: HTMLCanvasElement): () => void {
     wavingArm.position.y = .24 + wave * .045;
     for (const side of [-1, 1]) player.getObjectByName('ear' + side)!.rotation.z = .05 - side * (.22 + Math.sin(time * 1.6) * .018);
     for (const { group, x, phase } of clouds) group.position.x = x + Math.sin(time * .07 + phase) * .45;
+    if (arrivalStart !== undefined && !reducedMotion.matches) {
+      const progress = T.MathUtils.smoothstep((now - arrivalStart) / 1000, 0, 1.65);
+      camera.position.copy(position).add(new T.Vector3(0, 2 * (1 - progress), 5 * (1 - progress)));
+      camera.lookAt(target);
+      player.position.y = groundedY + .9 * (1 - progress);
+      avatar.scale.y = 1 - Math.sin(Math.PI * T.MathUtils.smoothstep(progress, .75, 1)) * .08;
+      contactShadow.visible = progress > .8;
+      if (progress === 1) arrivalStart = undefined;
+    }
     renderer.render(scene, camera);
     if (diagnostics) {
       const bounds = new T.Box3().setFromObject(player.getObjectByName('avatar')!);
@@ -294,7 +307,7 @@ export function createHomeScene(canvas: HTMLCanvasElement): () => void {
   frame = requestAnimationFrame(render);
   return () => {
 
-    cancelAnimationFrame(frame); observer.disconnect();
+    cancelAnimationFrame(frame); observer.disconnect(); document.removeEventListener('journey-arrival', arrive);
     geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());
     grassTexture.dispose(); contactTexture.dispose();
     instances.forEach(instance => instance.dispose());

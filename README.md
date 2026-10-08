@@ -41,5 +41,5 @@ skills 参考已读：Game Studio 的 `three-webgl-game`、`game-playtest`，`le
 - `src/ui.ts`、`src/style.css`：界面；`public/audio/`：本地音效。
 - `tests/race.spec.ts`：自动化测试；`scripts/inspect-threejs-canvas.mjs`：可选的画布检查工具。
 
-`dist/`、`node_modules/` 和 `test-results/` 是生成或安装目录，已在 `.gitignore` 中排除。`artifacts/` 同样被排除，其中 `design/` 保存设计参考，`audio-sources/` 只保留音效制作所需的原始片段、许可证和校验记录。测试生成的截图和报告可在验证后清理；设计参考和制作源文件应保留。
+`dist/`、`node_modules/` 和 `test-results/` 是生成或安装目录，已在 `.gitignore` 中排除。`artifacts/` 同样被排除，其中 `design/` 的旧截图和设计图片已清理；测试截图写入 `test-results/`。`audio-sources/` 只保留音效制作所需的原始片段、许可证和校验记录。测试生成的截图和报告可在验证后清理；音效制作源文件和许可证应保留。
 

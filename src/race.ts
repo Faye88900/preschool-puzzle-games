@@ -1,3 +1,4 @@
+import { cloudTransfer } from './cloud-transfer';
 import * as T from 'three';
 import R from '@dimforge/rapier3d-compat';
 import { UI } from './ui';
@@ -133,6 +134,17 @@ export class Race {
             this.settings = { music: this.muted, effects: this.muted }; saveSettings(this.settings); this.applyAudioSettings();
             if (!this.settings.effects) speechSynthesis?.cancel(); else this.syncMusic();
         }, jump: () => this.jump = true, dive: () => this.dive = true, move: (x, y) => this.stick = { x, y } });
+        const nextLevel = document.querySelector<HTMLAnchorElement>('#game-ui .level-link')!;
+        nextLevel.dataset.cloudTransfer = 'true';
+        nextLevel.onclick = event => {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            if (this.state !== 'qualified' || this.transfer) return;
+            this.keys.clear(); this.stick = { x: 0, y: 0 };
+            this.transfer = cloudTransfer(this.scene, this.camera, this.people[0].mesh, false, () => {
+                location.assign('?level=2&cloudArrival=1' + (new URLSearchParams(location.search).has('test') ? '&test=1' : ''));
+            });
+        };
         addEventListener('keydown', e => { if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code))
             e.preventDefault(); this.keys.add(e.code); if (!e.repeat) {
             if (e.code === 'Space')
@@ -265,7 +277,7 @@ export class Race {
     applyAudioSettings(){this.raceMusic.muted=!this.settings.music;this.countdownSound.muted=this.finishHorn.muted=!this.settings.effects;}
     playMedia(kind:keyof typeof this.mediaPlays,clip:HTMLAudioElement){clip.currentTime=0;clip.muted=!(kind==='music'?this.settings.music:this.settings.effects);this.mediaPlays[kind]++;void clip.play().catch(()=>{});}
     stopMedia(clip:HTMLAudioElement){clip.pause();clip.currentTime=0;}
-    syncMusic(){const on=!this.paused&&!document.hidden&&['ready','countdown','racing'].includes(this.state);if(!on)this.raceMusic.pause();else if(this.raceMusic.paused)void this.raceMusic.play().catch(()=>{});}
+    syncMusic(){const on=!this.paused&&!document.hidden&&['ready','countdown','racing','qualified'].includes(this.state);if(!on)this.raceMusic.pause();else if(this.raceMusic.paused)void this.raceMusic.play().catch(()=>{});}
     start() { this.state = 'countdown'; this.countdown = 3; this.time = 0; this.finished = 0; this.paused = false; this.acc = 0; this.cueIndex = -1; this.cue = '准备——出发！'; this.keys.clear(); this.jump = this.dive = false; this.stick = { x: 0, y: 0 }; this.autoPlayer = false; this.testMode = false; speechSynthesis?.cancel(); this.stopMedia(this.finishHorn);this.stopMedia(this.countdownSound);if(this.raceMusic.paused)this.playMedia('music',this.raceMusic); if (this.confetti) {
         this.scene.remove(this.confetti);
         this.confetti.geometry.dispose();
@@ -465,7 +477,7 @@ export class Race {
                 this.end('timeout');
         }
     }
-    end(state: GameState) { this.state = state; this.stopMedia(this.raceMusic); this.say(state === 'qualified' ? '晋级啦！' : '没关系，再试一次！'); if (state === 'qualified') {
+    end(state: GameState) { this.state = state; if (state !== 'qualified') this.stopMedia(this.raceMusic); this.say(state === 'qualified' ? '晋级啦！' : '没关系，再试一次！'); if (state === 'qualified') {
         this.playMedia('finish',this.finishHorn);
         const a = new Float32Array(180 * 3);
         for (let i = 0; i < 180; i++) {
@@ -531,7 +543,12 @@ export class Race {
         }
     }
     resize() { this.renderer.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); }
-    tick(t: number) { const dt = Math.min((t - this.last) / 1000 || 0, .1); this.last = t; this.fps = this.fps * .95 + (1 / Math.max(dt, .001)) * .05; if (!this.paused && !this.freeze) {
+    transfer?: (now: number) => boolean;
+    tick(t: number) {
+        if (this.transfer) {
+            this.transfer(t); this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(v => this.tick(v)); return;
+        } const dt = Math.min((t - this.last) / 1000 || 0, .1); this.last = t; this.fps = this.fps * .95 + (1 / Math.max(dt, .001)) * .05; if (!this.paused && !this.freeze) {
         this.acc += dt;
         while (this.acc >= FIXED_DT) {
             this.step(FIXED_DT);
