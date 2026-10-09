@@ -3,7 +3,7 @@ import { readSettings, type Settings } from './settings';
 const levels = {
   pickup: .32, drop: .4, switch: .35, gate: .2, pipe: .24, grain: .26, flow: .24,
   bloom: .38, key: .4, win: .65, jump: .22, land: .2, hint: .24, chick: .32, water: .16,
-  stepGrass0: .1, stepGrass1: .1, stepGrass2: .1, stepStone0: .12, stepStone1: .12, stepStone2: .12,
+  stepGrass0: .2, stepGrass1: .2, stepGrass2: .2, stepStone0: .24, stepStone1: .24, stepStone2: .24,
 };
 export type PuzzleSound = keyof typeof levels;
 

@@ -100,10 +100,11 @@ export function startJourney(dialog: HTMLDialogElement, destination: string) {
   let ready = false, skipped = reduced, elapsed = fromExit ? 5.3 : 0, landing = 0, frame = 0, last = performance.now(), disposed = false, revealed = false;
   let resolve: () => void;
   const finished = new Promise<void>(done => { resolve = done; });
-  // Browser autoplay may block sound; start only after a gesture and honor effects settings.
+  // Start on entry; retry on a gesture if the browser blocks autoplay.
   let audio: AudioContext | undefined, wind: GainNode | undefined, filter: BiquadFilterNode | undefined;
   function startWind() {
-    if (audio || !readSettings().effects || reduced) return;
+    if (!readSettings().effects || reduced) return;
+    if (audio) { void audio.resume().catch(() => {}); return; }
     audio = new AudioContext();
     const buffer = audio.createBuffer(1, audio.sampleRate * 2, audio.sampleRate);
     const data = buffer.getChannelData(0);
@@ -114,6 +115,7 @@ export function startJourney(dialog: HTMLDialogElement, destination: string) {
     wind = audio.createGain(); wind.gain.value = 0; source.connect(filter).connect(wind).connect(audio.destination); source.start();
     void audio.resume().catch(() => {});
   }
+  startWind();
   dialog.addEventListener('pointerdown', startWind);
   const requestSkip = () => { skipped = true; skip.disabled = true; caption.textContent = '正在准备' + destination + '…'; };
   skip.onclick = requestSkip;
