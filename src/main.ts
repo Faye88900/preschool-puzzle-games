@@ -52,9 +52,15 @@ async function boot() {
 }
 async function start() {
   const level = params.get('level');
-  if (params.has('character') || (level !== '1' && level !== '2')) return boot();
+  const homeArrival = params.get('homeArrival') === '1';
+  if (params.has('character') || (level !== '1' && level !== '2' && !homeArrival)) return boot();
+  if (homeArrival) {
+    const url = new URL(location.href);
+    url.searchParams.delete('homeArrival');
+    history.replaceState(null, '', url);
+  }
   const { startJourney } = await import('./journey');
-  const destination = level === '1' ? '天空赛道' : '解谜花园';
+  const destination = level === '1' ? '天空赛道' : level === '2' ? '解谜花园' : '空岛';
   const journey = startJourney(loading, destination);
   try { await boot(); await journey.arrive(); }
   finally { journey.dispose(); }

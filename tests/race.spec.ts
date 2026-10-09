@@ -48,7 +48,7 @@ test('desktop: real inputs, checkpoints, pause, result and clean restart', async
   await expect(page.locator('#fullscreen svg')).toHaveAttribute('data-icon', 'maximize');
   await expect(page.locator('#menu-badge')).toBeHidden();
   await expect(page.locator('.level-link')).toBeHidden();
-  await expect(page.getByRole('link', { name: '返回首页' })).toHaveAttribute('href', './');
+  await expect(page.getByRole('link', { name: '返回首页' })).toHaveAttribute('href', './?homeArrival=1');
   await expect(page.getByRole('link', { name: '返回首页' })).toBeVisible();
   expect(initial.people).toHaveLength(12);
   expect(Math.abs(initial.people[0].position.x)).toBeCloseTo(.85);

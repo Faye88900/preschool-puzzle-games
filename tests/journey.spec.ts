@@ -13,6 +13,24 @@ test('homepage opens without a cloud ride; starting a level plays it', async ({ 
   await expect(page.locator('.cloud-journey')).toBeVisible();
 });
 
+for (const level of [1, 2]) {
+  test(`level ${level} returns home with a ride; reloading home bypasses it`, async ({ page }) => {
+    if (level === 2) await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(`/?level=${level}`);
+    await expect(page.locator('#primary')).toBeVisible();
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.getByRole('link', { name: '返回首页' }).click();
+    await expect(page.getByRole('dialog', { name: '乘云前往空岛' })).toBeVisible();
+    await page.getByRole('button', { name: '跳过动画' }).click();
+    await expect(page.getByRole('link', { name: '开始游戏', exact: true })).toBeVisible();
+    await expect(page).toHaveURL('http://127.0.0.1:5188/');
+    await page.reload();
+    await expect(page.getByRole('link', { name: '开始游戏', exact: true })).toBeVisible();
+    await expect(page.locator('.cloud-journey')).toHaveCount(0);
+  });
+}
+
 test('cloud ride takes off, lands, and releases the level controls', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
