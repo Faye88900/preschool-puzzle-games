@@ -13,6 +13,42 @@ test('homepage opens without a cloud ride; starting a level plays it', async ({ 
   await expect(page.locator('.cloud-journey')).toBeVisible();
 });
 
+for (const musicEnabled of [true, false]) {
+  test(`garden music plays during loading and continues into gameplay (music ${musicEnabled})`, async ({ page }) => {
+    await page.addInitScript(enabled => {
+      localStorage.setItem('gummy-rush-settings', JSON.stringify({ music: enabled, effects: false }));
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () {
+        if (this.src.includes('/audio/puzzle/Puzzle')) (window as any).__JOURNEY_MUSIC__ = this;
+        return play.call(this);
+      };
+    }, musicEnabled);
+    await page.goto('/');
+    await page.getByRole('button', { name: '选择关卡' }).click();
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    await page.route('**/models/*.glb', async route => { await gate; await route.continue(); });
+    const music = () => page.evaluate(() => {
+      const audio = (window as any).__JOURNEY_MUSIC__ as HTMLAudioElement | undefined;
+      return audio ? { paused: audio.paused, muted: audio.muted, time: audio.currentTime, error: audio.error?.code ?? null } : null;
+    });
+    try {
+      await page.getByRole('link', { name: /第二关/ }).click();
+      await expect(page.locator('.cloud-journey')).toBeVisible();
+      await expect.poll(async () => (await music())?.time).toBeGreaterThan(.2);
+      expect(await music()).toMatchObject({ paused: false, muted: !musicEnabled, error: null });
+      await expect(page.locator('#primary')).toHaveCount(0);
+    } finally { release(); }
+    await page.getByRole('button', { name: '跳过动画' }).click();
+    await expect(page.locator('#primary')).toBeVisible();
+    const before = (await music())!.time;
+    await page.locator('#primary').click();
+    await expect(page.locator('#primary')).not.toBeVisible();
+    await expect.poll(async () => (await music())!.time).toBeGreaterThan(before);
+    expect((await music())!.muted).toBe(!musicEnabled);
+  });
+}
+
 for (const level of [1, 2]) {
   test(`level ${level} returns home with a ride; reloading home bypasses it`, async ({ page }) => {
     if (level === 2) await page.setViewportSize({ width: 390, height: 844 });

@@ -123,9 +123,20 @@ export class PuzzleGarden {
     sun.shadow.normalBias = .04;
     sun.shadow.radius = 2;
     this.scene.add(sun, sun.target);
+    this.audio = new PuzzleAudio();
+    const syncMusic = () => {
+      const music = this.audio!.music;
+      if (this.paused || document.hidden || this.state === 'qualified') music.pause();
+      else if (music.paused) void music.play().catch(() => {});
+    };
+    addEventListener('pointerdown', syncMusic);
+    addEventListener('keydown', syncMusic);
+    document.addEventListener('visibilitychange', syncMusic);
+    addEventListener('pagehide', () => this.audio?.pause());
+    syncMusic();
     await this.loadModels();
     this.build();
-    this.audio = new PuzzleAudio(); await this.audio.load();
+    await this.audio.load();
     this.body = this.world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(spawn.x, .8, spawn.z).lockRotations().setLinearDamping(movement.damping).setCcdEnabled(true));
     this.previous.copy(this.body.translation());
     this.world.createCollider(R.ColliderDesc.capsule(.25, .4).setMass(1).setFriction(movement.friction).setRestitution(0), this.body);
@@ -559,7 +570,9 @@ export class PuzzleGarden {
     this.jumpRequested = false; this.jumpBuffer = 0;
   }
   start() {
-    window.speechSynthesis?.cancel(); this.audio?.stop(); this.audio?.resume();
+    window.speechSynthesis?.cancel();
+    if (this.state !== 'ready') this.audio?.stop();
+    this.audio?.resume();
     this.state = 'racing'; this.paused = false; this.time = 0; this.accumulator = 0;
     this.collected.fill(false); this.carried = -1;
     this.happyUntil = this.solvedCount = 0;
