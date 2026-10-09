@@ -51,10 +51,10 @@ async function boot() {
   return (await import('./home')).showHome();
 }
 async function start() {
-  // The character workbench is a utility page, not a trip to an island.
-  if (params.has('character')) return boot();
+  const level = params.get('level');
+  if (params.has('character') || (level !== '1' && level !== '2')) return boot();
   const { startJourney } = await import('./journey');
-  const destination = params.get('level') === '1' ? '天空赛道' : params.get('level') === '2' ? '解谜花园' : '空岛';
+  const destination = level === '1' ? '天空赛道' : '解谜花园';
   const journey = startJourney(loading, destination);
   try { await boot(); await journey.arrive(); }
   finally { journey.dispose(); }

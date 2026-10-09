@@ -1,7 +1,19 @@
 import { test, expect } from '@playwright/test';
 test.use({ video: 'on' });
 
-test('cloud ride takes off, lands, and releases the home controls', async ({ page }) => {
+test('homepage opens without a cloud ride; starting a level plays it', async ({ page }) => {
+  const journeys: string[] = [];
+  page.on('request', request => { if (request.url().includes('/src/journey.ts')) journeys.push(request.url()); });
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: '开始游戏', exact: true })).toBeVisible();
+  await expect(page.locator('.game-loading')).toHaveCount(0);
+  await expect(page.locator('.cloud-journey')).toHaveCount(0);
+  expect(journeys).toEqual([]);
+  await page.getByRole('link', { name: '开始游戏', exact: true }).click();
+  await expect(page.locator('.cloud-journey')).toBeVisible();
+});
+
+test('cloud ride takes off, lands, and releases the level controls', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => {
@@ -14,9 +26,10 @@ test('cloud ride takes off, lands, and releases the home controls', async ({ pag
     };
     requestAnimationFrame(sample);
   });
-  await page.goto('/?test=1');
+  await page.goto('/?level=1&test=1');
   const ride = page.locator('.cloud-journey');
   await expect(ride).toHaveAttribute('data-phase', 'takeoff');
+  const takeoffCamera = await page.evaluate(() => (window as any).__JOURNEY_DIAGNOSTICS__.camera);
   await ride.locator('canvas').click({ position: { x: 20, y: 20 } });
   await expect(ride).toHaveAttribute('data-phase', 'flying');
 
@@ -27,7 +40,7 @@ test('cloud ride takes off, lands, and releases the home controls', async ({ pag
   expect(second.streaks).toHaveLength(10);
   expect(second.streaks.some((streak: any) => streak.visible && streak.opacity > .3)).toBe(true);
   expect(second.streaks.map((streak: any) => streak.z)).not.toEqual(first.streaks.map((streak: any) => streak.z));
-  expect(second.camera).not.toEqual(first.camera);
+  expect(second.camera).not.toEqual(takeoffCamera);
   expect(second.player).not.toEqual(first.player);
   expect(second.pose.arms).not.toEqual(first.pose.arms);
   expect(second.pose.feet).not.toEqual(first.pose.feet);
@@ -37,7 +50,7 @@ test('cloud ride takes off, lands, and releases the home controls', async ({ pag
   expect(second.triangles).toBeLessThan(300000);
   console.log('Journey render:', JSON.stringify(second));
   await page.screenshot({ path: 'artifacts/journey-flight.png' });
-  await expect.poll(() => page.evaluate(() => (window as any).__JOURNEY_DIAGNOSTICS__?.passing), { intervals: [40] }).toBeGreaterThan(.75);
+  await expect.poll(() => page.evaluate(() => (window as any).__JOURNEY_FRAMES__.some((frame: any) => frame.passing > .75))).toBe(true);
   await page.screenshot({ path: 'artifacts/journey-cloud-pass.png' });
   await expect.poll(() => page.evaluate(() => (window as any).__JOURNEY_DIAGNOSTICS__?.elapsed)).toBeGreaterThan(6);
   const far = await page.evaluate(() => (window as any).__JOURNEY_DIAGNOSTICS__);
@@ -70,8 +83,7 @@ test('cloud ride takes off, lands, and releases the home controls', async ({ pag
   await page.waitForTimeout(700);
   await page.screenshot({ path: 'artifacts/journey-arrival.png' });
   await expect(ride).toHaveCount(0);
-  await page.getByRole('button', { name: '选择关卡' }).click();
-  await expect(page.locator('#level-dialog')).toBeVisible();
+  await expect(page.locator('#primary')).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -86,6 +98,9 @@ test('mobile ride can be skipped without starting gameplay; reduced motion bypas
   await page.locator('#primary').click();
   await expect(page.locator('#game-ui')).toHaveAttribute('data-state', /countdown|racing/);
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?level=1&test=1');
+  await expect(page.locator('.cloud-journey')).toHaveCount(0);
+  await expect(page.locator('#primary')).toBeVisible();
   await page.goto('/?test=1');
   await expect(page.locator('.cloud-journey')).toHaveCount(0);
   await page.getByRole('button', { name: '设置', exact: true }).click();
@@ -95,15 +110,15 @@ test('mobile ride can be skipped without starting gameplay; reduced motion bypas
 test('skipping waits for destination loading and boot failures remove the ride', async ({ page }) => {
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
-  await page.route('**/src/home.ts*', async route => { await gate; await route.continue(); });
-  await page.goto('/?test=1');
+  await page.route('**/src/race.ts*', async route => { await gate; await route.continue(); });
+  await page.goto('/?level=1&test=1');
   await page.getByRole('button', { name: '跳过动画' }).click();
   await expect(page.locator('.cloud-journey')).toBeVisible();
   await expect(page.getByRole('status')).toContainText('正在准备');
   release();
   await expect(page.locator('.cloud-journey')).toHaveCount(0);
-  await page.unroute('**/src/home.ts*');
-  await page.route('**/src/home.ts*', route => route.abort());
+  await page.unroute('**/src/race.ts*');
+  await page.route('**/src/race.ts*', route => route.abort());
   await page.reload();
   await expect(page.getByText('暂时无法打开游戏，请刷新再试一次。')).toBeVisible();
   await expect(page.locator('.cloud-journey')).toHaveCount(0);
@@ -117,7 +132,7 @@ test('pending animation module shows a full cloud cover without the old loading 
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   await page.route('**/src/journey.ts*', async route => { await gate; await route.continue(); });
-  await page.goto('/?test=1');
+  await page.goto('/?level=1&test=1');
   const loading = page.locator('.game-loading');
   await expect(loading).toBeVisible();
   await expect(loading).toHaveText('');

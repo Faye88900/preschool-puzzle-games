@@ -3,6 +3,7 @@ import { PNG } from 'pngjs';
 
 test('button sounds follow effects settings for mouse, touch, and keyboard', async ({ browser }) => {
   const page = await browser.newPage({ hasTouch: true });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => {
