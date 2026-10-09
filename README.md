@@ -2,6 +2,10 @@
 
 用 Three.js + Rapier 制作的 3D 小游戏，包含竞速和解谜两个关卡，支持电脑与手机。
 
+[在线试玩](https://faye88900.github.io/preschool-puzzle-games/)
+
+推送到 `main` 后，GitHub Actions 会自动构建并更新 GitHub Pages。部署状态可在仓库的 Actions 页面查看。
+
 ## 第一关 · 天空赛道
 
 和 11 名电脑选手一起跑跳、躲障碍，前 8 名晋级，限时 90 秒。晋级后可乘云前往第二关。
