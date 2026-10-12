@@ -44,7 +44,7 @@ loading.setAttribute('aria-label', '加载中');
 document.body.append(loading);
 loading.showModal();
 async function boot() {
-  if (params.has('character')) return (await import('./character-preview')).showCharacterPreview();
+  if (params.has('character')) return (await import('./character-preview')).showCharacterPreview(params.get('character') === 'npc');
   const level = params.get('level');
   if (level === '1') return new (await import('./race')).Race().init();
   if (level === '2') return new (await import('./puzzle')).PuzzleGarden().init();

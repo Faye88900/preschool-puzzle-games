@@ -103,3 +103,39 @@
   #game-ui.card-mode[data-state] :is(.primary-button,.level-link){min-height:52px;font-size:21px}
   #game-ui.card-mode[data-state] .secondary-button{min-height:44px;margin-top:8px}
 }
+/* The speaker tab and soft speech silhouette belong to the garden's toy-like characters. */
+body.workshop-talking #game-ui { visibility: hidden; }
+.workshop-dialogue { --speaker-color: #b5dfcb; --speaker-ink: #265749; position: fixed; inset: auto 0 max(24px, env(safe-area-inset-bottom)); width: min(820px, calc(100% - 48px)); max-width: none; max-height: calc(100dvh - 32px); padding: 23px 8px 12px; margin: 0 auto; overflow: auto; border: 0; background: transparent; color: #344d49; font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+.workshop-dialogue[data-speaker="player"] { --speaker-color: #ddd0f3; --speaker-ink: #594277; }
+.workshop-dialogue[data-speaker="observe"] { --speaker-color: #f5dfa7; --speaker-ink: #70552b; }
+.workshop-dialogue::backdrop { background: linear-gradient(transparent 65%, #25434424); pointer-events: auto; }
+.workshop-bubble { position: relative; padding: 36px 46px 17px; background: #fffaf0; border-radius: 45px 57px 47px 55px / 38px 44px 36px 42px; box-shadow: 0 7px 0 #dbd7bd, 0 14px 24px #243f4026; }
+#workshop-speaker { position: absolute; left: 35px; top: -19px; display: inline-flex; align-items: center; min-height: 39px; padding: 7px 24px; border-radius: 17px 20px 16px 12px; background: var(--speaker-color); color: var(--speaker-ink); font-size: 18px; font-weight: 800; letter-spacing: 1px; transform: rotate(-3deg); box-shadow: 0 3px 0 #223f4610; }
+#workshop-line { min-height: 68px; margin: 0; padding-right: 12px; font-size: clamp(21px, 2.2vw, 26px); line-height: 1.65; font-weight: 600; letter-spacing: .5px; overflow-wrap: anywhere; }
+.workshop-bubble { cursor: pointer; user-select: none; touch-action: manipulation; }
+.workshop-dialogue-footer { display: flex; justify-content: flex-end; margin-top: 4px; }
+.workshop-dialogue button { border: 0; cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.workshop-leave { position: absolute; top: 7px; right: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; color: #74867b; background: transparent; border-radius: 50%; }
+.workshop-leave svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.workshop-leave:hover { background: #e8ecdf; color: #344d49; }
+.workshop-next { display: inline-flex; align-items: center; justify-content: flex-end; gap: 11px; min-height: 44px; min-width: 128px; padding: 5px 8px 5px 14px; border-radius: 20px; background: transparent; color: #526d60; font-size: 16px !important; font-weight: 700 !important; }
+.workshop-next kbd { display: inline-grid; place-items: center; min-width: 43px; height: 25px; padding: 0 6px; border: 1.5px solid #9daa9d; border-bottom-width: 3px; border-radius: 7px; font: 600 11px system-ui, sans-serif; color: #6d8172; }
+.workshop-next-arrow { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 10px solid #c58b25; margin-left: 2px; }
+.workshop-next:hover { background: #eee9d6; color: #344d49; }
+.workshop-next:active { transform: translateY(2px); }
+.workshop-dialogue button:focus-visible { outline: 3px solid #548b79; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .workshop-dialogue { width: calc(100% - 22px); bottom: max(14px, env(safe-area-inset-bottom)); padding: 22px 5px 10px; }
+  .workshop-bubble { padding: 32px 24px 12px; border-radius: 30px 37px 30px 35px / 30px 32px 28px 30px; }
+  #workshop-speaker { left: 22px; font-size: 16px; min-height: 36px; padding: 6px 20px; }
+  #workshop-line { font-size: 20px; min-height: 66px; line-height: 1.7; padding-right: 9px; }
+  .workshop-leave { top: 4px; right: 7px; }
+  .workshop-next { min-width: 104px; }
+}
+@media (pointer: coarse) { .workshop-next kbd { display: none; } }
+@media (max-height: 450px) {
+  .workshop-dialogue { bottom: max(8px, env(safe-area-inset-bottom)); width: min(720px, calc(100% - 32px)); }
+  .workshop-bubble { padding: 25px 32px 7px; }
+  #workshop-line { min-height: 32px; font-size: 19px; line-height: 1.5; }
+  #workshop-speaker { font-size: 15px; min-height: 32px; top: -17px; }
+}

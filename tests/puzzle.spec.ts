@@ -436,17 +436,17 @@ test('normal guidance follows the current task without pressing H', async ({ pag
   await start(page);
   await expect(page.locator('#cue')).toHaveText('花园里藏着3把钥匙，会在哪里呢？');
   await page.screenshot({ path: resolve(outputs, 'normal-guidance-start.png') });
-  await warp(page, -24, -12);
+  await warp(page, -24, -20);
   await expect(page.locator('#cue')).toHaveText('积木工坊 · 铁门关着，地上的图案有点特别。');
   await expect(page.locator('#cue')).not.toContainText('方形');
-  // Walking around the same task must not rewrite the banner.
+  // Away from the guide's conversation range, the same task must not rewrite the banner.
   const rewrites = await page.evaluate(async () => {
     const cue = document.getElementById('cue')!;
     const seen: string[] = [];
     const observer = new MutationObserver(() => seen.push(cue.textContent!));
     observer.observe(cue, { childList: true, subtree: true, characterData: true });
     for (let i = 0; i < 6; i++) {
-      (window as any).__PUZZLE_TEST__.warp(-24, i % 2 ? -12 : -11);
+      (window as any).__PUZZLE_TEST__.warp(-24, i % 2 ? -20 : -21);
       await new Promise(resolve => setTimeout(resolve, 250));
     }
     observer.disconnect(); return seen;
@@ -468,7 +468,7 @@ test('normal guidance follows the current task without pressing H', async ({ pag
   await expect(page.locator('#cue')).toContainText('小鸡盯着谷粒');
   await solve(page, 2);
   await expect(page.locator('#cue')).toHaveText('已找到1/3把钥匙 · 花园里还有新的发现。');
-  await warp(page, -24, -12);
+  await warp(page, -24, -20);
   await expect(page.locator('#cue')).toContainText('里面闪着一点金光');
   expect((await snapshot(page)).hintActive).toBe(false);
 });
@@ -476,7 +476,7 @@ test('normal guidance follows the current task without pressing H', async ({ pag
 test('H repeats only the opening clue without numbered steps', async ({ page }) => {
   await start(page);
   for (const [x, z, clue] of [
-    [-24, -12, '机关上有一个正方形。工坊里有一样形状的积木吗？'],
+    [-24, -20, '机关上有一个正方形。工坊里有一样形状的积木吗？'],
     [22, -13.9, '沿着水流看一看，水停在哪一段水管前？'],
     [-4, -47, '小鸡喜欢谷粒，也能钻进你进不去的小门。'],
   ] as const) {
