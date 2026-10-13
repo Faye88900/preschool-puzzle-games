@@ -20,6 +20,8 @@ export class WorkshopDialogue {
   returning = false;
   private solved = false;
   private collected = false;
+  private introduced = false;
+  private shortHint?: string;
   private waypoint = 0;
   private gait = 0;
   private walkSpeed = 0;
@@ -60,10 +62,12 @@ export class WorkshopDialogue {
   }
   reset() {
     this.close(true); this.waypoint = 0; this.gait = 0; this.walkSpeed = 0;
+    this.introduced = false; this.shortHint = undefined;
     this.guide.position.set(-26, .68, -9); this.guide.rotation.y = 0;
   }
-  start(solved: boolean, collected: boolean) {
+  start(solved: boolean, collected: boolean, hint?: string) {
     if (this.active) return;
+    this.shortHint = this.introduced ? hint : undefined; this.introduced = true;
     this.solved = solved; this.collected = collected;
     this.stage = 0; this.elapsed = 0; this.capture = true;
     this.clearInput();
@@ -72,17 +76,17 @@ export class WorkshopDialogue {
   }
   private showLine() {
     const [speaker, text] = this.collected ? ['工坊向导', '你找到工坊的钥匙啦！去其他地方看看吧。']
-      : this.solved ? ['工坊向导', '铁门打开了！快去拿里面的钥匙吧。'] : lines[this.stage];
+      : this.solved ? ['工坊向导', '铁门打开了！快去拿里面的钥匙吧。'] : this.shortHint ? ['工坊向导', this.shortHint] : lines[this.stage];
     this.panel.querySelector('#workshop-speaker')!.textContent = speaker;
     this.panel.querySelector('#workshop-line')!.textContent = text;
     this.panel.dataset.speaker = speaker === '玩家' ? 'player' : speaker === '工坊向导' ? 'guide' : 'observe';
-    this.next.querySelector('.workshop-next-label')!.textContent = this.stage === 5 || this.solved || this.collected ? '出发吧' : '继续';
+    this.next.querySelector('.workshop-next-label')!.textContent = this.stage === 5 || this.solved || this.collected || this.shortHint ? '出发吧' : '继续';
     this.next.focus({ preventScroll: true });
     this.speak(text);
   }
   advance() {
     if (this.stage < 0) return;
-    if (this.stage === 5 || this.solved || this.collected) { this.close(); return; }
+    if (this.stage === 5 || this.solved || this.collected || this.shortHint) { this.close(); return; }
     this.stage++; this.elapsed = 0; this.capture = true; this.showLine();
   }
   close(immediate = false) {
@@ -96,7 +100,7 @@ export class WorkshopDialogue {
     player: T.Group, followPosition: T.Vector3, followLook: T.Vector3) {
     if (paused) return this.active;
     this.elapsed += dt;
-    const pointing = !this.solved && !this.collected && this.stage >= 1 && this.stage <= 4;
+    const pointing = !this.solved && !this.collected && !this.shortHint && this.stage >= 1 && this.stage <= 4;
     const target = pointing ? new T.Vector3(-24, 1, this.stage <= 2 ? -31 : -17)
       : this.active ? player.position : patrol[this.waypoint];
     const dx = target.x - this.guide.position.x, dz = target.z - this.guide.position.z;
@@ -131,7 +135,7 @@ export class WorkshopDialogue {
       side.normalize(); if (side.z < 0) side.negate();
       position.copy(middle).addScaledVector(side, portrait ? 8.5 : 5.5); position.y = 3.5;
       aim.set(middle.x, .25, middle.z);
-      if (!this.solved && !this.collected) {
+      if (!this.solved && !this.collected && !this.shortHint) {
         if (this.stage === 1) {
           position.set(middle.x + (portrait ? 4 : 2.6), 3.5, middle.z + (portrait ? 7 : 4.55));
           const pan = reduced ? 1 : T.MathUtils.smoothstep(this.elapsed, 1.5, 3.5);

@@ -103,6 +103,8 @@
   #game-ui.card-mode[data-state] :is(.primary-button,.level-link){min-height:52px;font-size:21px}
   #game-ui.card-mode[data-state] .secondary-button{min-height:44px;margin-top:8px}
 }
+#game-ui:not(.puzzle-ui)[data-state="ready"] .menu-card h1 { font-size: clamp(28px, 3.3vw, 48px); }
+
 /* The speaker tab and soft speech silhouette belong to the garden's toy-like characters. */
 body.workshop-talking #game-ui { visibility: hidden; }
 .workshop-dialogue { --speaker-color: #b5dfcb; --speaker-ink: #265749; position: fixed; inset: auto 0 max(24px, env(safe-area-inset-bottom)); width: min(820px, calc(100% - 48px)); max-width: none; max-height: calc(100dvh - 32px); padding: 23px 8px 12px; margin: 0 auto; overflow: auto; border: 0; background: transparent; color: #344d49; font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
@@ -139,3 +141,11 @@ body.workshop-talking #game-ui { visibility: hidden; }
   #workshop-line { min-height: 32px; font-size: 19px; line-height: 1.5; }
   #workshop-speaker { font-size: 15px; min-height: 32px; top: -17px; }
 }
+.chicken-marker, .pipe-feedback { position: absolute; z-index: 5; pointer-events: none; padding: 9px 13px; border: 2px solid #fff; border-radius: 18px; background: #fff5cb; color: #584428; font: 700 16px system-ui, sans-serif; box-shadow: 0 3px 0 #7c66352b; }
+.chicken-marker { transform: translate(-50%, -100%); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 26px; }
+.chicken-marker[data-mood="blocked"] { background: #ffe1ca; }
+.pipe-feedback { top: max(100px, 13%); left: 50%; transform: translateX(-50%); background: #d9fae9; white-space: nowrap; }
+.brand-avatar{display:block;width:46px;height:48px}.brand-avatar svg{width:100%;height:100%}.wordmark small{display:block;font:700 11px system-ui,sans-serif;letter-spacing:2px;margin-top:4px}
+@media(max-width:700px){.brand-avatar{width:30px;height:34px}}
+.key-count-icon .control-icon{stroke:#c17b06;width:28px;height:28px}#stick[aria-disabled="true"]{opacity:.4}
+.menu-tips svg{width:32px;height:35px;display:block}

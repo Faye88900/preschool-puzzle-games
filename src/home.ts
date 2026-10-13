@@ -1,13 +1,14 @@
 import './home.css';
 import { createHomeScene } from './home-scene';
 import { readSettings, saveSettings } from './settings';
+import { GAME_NAME, PLAYER_AVATAR } from './identity';
 
 export function showHome() {
   const root = document.createElement('main');
   root.id = 'home';
   root.innerHTML = `
     <div class="home-menu">
-      <h1 class="home-logo" aria-label="Bean Rush"><span>BEAN</span><span>RUSH</span></h1>
+      <h1 class="home-logo" aria-label="${GAME_NAME}"><i class="home-avatar" aria-hidden="true">${PLAYER_AVATAR}</i><span>BEAN</span><span>RUSH</span><small>云端冒险</small></h1>
       <nav aria-label="游戏首页">
         <a class="home-start" href="?level=1"><span aria-hidden="true">▶</span>开始游戏</a>
         <button class="home-levels" id="choose-level">选择关卡</button>

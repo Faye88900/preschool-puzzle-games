@@ -1,0 +1,8 @@
+export const GAME_NAME = '云端冒险 · Bean Rush';
+export const PLAYER_AVATAR = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="#bfe5d9" stroke="#b5a1d5" stroke-width="3"><path d="M18 34C0 31 0 20 7 21C0 3 12 0 18 13L24 33Z"/><path d="M46 34C64 31 64 20 57 21C64 3 52 0 46 13L40 33Z"/></g><ellipse cx="32" cy="39" rx="23" ry="22" fill="#f2eaf7"/><g fill="#352565"><ellipse cx="24" cy="37" rx="4" ry="7"/><ellipse cx="40" cy="37" rx="4" ry="7"/><path d="M28 49Q32 55 36 49Z"/></g><g fill="white"><circle cx="23" cy="34" r="1.6"/><circle cx="39" cy="34" r="1.6"/></g></svg>';
+export const TASKS = [
+  { name: '积木工坊', icon: '<path fill="#ffd15a" d="m12 2 10 6v10l-10 6L2 18V8Z"/><path fill="#e5a12e" d="m12 14 10-6v10l-10 6Z"/><path fill="none" stroke="#986424" stroke-width="1.5" stroke-linejoin="round" d="m12 2 10 6v10l-10 6L2 18V8Zm0 12L2 8m10 6 10-6M12 14v10"/>' },
+  { name: '流水池塘', icon: '<path fill="#76cde8" stroke="#317c9c" stroke-width="1.5" d="M12 2C9 7 4 12 4 16a8 8 0 0 0 16 0c0-4-5-9-8-14Z"/><path fill="none" stroke="#e9fbff" stroke-width="2" stroke-linecap="round" d="M8 14c-1 3 0 5 2 5"/>' },
+  { name: '动物朋友', icon: '<path fill="#ffdd69" stroke="#aa7830" stroke-width="1.5" d="M18 10V7a4 4 0 0 0-8 0v3a6 6 0 0 0-6 6c0 3 3 4 7 4a7 7 0 0 0 7-7Z"/><path fill="#ee9350" d="m18 7 4 2-4 2Z"/><path fill="none" stroke="#aa7830" stroke-width="1.5" stroke-linecap="round" d="M7 14c1 2 3 3 5 1M9 20v2m5-2v2"/><circle cx="14.5" cy="6.5" r="1" fill="#4a3933"/>' },
+];
+export const taskIcon = (index: number) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 26" aria-hidden="true">${TASKS[index].icon}</svg>`;

@@ -1,12 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
+async function requestDemo(page: Page) { for (let i = 0; i < 3; i++) await page.keyboard.press('KeyH'); }
 const shot = (page: Page) => page.evaluate(() => (window as any).__PUZZLE_TEST__.hintCamera());
 const snapshot = (page: Page) => page.evaluate(() => (window as any).__PUZZLE_TEST__.snapshot());
 const warp = (page: Page, x: number, z: number) => page.evaluate(([x, z]) => (window as any).__PUZZLE_TEST__.warp(x, z), [x, z]);
 const inFrame = (point: number[]) => { expect(Math.abs(point[0])).toBeLessThan(.85); expect(Math.abs(point[1])).toBeLessThan(.85); expect(point[2]).toBeLessThan(1); };
 async function start(page: Page) {
-  await page.addInitScript(() => { speechSynthesis.speak = () => {}; });
+  await page.addInitScript(() => { (window as any).__spokenHints = []; speechSynthesis.speak = utterance => (window as any).__spokenHints.push(utterance.text); });
   await page.goto('/?level=2&test=1');
   await page.getByRole('button', { name: '跳过动画' }).click();
   await page.locator('#primary').click();
@@ -27,9 +28,15 @@ for (const mobile of [false, true]) {
     expect((await shot(page)).elapsed).toBeNull();
     await page.keyboard.up('KeyW');
     await expect.poll(async () => (await shot(page)).elapsed ?? 0).toBeGreaterThan(1.05);
+    expect(await page.evaluate(() => (window as any).__spokenHints)).toContain('小鸡喜欢谷粒，也能钻进你进不去的小门。');
     let current = await shot(page);
     expect(current.elapsed).toBeLessThan(2.5);
     inFrame(current.grain); inFrame(current.chicken);
+    const demo = await page.evaluate(() => (window as any).__PUZZLE_TEST__.interaction().demo);
+    expect(demo).not.toBeNull();
+    await page.waitForTimeout(250);
+    expect(await page.evaluate(() => (window as any).__PUZZLE_TEST__.interaction().demo)).not.toEqual(demo);
+    expect((await snapshot(page)).animal.carryingGrain).toBe(false);
     await page.screenshot({ path: `artifacts/hint-camera/${mobile ? 'portrait' : 'desktop'}-grain.png` });
     const still = (await snapshot(page)).position;
     await page.keyboard.press('Escape');
@@ -43,6 +50,7 @@ for (const mobile of [false, true]) {
     inFrame(current.door);
     await page.screenshot({ path: `artifacts/hint-camera/${mobile ? 'portrait' : 'desktop'}-coop.png` });
     await expect.poll(async () => (await shot(page)).elapsed).toBeNull();
+    expect(await page.evaluate(() => (window as any).__PUZZLE_TEST__.interaction().demo)).toBeNull();
     const returned = await snapshot(page);
     expect(returned.position.x).toBeCloseTo(still.x, 2);
     expect(returned.position.z).toBeCloseTo(still.z, 2);
@@ -51,10 +59,17 @@ for (const mobile of [false, true]) {
     await warp(page, 0, -30); await page.waitForTimeout(100);
     await warp(page, 0, -40); await page.waitForTimeout(300);
     expect((await shot(page)).elapsed).toBeNull();
-    if (mobile) await page.locator('#hint').tap(); else await page.keyboard.press('KeyH');
+    if (mobile) { for (let i = 0; i < 3; i++) await page.locator('#hint').tap(); } else await requestDemo(page);
     await expect.poll(async () => (await shot(page)).elapsed ?? 0).toBeGreaterThan(.1);
-    if (mobile) await page.locator('#jump').tap(); else await page.keyboard.down('KeyD');
-    await expect.poll(async () => (await shot(page)).returning).toBe(true);
+    const locked = (await snapshot(page)).position;
+    if (mobile) {
+      await expect(page.locator('#jump')).toBeDisabled();
+      const box = (await page.locator('#jump').boundingBox())!;
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    } else await page.keyboard.down('KeyD');
+    await page.waitForTimeout(250);
+    expect((await shot(page)).returning).toBe(false);
+    expect((await snapshot(page)).position).toEqual(locked);
     if (!mobile) await page.keyboard.up('KeyD');
     await expect.poll(async () => (await shot(page)).elapsed).toBeNull();
     expect(errors).toEqual([]);
@@ -62,20 +77,24 @@ for (const mobile of [false, true]) {
   });
 }
 
-test('interaction and jump return the camera; carrying grain focuses the coop; restart resets the intro', async ({ page }) => {
+test('interaction and jump wait for the camera; carrying grain focuses the coop; restart resets the intro', async ({ page }) => {
   await start(page);
   await warp(page, -4, -45.6);
   await expect.poll(async () => (await shot(page)).elapsed ?? 0).toBeGreaterThan(.1);
   await page.keyboard.press('KeyE');
-  expect((await snapshot(page)).animal.carryingGrain).toBe(true);
-  expect((await shot(page)).returning).toBe(true);
+  expect((await snapshot(page)).animal.carryingGrain).toBe(false);
+  expect((await shot(page)).returning).toBe(false);
   await expect.poll(async () => (await shot(page)).elapsed).toBeNull();
-  await page.keyboard.press('KeyH');
+  await page.keyboard.press('KeyE');
+  expect((await snapshot(page)).animal.carryingGrain).toBe(true);
+  await requestDemo(page);
   expect((await shot(page)).coopOnly).toBe(true);
   await expect.poll(async () => (await shot(page)).elapsed ?? 0).toBeGreaterThan(1.1);
   inFrame((await shot(page)).door);
   await page.keyboard.press('Space');
-  await expect.poll(async () => (await shot(page)).returning).toBe(true);
+  expect((await shot(page)).returning).toBe(false);
+  await expect.poll(async () => (await shot(page)).elapsed).toBeNull();
+  await page.keyboard.press('Space');
   await expect.poll(async () => (await snapshot(page)).position.y).toBeGreaterThan(1.2);
   await page.keyboard.press('Escape');
   await page.locator('#restart').click();
@@ -91,7 +110,6 @@ test('reduced motion retains the text hint and normal camera', async ({ page }) 
   await page.goto('/?level=2&test=1');
   await page.locator('#primary').click();
   await warp(page, 0, -40);
-  await page.keyboard.press('KeyH');
   await expect(page.locator('#cue')).toHaveText('小鸡喜欢谷粒，也能钻进你进不去的小门。');
   await page.waitForTimeout(300);
   expect((await shot(page)).elapsed).toBeNull();

@@ -3,8 +3,9 @@ import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import R from '@dimforge/rapier3d-compat';
-import { bean, label, mat, orb } from './models';
+import { bean, mat, orb } from './models';
 import { UI } from './ui';
+import { TASKS } from './identity';
 import { WorkshopDialogue } from './workshop-dialogue';
 import { readSettings, saveSettings } from './settings';
 import { movement, acceleration, animateWalk } from './movement';
@@ -15,6 +16,7 @@ import { rounded, chickenCoop, gardenFlower, colorFlower, gateMesh, padlock, lan
 const STEP = movement.step;
 const colors = ['#ffd15a', '#76cde8', '#f29bbe'];
 type Spot = { x: number; z: number };
+type Interaction = Spot & { kind: 'drop' | 'piece' | 'guide' | 'pipe' | 'grain' | 'coop' | 'chicken' | 'exit'; label: string; index?: number };
 type HintFrame = { at: number; position: T.Vector3; look: T.Vector3 };
 const spawn = { x: 0, z: 10 };
 const plateSpot = { x: -24, z: -17 };
@@ -42,7 +44,7 @@ export class PuzzleGarden {
   cameraGoal = new T.Vector3();
   animalHintSeen = false;
   pondHintSeen = false;
-  hintShot?: { elapsed: number; coopOnly: boolean; returning: boolean; position: T.Vector3; look: T.Vector3; pond?: HintFrame[]; blocked?: number; waterPath?: T.CatmullRomCurve3; waterOffset?: T.Vector3 };
+  hintShot?: { elapsed: number; coopOnly: boolean; returning: boolean; position: T.Vector3; look: T.Vector3; pond?: HintFrame[]; demo?: HintFrame[]; blocked?: number; waterPath?: T.CatmullRomCurve3; waterOffset?: T.Vector3 };
   renderer!: T.WebGLRenderer;
   world!: R.World;
   body!: R.RigidBody;
@@ -79,11 +81,16 @@ export class PuzzleGarden {
   pipesSolved = false;
   pipeTouched = false;
   flowReached = 0;
+  flowFeedbackUntil = 0;
   pavedBounds: T.Box3[] = [];
   animalSolved = false;
   region = -1;
   normalCue = '';
   hintActive = false;
+  hintLevels = new Map<string, number>();
+  interaction?: Interaction;
+  interactionRing = new T.Mesh(new T.RingGeometry(.85, 1, 40), new T.MeshBasicMaterial({ color: '#ffe36b', side: T.DoubleSide, transparent: true, depthWrite: false }));
+  hintDemo?: { mesh: T.Object3D; from: T.Vector3; to: T.Vector3; rotation: number; turn: boolean; hop: boolean; start: number };
   pieces: Piece[] = [];
   carried = -1;
   gate!: { mesh: T.Group; body: R.RigidBody };
@@ -147,20 +154,24 @@ export class PuzzleGarden {
     this.previous.copy(this.body.translation());
     this.world.createCollider(R.ColliderDesc.capsule(.25, .4).setMass(1).setFriction(movement.friction).setRestitution(0), this.body);
     this.scene.add(this.player);
+    this.interactionRing.rotation.x = -Math.PI / 2;
+    this.interactionRing.visible = false;
+    this.scene.add(this.interactionRing);
     this.ui = new UI({ start: () => this.start(), pause: () => this.pause(), mute: () => {
       this.settings = { music: this.muted, effects: this.muted }; saveSettings(this.settings);
       if (!this.settings.effects) window.speechSynthesis?.cancel();
       this.audio?.applySettings(this.settings);
-    }, move: (x, y) => this.stick = { x, y }, jump: () => this.jumpRequested = true, dive: () => this.interact(), hint: () => this.hint() });
+    }, move: (x, y) => { if (!this.hintShot) this.stick = { x, y }; }, jump: () => { if (!this.hintShot) this.jumpRequested = true; }, dive: () => this.interact(), hint: () => this.hint() });
     this.ui.configurePuzzle();
     this.workshop = new WorkshopDialogue(text => this.say(text), () => {
       this.clearInput(); this.previous.copy(this.body.translation());
     }, (x, z) => this.pieces.every((piece, i) => i === this.carried || Math.hypot(x - piece.x, z - piece.z) > piece.reach + .65));
     this.scene.add(this.workshop.guide);
-    document.querySelector('#game')!.setAttribute('aria-label', '第二关：三把钥匙的解谜花园');
+    document.querySelector('#game')!.setAttribute('aria-label', '第二关：解谜花园');
     addEventListener('keydown', event => {
       if (this.workshop.active && !this.paused) return;
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) event.preventDefault();
+      if (this.hintShot && event.code !== 'Escape') return;
       this.keys.add(event.code);
       if (event.repeat) return;
       if (event.code === 'KeyE' || event.code.startsWith('Shift')) this.interact();
@@ -172,10 +183,11 @@ export class PuzzleGarden {
     const suspend = () => { this.clearInput(); if (this.state === 'racing' && !this.paused) this.pause(); };
     addEventListener('blur', suspend);
     document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
-    addEventListener('resize', () => { this.endHintShot(); this.clearInput(); this.resize(); });
+    addEventListener('resize', () => { this.clearInput(); this.resize(); });
     this.resize(); this.render();
     if (new URLSearchParams(location.search).has('test')) {
       Object.assign(window, { __PUZZLE_TEST__: {
+        interaction: () => ({ target: this.interaction, ring: { visible: this.interactionRing.visible, position: this.interactionRing.position.toArray() }, hintLevel: this.hintLevels.get(this.nextHint().key) ?? 0, demo: this.hintDemo ? { position: this.hintDemo.mesh.position.toArray(), rotation: this.hintDemo.mesh.rotation.y } : null }),
         workshop: () => ({ active: this.workshop.active, stage: this.workshop.stage, elapsed: this.workshop.elapsed,
           returning: this.workshop.returning, pose: this.workshop.guide.userData.pose,
           position: this.workshop.guide.position.toArray(), yaw: this.workshop.guide.rotation.y,
@@ -196,6 +208,7 @@ export class PuzzleGarden {
           door: new T.Vector3(tunnelSpot.x, .7, tunnelSpot.z - 1).project(this.camera).toArray() }),
         audio: () => ({ music: { paused: this.audio!.music.paused, muted: this.audio!.music.muted, loop: this.audio!.music.loop, time: this.audio!.music.currentTime, volume: this.audio!.music.volume, error: this.audio!.music.error?.code ?? null }, state: this.audio?.context.state, loaded: [...this.audio!.buffers.keys()], plays: { ...this.audio!.plays }, active: [...this.audio!.sources.keys()], master: this.audio!.master.gain.value, water: this.audio!.waterGain.gain.value, flowReached: this.flowReached, winDuration: this.audio!.buffers.get('win')?.duration }),
         pond: () => ({ wet: this.pipeMeshes.map(pipe => pipe.getObjectByName('flow')!.visible),
+          mouths: this.pipeMeshes.map(pipe => [0, 1].map(end => ((pipe.getObjectByName(`mouth-${end}`) as T.Mesh).material as T.MeshStandardMaterial).emissiveIntensity)),
           angles: this.pipeMeshes.map(pipe => pipe.rotation.y), watering: this.watering.visible,
           bloom: this.waterFlower.scale.y, key: this.keyMeshes[1].position.toArray(), flowerTop: .49 + 1.33 * this.waterFlower.scale.y,
           drops: this.outlet.getObjectByName('flow')!.children.slice(1).map(drop => drop.position.toArray()) }),
@@ -208,6 +221,8 @@ export class PuzzleGarden {
           const bounds = new T.Box3().setFromObject(node);
           return { name: node.name, min: bounds.min.toArray(), max: bounds.max.toArray(), ndc: bounds.getCenter(new T.Vector3()).project(this.camera).toArray() };
         }), calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles }),
+        signs: () => this.scene.children.filter(node => node.name.startsWith('task-sign-')).map(node => ({ name: node.name,
+          loaded: !!(((node as T.Mesh).material as T.MeshBasicMaterial).map?.image as HTMLImageElement | undefined)?.complete })),
         overview: () => {
           this.overviewMode = true;
           this.scene.fog = null;
@@ -217,7 +232,7 @@ export class PuzzleGarden {
         },
         snapshot: () => ({ state: this.state, paused: this.paused, expression: this.player.userData.expression, collected: [...this.collected], animal: { state: this.chickenState, mood: this.chickenMood, position: this.chicken.position.toArray(), carryingGrain: this.carryingGrain, grainPlaced: this.grainPlaced, grainPosition: this.grain.position.toArray(), solved: this.animalSolved, key: this.keyMeshes[2].position.toArray() }, pipeTurns: [...this.pipeTurns], pipesSolved: this.pipesSolved, carried: this.carried, carriedName: this.carried < 0 ? null : this.pieces[this.carried].name, placed: this.pieces.map(p => p.placed), position: this.body.translation(), region: this.region, hintActive: this.hintActive, gateOpen: this.pieces[0].placed, exitOpen: this.collected.every(Boolean), camera: { type: this.camera.type, fov: this.camera.fov, position: this.camera.position.toArray(), look: this.cameraLook.toArray(), playerNdc: this.player.position.clone().project(this.camera).toArray() } }),
         motion: () => ({ velocity: this.body.linvel(), heading: this.heading, rotation: this.player.rotation.y, gait: this.gait, bob: this.player.getObjectByName('avatar')!.position.y, roll: this.player.getObjectByName('avatar')!.rotation.z, feet: [-1, 1].map(s => this.player.getObjectByName('foot' + s)!.rotation.x), arms: [-1, 1].map(s => this.player.getObjectByName('arm' + s)!.rotation.x), carriedPosition: this.carried >= 0 ? this.pieces[this.carried].mesh.position.toArray() : null, playerPosition: this.player.position.toArray() }),
-        warp: (x: number, z: number) => { this.body.setTranslation({ x, y: .8, z }, true); this.previous.copy(this.body.translation()); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); this.render(); },
+        warp: (x: number, z: number, y = .8) => { this.body.setTranslation({ x, y, z }, true); this.previous.copy(this.body.translation()); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); this.render(); },
       } });
     }
     if (new URLSearchParams(location.search).has('cloudArrival')) {
@@ -240,8 +255,14 @@ export class PuzzleGarden {
     }
     return mesh;
   }
-  sign(text: string, x: number, z: number, color: string, scale = .8) {
-    const mesh = label(text, '#355d57', color); mesh.scale.setScalar(scale);
+  sign(tasks: number[], x: number, z: number, color: string, scale = .8, directions = false) {
+    const symbols = tasks.map((index, i) => `<svg x="${tasks.length === 1 ? 206 : 125 + i * 158}" y="14" width="100" height="100" viewBox="0 0 24 26">${TASKS[index].icon}</svg>`).join('');
+    const arrows = directions ? tasks.length === 2 ? '<text x="55" y="82">←</text><text x="414" y="82">→</text>' : '<text x="120" y="82">↑</text>' : '';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="128"><rect width="512" height="128" fill="${color}"/><g fill="#355d57" font-size="64" font-family="sans-serif">${arrows}</g>${symbols}</svg>`;
+    const texture = new T.TextureLoader().load(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    texture.colorSpace = T.SRGBColorSpace;
+    const mesh = new T.Mesh(new T.PlaneGeometry(7, 1.75), new T.MeshBasicMaterial({ map: texture, side: T.DoubleSide }));
+    mesh.name = `task-sign-${tasks.join('-')}`; mesh.scale.setScalar(scale);
     mesh.position.set(x, 3.1, z + .12); this.scene.add(mesh);
     const w = 7 * scale + .22, h = 1.75 * scale + .22;
     this.box(x, 3.1, z, w, h, .2, '#bb955d', false).geometry = rounded(w, h, .2);
@@ -344,9 +365,9 @@ export class PuzzleGarden {
     this.box(0, .012, -26, 6, .025, 88, '#f5e5b8', false);
     for (const z of [-9, -40]) this.box(0, .015, z, 52, .03, 5, '#f5e5b8', false);
     for (const x of [-24, 24]) this.box(x, .017, -25, 5, .035, 34, '#f5e5b8', false);
-    this.box(0, .02, 2, 17, .04, 14, '#eee1c0', false);
-    this.sign('← 工坊   池塘 →', -6, -5, '#fff7d5', .9);
-    this.sign('↑ 动物朋友', -6, -35, '#ffe0ed');
+    this.box(0, .02, 2, 17, .04, 14, '#f5e5b8', false);
+    this.sign([0, 1], -6, -5, '#fff7d5', .9, true);
+    this.sign([2], -7.5, -47, '#ffe0ed', .8, true);
     for (const x of [-6, 6]) {
       this.prop('bench-01', x, 4, 3.5, 0, true);
     }
@@ -387,7 +408,7 @@ export class PuzzleGarden {
       const reeds = this.prop('cattail-reed-clump', x, z, 1.25, angle);
       reeds.position.y = .35;
     }
-    this.sign('让水流到小花', 18, -27, '#d8f4ff', .7);
+    this.sign([1], 18, -27, '#d8f4ff', .7);
     this.box(18, .75, -17, 1.4, 1.4, 1.4, '#88ad4d').geometry = rounded(1.4, 1.4, 1.4);
     this.box(18, 1.455, -17, .8, .025, .8, '#276f89', false);
     this.box(18, 1.47, -17, .58, .015, .58, '#73d6e8', false);
@@ -417,7 +438,7 @@ export class PuzzleGarden {
     this.waterFlower = this.flower(26, -25.5);
     this.waterFlower.position.y = .49;
     // Two thin discs approximate the broad leaves and petals as jumpable surfaces.
-    for (const [y, radius, halfHeight] of [[.38, 1.05, .13], [1.24, 1.12, .09]]) {
+    for (const [y, radius, halfHeight] of [[.38, 1.2, .13], [1.24, 1.28, .09]]) {
       const collider = this.world.createCollider(R.ColliderDesc.cylinder(halfHeight, radius).setFriction(.7));
       collider.setTranslation({ x: 26, y: .49 + y * .72, z: -25.5 });
       this.flowerPlatforms.push(collider);
@@ -475,7 +496,6 @@ export class PuzzleGarden {
     for (const [x, z] of [[-7.6, -45.5], [-2, -46.5], [6, -55], [7, -55.5], [17, -55.5], [18, -56], [8.3, -65]]) {
       const bloom = this.flower(x, z); bloom.scale.setScalar(.27); colorFlower(bloom, '#fff3c5', true);
     }
-    this.sign('谷粒在这里', -7.5, -47, '#fff8e8', .6);
     this.box(grainSpot.x, .14, grainSpot.z, 1.1, .28, 1.1, '#e8d9b6', false).geometry = rounded(1.1, .28, 1.1);
     for (const x of [-5, -3]) this.prop('crate-01', x, -54, 2, 0, true);
     const coop = chickenCoop(); coop.position.set(13, 0, -61.5); this.scene.add(coop);
@@ -619,8 +639,11 @@ export class PuzzleGarden {
     this.carryingGrain = this.grainPlaced = this.animalSolved = false; this.chickenState = 'idle'; this.chickenMood = '';
     this.chicken.position.set(chickenHome.x, 0, chickenHome.z); this.chicken.rotation.set(0, 0, 0);
     this.pipeTurns = [1, 0, 3]; this.pipesSolved = false; this.pipeTouched = false; this.flowReached = 0;
+    this.flowFeedbackUntil = 0;
+    this.pipeMeshes.forEach(pipe => { pipe.userData.feedbackUntil = 0; });
     this.region = -1; this.normalCue = ''; this.hintActive = false;
     this.hintShot = undefined; this.animalHintSeen = this.pondHintSeen = false;
+    this.hintLevels.clear(); this.clearHintDemo(); this.interaction = undefined;
     this.pieces.forEach(piece => this.place(piece, piece.home.x, piece.home.z, false));
     this.body.setTranslation({ x: spawn.x, y: .8, z: spawn.z }, true); this.clearInput();
     this.previous.copy(this.body.translation()); this.heading = this.gait = 0; this.grounded = true;
@@ -635,7 +658,37 @@ export class PuzzleGarden {
     if (this.paused) this.audio?.pause(); else this.audio?.resume();
   }
   near(x: number, z: number, distance = 1.9) { const p = this.body.translation(); return Math.hypot(p.x - x, p.z - z) < distance; }
-  nearGuide() { const p = this.workshop.guide.position; return this.near(p.x, p.z, 3); }
+  interactionTarget(): Interaction | undefined {
+    const player = this.body.translation();
+    if (this.carried >= 0) {
+      const spot = this.near(plateSpot.x, plateSpot.z, 2.5) && this.pieces[this.carried].square ? plateSpot : this.dropSpot(this.pieces[this.carried]);
+      return { ...spot, kind: 'drop', label: '放下' };
+    }
+    const candidates: (Interaction & { reach: number })[] = [];
+    this.pieces.forEach((piece, index) => { if (!piece.placed) candidates.push({ x: piece.x, z: piece.z, index, kind: 'piece', label: '拿起', reach: 1.9 }); });
+    if (!this.carryingGrain) candidates.push({ ...this.workshop.guide.position, kind: 'guide', label: '对话', reach: 3 });
+    pipeSpots.forEach((spot, index) => candidates.push({ ...spot, index, kind: 'pipe', label: this.pipesSolved ? '看水管' : '转水管', reach: pipeReach }));
+    if (!this.carryingGrain && !this.grainPlaced && !this.animalSolved) candidates.push({ ...grainSpot, kind: 'grain', label: '拿谷粒', reach: 1.9 });
+    candidates.push({ ...tunnelSpot, kind: 'coop', label: this.carryingGrain ? '放谷粒' : '看鸡舍', reach: this.carryingGrain ? 2.5 : 3 },
+      { ...this.chicken.position, kind: 'chicken', label: '招呼小鸡', reach: 6 },
+      { x: 0, z: -71, kind: 'exit', label: '看大门', reach: 5 });
+    const score = (target: Interaction) => {
+      const dx = target.x - player.x, dz = target.z - player.z, distance = Math.hypot(dx, dz);
+      const facing = distance ? (-Math.sin(this.heading) * dx - Math.cos(this.heading) * dz) / distance : 1;
+      // Facing breaks close-distance ties without selecting a distant object behind a nearer one.
+      return distance - facing * .2;
+    };
+    return candidates.filter(target => this.near(target.x, target.z, target.reach)).sort((a, b) => score(a) - score(b))[0];
+  }
+  updateInteraction() {
+    this.interaction = this.interactionTarget();
+    this.interactionRing.visible = !!this.interaction && this.state === 'racing' && !this.paused && !this.workshop.active && !this.hintShot;
+    if (this.interaction) {
+      this.interactionRing.position.set(this.interaction.x, this.interaction.kind === 'pipe' ? .38 : .12, this.interaction.z);
+      this.interactionRing.scale.setScalar(this.interaction.kind === 'pipe' ? 1.85 : 1);
+    }
+    return this.interaction?.label ?? '看一看';
+  }
   nearestZone() {
     const p = this.body.translation();
     const index = zones.reduce((best, zone, i) => Math.hypot(p.x - zone.x, p.z - zone.z) < Math.hypot(p.x - zones[best].x, p.z - zones[best].z) ? i : best, 0);
@@ -646,7 +699,7 @@ export class PuzzleGarden {
     const count = this.collected.filter(Boolean).length;
     if (count === 3) return '3把钥匙齐了 · 远处传来了开门的声音。';
     if (this.carried >= 0) return '手里的积木沉甸甸的，会有什么用呢？';
-    if (!this.carryingGrain && this.nearGuide()) return '工坊向导在这里 · 按 E 或点击「对话」问问线索。';
+    if (this.interactionTarget()?.kind === 'guide') return '工坊向导在这里 · 按 E 或点击「对话」问问线索。';
     if (this.carryingGrain) {
       if (this.chickenMood === 'waiting') return '小鸡在后面等你，谷粒离它太远了。';
       if (this.chickenMood === 'blocked') return '小鸡被挡住了，它需要一条能走过去的小路。';
@@ -673,13 +726,45 @@ export class PuzzleGarden {
     return zones[local].goal;
   }
   hint() {
-    if (this.state !== 'racing' || this.paused || this.workshop.active) return;
-    if (this.carried < 0 && !this.carryingGrain && this.nearGuide()) { this.talkToGuide(); return; }
+    if (this.state !== 'racing' || this.paused || this.workshop.active || this.hintShot) return;
     this.region = this.nearestZone(); this.normalCue = this.normalGuidance();
+    const plan = this.nextHint();
+    const level = Math.min(2, this.hintLevels.get(plan.key) ?? 0);
+    this.hintLevels.set(plan.key, level + 1);
     this.hintActive = true;
-    this.say(this.nextHint(), 'hint');
-    if (this.carried < 0 && (this.carryingGrain || this.nearestZone() === 2)) this.startHintShot();
-    else if (this.carried < 0 && this.nearestZone() === 1) this.startPondHintShot();
+    this.say(plan.lines[level], 'hint');
+    if (level < 2) return;
+    this.showHintDemo(plan);
+    if (plan.local === 1) this.startPondHintShot();
+    else if (plan.local === 2 && !this.animalSolved) this.startHintShot();
+    else if (!this.reducedMotion) {
+      const look = plan.from.clone().lerp(plan.to, .5);
+      const position = look.clone().add(new T.Vector3(0, 9, innerWidth < innerHeight ? 16 : 12));
+      this.hintShot = { elapsed: 0, coopOnly: false, returning: false, position: this.camera.position.clone(), look: this.cameraLook.clone(), demo: [
+        { at: 0, position: this.camera.position.clone(), look: this.cameraLook.clone() },
+        { at: 1.3, position, look }, { at: 5.5, position, look },
+      ] };
+    }
+  }
+  showHintDemo(plan = this.nextHint()) {
+    this.clearHintDemo();
+    const mesh = plan.object.clone(true);
+    mesh.position.copy(plan.from);
+    if (plan.hop) mesh.rotation.y = Math.PI;
+    mesh.traverse(node => {
+      if (!(node instanceof T.Mesh)) return;
+      const ghost = (material: T.Material) => { const copy = material.clone(); copy.transparent = true; copy.opacity = .4; copy.depthWrite = false; return copy; };
+      node.material = Array.isArray(node.material) ? node.material.map(ghost) : ghost(node.material);
+      node.castShadow = node.receiveShadow = false;
+    });
+    this.scene.add(mesh);
+    this.hintDemo = { mesh, from: plan.from, to: plan.to, rotation: mesh.rotation.y, turn: plan.turn, hop: plan.hop, start: this.time };
+  }
+  clearHintDemo() {
+    if (!this.hintDemo) return;
+    this.hintDemo.mesh.removeFromParent();
+    this.hintDemo.mesh.traverse(node => { if (node instanceof T.Mesh) (Array.isArray(node.material) ? node.material : [node.material]).forEach(material => material.dispose()); });
+    this.hintDemo = undefined;
   }
   startHintShot() {
     if (this.reducedMotion || this.hintShot || this.collected[2]) return;
@@ -727,6 +812,7 @@ export class PuzzleGarden {
     this.hintShot = { elapsed: 0, coopOnly: false, returning: false, position: frames[0].position.clone(), look: frames[0].look.clone(), pond: frames, blocked, waterPath, waterOffset };
   }
   endHintShot() {
+    this.clearHintDemo();
     const shot = this.hintShot;
     if (!shot || shot.returning) return;
     shot.returning = true; shot.elapsed = 0;
@@ -737,20 +823,22 @@ export class PuzzleGarden {
     if (!shot) return false;
     if (!this.paused) shot.elapsed += dt;
     const t = shot.elapsed, smooth = T.MathUtils.smootherstep;
-    if (!shot.returning && t >= (shot.pond ? shot.pond[shot.pond.length - 1].at : shot.coopOnly ? 2.5 : 5.5)) this.endHintShot();
+    const frames = shot.pond ?? shot.demo;
+    if (!shot.returning && t >= (frames ? frames[frames.length - 1].at : shot.coopOnly ? 2.5 : 5.5)) this.endHintShot();
     if (shot.returning) {
       const blend = smooth(shot.elapsed, 0, shot.pond ? 1.6 : 1);
       this.camera.position.lerpVectors(shot.position, position, blend);
       this.cameraLook.lerpVectors(shot.look, look, blend);
       if (blend === 1) this.hintShot = undefined;
-    } else if (shot.pond) {
+    } else if (frames) {
       if (shot.waterPath && t >= 1.6 && t <= 4.2) {
-        shot.waterPath.getPointAt(smooth(t, 1.6, 4.2), this.cameraLook);
+        // Floating-point smootherstep can exceed 1 at the endpoint, outside the curve's domain.
+        shot.waterPath.getPointAt(T.MathUtils.clamp(smooth(t, 1.6, 4.2), 0, 1), this.cameraLook);
         this.camera.position.copy(this.cameraLook).add(shot.waterOffset!);
         return true;
       }
-      const next = shot.pond.findIndex(frame => frame.at > t);
-      const from = shot.pond[next - 1], to = shot.pond[next];
+      const next = frames.findIndex(frame => frame.at > t);
+      const from = frames[next - 1], to = frames[next];
       const blend = smooth(t, from.at, to.at);
       this.camera.position.lerpVectors(from.position, to.position, blend);
       this.cameraLook.lerpVectors(from.look, to.look, blend);
@@ -772,16 +860,49 @@ export class PuzzleGarden {
     return true;
   }
   nextHint() {
-    const local = this.carried >= 0 ? 0 : this.carryingGrain ? 2 : this.nearestZone();
-    return [
-      '机关上有一个正方形。工坊里有一样形状的积木吗？',
-      this.pipesSolved ? '小花开了，跳上去看看吧！' : '沿着水流看一看，水停在哪一段水管前？',
-      '小鸡喜欢谷粒，也能钻进你进不去的小门。',
-    ][local] ?? '三个地方藏着钥匙，到周围探索吧！';
+    let local = this.carried >= 0 ? 0 : this.carryingGrain ? 2 : this.nearestZone();
+    if (local < 0 || this.collected[local]) local = this.collected.findIndex(done => !done);
+    let object: T.Object3D = this.exit.mesh, to = object.position.clone(), turn = false;
+    let from: T.Vector3 | undefined, hop = false;
+    let key = 'exit', lines = ['三把钥匙齐了，看看远处的大门。', '沿着中间的小路走向打开的大门。', '示范：走过打开的大门，就完成冒险啦！'];
+    if (local >= 0 && this.solved()[local]) {
+      object = this.keyMeshes[local]; to = object.position.clone().add(new T.Vector3(0, .7, 0));
+      if (local === 1) {
+        object = this.player; from = new T.Vector3(26, .68, -28);
+        to = new T.Vector3(26, .49 + .51 * this.waterFlower.scale.y + .68, -26.5); hop = true;
+      }
+      key = `${local}:key`;
+      lines = [local === 1 ? '小花开了，跳上去看看吧！' : '谜题有变化了，看看哪里在发光。',
+        ['钥匙就在打开的铁门后面。', '蓝色钥匙在花朵上方。', '粉色钥匙在鸡舍门口。'][local],
+        local === 1 ? '示范：先跳上较低的花瓣，再跳到高处碰到钥匙。' : '示范：走近发光的钥匙，就能拿到它。'];
+    } else if (local === 0) {
+      const correct = this.carried === 0, wrong = this.carried > 0;
+      object = this.pieces[wrong ? this.carried : 0].mesh;
+      to = correct ? new T.Vector3(plateSpot.x, 1.005, plateSpot.z) : object.position.clone().add(new T.Vector3(0, wrong ? -.3 : 1, 0));
+      key = `0:${correct ? 'place' : wrong ? 'wrong' : 'pick'}`;
+      lines = ['机关上有一个正方形。工坊里有一样形状的积木吗？',
+        wrong ? '手里的积木形状不同，找找正方体。' : correct ? '把手里的正方体带到方形机关旁。' : '看看正方体积木，它和机关的形状一样。',
+        wrong ? '示范：先按互动放下这块积木，再去拿正方体。' : correct ? '示范：靠近方形机关，按互动放下正方体。' : '示范：走近正方体，按互动把它拿起来。'];
+    } else if (local === 1) {
+      const blocked = this.pipeTurns.findIndex((value, i) => value !== pipeSolution[i]);
+      object = this.pipeMeshes[Math.max(0, blocked)]; to = object.position.clone(); turn = true;
+      key = `1:${blocked}`;
+      lines = ['沿着水流看一看，水停在哪一段水管前？', `看看水停住后面的第${blocked + 1}段水管，它的管口朝向哪里？`, '示范：靠近这段水管，按一次互动转一下，再看看水流。'];
+    } else if (local === 2) {
+      object = this.grainPlaced ? this.chicken : this.grain;
+      to = this.carryingGrain ? new T.Vector3(tunnelSpot.x, .7, tunnelSpot.z) : object.position.clone().add(new T.Vector3(0, .7, 0));
+      key = `2:${this.grainPlaced ? 'wait' : this.carryingGrain ? 'lead' : 'pick'}`;
+      lines = ['小鸡喜欢谷粒，也能钻进你进不去的小门。',
+        this.grainPlaced ? '小鸡在鸡舍里找东西，看看门口。' : this.carryingGrain ? '带着谷粒慢慢走向鸡舍的小门，等等小鸡。' : '看看小鸡旁边的那碗谷粒。',
+        this.grainPlaced ? '示范：在门口等一等，小鸡会带回钥匙。' : this.carryingGrain ? '示范：带小鸡走到小门旁，等它跟上，再按互动放谷粒。' : '示范：走近谷粒，按互动拿起来，小鸡就会跟着你。'];
+    }
+    return { local, key, lines, object, from: from ?? object.position.clone(), to, turn, hop };
   }
   interact() {
-    if (this.state !== 'racing' || this.paused || this.workshop.active) return;
+    if (this.state !== 'racing' || this.paused || this.workshop.active || this.hintShot) return;
     this.endHintShot();
+    const target = this.interactionTarget();
+    if (!target) return;
     if (this.carried >= 0) {
       const piece = this.pieces[this.carried];
       const atPlate = this.near(plateSpot.x, plateSpot.z, 2.5);
@@ -795,15 +916,15 @@ export class PuzzleGarden {
       if (fits || atPlate) this.say(fits ? '正方体压住机关，铁门开啦！' : `${piece.name}和方形机关对不上，再找找正方体！`);
       return;
     }
-    const pick = this.pieces.findIndex(p => !p.placed && this.near(p.x, p.z));
-    if (pick >= 0) {
+    if (target.kind === 'piece') {
+      const pick = target.index!;
       this.carried = pick;
       this.pieces[pick].body.setEnabled(false);
       this.say(this.pieces[pick].square ? '拿起来啦！这个形状能帮上什么忙呢？' : `拿起${this.pieces[pick].name}啦！看看机关要什么形状。`, 'pickup'); return;
     }
-    if (!this.carryingGrain && this.nearGuide()) { this.talkToGuide(); return; }
-    const pipe = pipeSpots.findIndex(spot => this.near(spot.x, spot.z, pipeReach));
-    if (pipe >= 0) {
+    if (target.kind === 'guide') { this.talkToGuide(); return; }
+    if (target.kind === 'pipe') {
+      const pipe = target.index!;
       if (this.pipesSolved) { this.say('水已经接通啦！小花替你找到一把钥匙。'); return; }
       const turn = (this.pipeTurns[pipe] + 1) % 4;
       this.pipeTurns[pipe] = turn;
@@ -813,7 +934,7 @@ export class PuzzleGarden {
       else this.cue = this.normalGuidance();
       this.pipeTouched = true; return;
     }
-    if (this.carryingGrain && this.near(tunnelSpot.x, tunnelSpot.z, 2.5)) {
+    if (target.kind === 'coop' && this.carryingGrain) {
       if (Math.hypot(this.chicken.position.x - tunnelSpot.x, this.chicken.position.z - tunnelSpot.z) > 2.5) {
         this.say('小鸡还没跟上来，等等它吧。'); return;
       }
@@ -821,16 +942,16 @@ export class PuzzleGarden {
       this.audio?.play('grain');
       this.hintActive = false; this.say('小鸡钻进去了！', 'chick'); return;
     }
-    if (!this.carryingGrain && !this.grainPlaced && !this.animalSolved && this.near(grainSpot.x, grainSpot.z)) {
+    if (target.kind === 'grain') {
       this.carryingGrain = true; this.chickenState = 'following';
       this.audio?.play('grain');
       this.hintActive = false; this.say('小鸡跟着谷粒走了', 'chick'); return;
     }
-    if (this.near(this.chicken.position.x, this.chicken.position.z, 6) || this.near(tunnelSpot.x, tunnelSpot.z, 3)) {
+    if (target.kind === 'chicken' || target.kind === 'coop') {
       this.audio?.play('chick');
       this.say(this.animalSolved ? '粉色钥匙在鸡舍门口。' : this.grainPlaced ? '鸡舍里传来小鸡的声音。' : !this.carryingGrain ? '小鸡一直盯着那碗谷粒呢。' : this.chickenMood === 'blocked' ? '小鸡在原地打转，好像走不过去。' : '小鸡正看着你手里的谷粒。'); return;
     }
-    if (this.near(0, -71, 5)) this.say(this.collected.every(Boolean) ? '出口就在前面，走过去吧！' : `大门还差${3 - this.collected.filter(Boolean).length}把钥匙，再去探索吧。`);
+    if (target.kind === 'exit') this.say(this.collected.every(Boolean) ? '出口就在前面，走过去吧！' : `大门还差${3 - this.collected.filter(Boolean).length}把钥匙，再去探索吧。`);
   }
   updateChicken() {
     if (this.chickenState === 'idle' || this.chickenState === 'delivered') return;
@@ -841,7 +962,7 @@ export class PuzzleGarden {
       const distance = Math.hypot(player.x - pos.x, player.z - pos.z);
       const waiting = distance > 12 || this.carried >= 0;
       if (waiting || distance < 1.2) {
-        if (waiting && this.chickenMood !== 'waiting' && distance < 18) this.audio?.play('chick');
+        if (waiting && this.chickenMood !== 'waiting') this.audio?.play('chick');
         this.chickenMood = waiting ? 'waiting' : 'following'; this.chicken.rotation.z = 0; return;
       }
       target = player;
@@ -874,8 +995,9 @@ export class PuzzleGarden {
     this.chicken.rotation.z = this.reducedMotion ? 0 : Math.sin(this.time * 18) * .08;
   }
   talkToGuide() {
+    this.clearHintDemo();
     this.hintShot = undefined;
-    this.workshop.start(this.pieces[0].placed, this.collected[0]);
+    this.workshop.start(this.pieces[0].placed, this.collected[0], this.nextHint().lines[1]);
   }
   say(text: string, sound?: PuzzleSound) {
     if (sound !== 'hint') { this.hintActive = false; }
@@ -890,10 +1012,16 @@ export class PuzzleGarden {
   step() {
     if (this.state !== 'racing' || this.paused || this.workshop.active) return;
     this.time += STEP;
+    if (this.hintShot) {
+      this.clearInput(); this.previous.copy(this.body.translation());
+      const velocity = this.body.linvel();
+      this.body.setLinvel({ x: 0, y: velocity.y, z: 0 }, true);
+      return;
+    }
     let x = Number(this.keys.has('KeyD') || this.keys.has('ArrowRight')) - Number(this.keys.has('KeyA') || this.keys.has('ArrowLeft')) + this.stick.x;
     let z = Number(this.keys.has('KeyS') || this.keys.has('ArrowDown')) - Number(this.keys.has('KeyW') || this.keys.has('ArrowUp')) + this.stick.y;
     const length = Math.hypot(x, z); if (length > 1) { x /= length; z /= length; }
-    if (length > .1 || this.jumpRequested) this.endHintShot();
+    if (length > .1 || this.jumpRequested) this.clearHintDemo();
     this.previous.copy(this.body.translation());
     const velocity = this.body.linvel(), p = this.body.translation();
     const ray = new R.Ray({ x: p.x, y: p.y - .57, z: p.z }, { x: 0, y: -1, z: 0 });
@@ -939,7 +1067,7 @@ export class PuzzleGarden {
     this.solvedCount = solvedCount;
     keySpots.forEach((spot, index) => {
       const reachedHeight = index !== 1 || this.body.translation().y > .49 + 1.33 * this.waterFlower.scale.y + .35;
-      if (available[index] && !this.collected[index] && reachedHeight && this.near(spot.x, spot.z, 1.3)) {
+      if (available[index] && !this.collected[index] && reachedHeight && this.near(spot.x, spot.z, index === 1 ? 1.75 : 1.55)) {
         this.collected[index] = true;
         this.happyUntil = this.time + 2.5;
         this.hintActive = false;
@@ -951,15 +1079,22 @@ export class PuzzleGarden {
     const current = this.body.translation();
     if (this.collected.every(Boolean) && current.z < -72.7 && Math.abs(current.x) < 3) { this.state = 'qualified'; this.clearInput(); this.audio?.stop(); this.say('大门打开啦！你是小小解谜高手！', 'win'); }
     this.region = this.nearestZone();
-    // Wait for the arrival movement to stop so the first shot does not fight held controls.
-    if (this.region === 2 && !this.animalHintSeen && this.carried < 0 && !this.carryingGrain && !this.grainPlaced && !this.animalSolved && this.grounded && length <= .1 && Math.hypot(velocity.x, velocity.z) < .15) this.startHintShot();
-    if (this.region === 1 && !this.pondHintSeen && !this.pipesSolved && this.carried < 0 && !this.carryingGrain && this.near(22, -20, 10) && this.grounded && length <= .1 && Math.hypot(velocity.x, velocity.z) < .15) this.startPondHintShot();
     if (this.state === 'racing') {
       const cue = this.normalGuidance();
       // Update only when the next task changes; footsteps must not repeat speech or DOM updates.
       if (cue !== this.normalCue) {
         this.normalCue = this.cue = cue;
         this.hintActive = false;
+      }
+    }
+    // Let arrival movement stop before the introductory camera takes over.
+    if (!this.hintShot && this.carried < 0 && !this.carryingGrain && this.grounded && length <= .1 && Math.hypot(velocity.x, velocity.z) < .15) {
+      if (this.region === 2 && !this.animalHintSeen && !this.grainPlaced && !this.animalSolved) {
+        this.animalHintSeen = true;
+        this.hintActive = true; this.say(this.nextHint().lines[0], 'hint'); this.showHintDemo(); this.startHintShot();
+      } else if (this.region === 1 && !this.pondHintSeen && !this.pipesSolved && this.near(22, -20, 10)) {
+        this.pondHintSeen = true;
+        this.hintActive = true; this.say(this.nextHint().lines[0], 'hint'); this.showHintDemo(); this.startPondHintShot();
       }
     }
   }
@@ -990,6 +1125,7 @@ export class PuzzleGarden {
       this.cameraLook.lerp(lookGoal, follow);
     }
     this.camera.lookAt(this.cameraLook);
+    this.camera.updateMatrixWorld();
     this.gate.mesh.position.y = this.pieces[0].placed ? 3.6 : 0;
     const exitOpen = this.collected.every(Boolean);
     this.exit.mesh.getObjectByName('left-leaf')!.rotation.y = exitOpen ? -Math.PI / 2 : 0;
@@ -1003,11 +1139,19 @@ export class PuzzleGarden {
       if (dt === 0) group.rotation.y = target;
       connected = connected && this.pipeTurns[i] === pipeSolution[i] && Math.abs(delta) < .025;
       if (connected) wetCount++;
-      animateWater(group, connected, this.reducedMotion ? 0 : this.time);
+      animateWater(group, connected, this.reducedMotion ? 0 : this.time, i === 1);
     });
     if (this.state === 'racing' && !this.paused && wetCount > this.flowReached) {
+      for (let i = this.flowReached; i < wetCount; i++) this.pipeMeshes[i].userData.feedbackUntil = this.time + 1.6;
+      this.flowFeedbackUntil = this.time + 1.6;
       this.audio?.play('flow', 1 + (wetCount - 1) * .1); this.flowReached = wetCount;
     }
+    this.pipeMeshes.forEach(pipe => {
+      for (const end of [0, 1]) {
+        const material = (pipe.getObjectByName(`mouth-${end}`) as T.Mesh).material as T.MeshStandardMaterial;
+        material.emissive.set('#53dba4'); material.emissiveIntensity = pipe.userData.feedbackUntil > this.time ? 1.4 : 0;
+      }
+    });
     if (connected && !this.pipesSolved) {
       this.pipesSolved = true;
       this.say('小花开啦！跳到花上拿蓝色钥匙！', 'bloom');
@@ -1016,11 +1160,11 @@ export class PuzzleGarden {
     animateWater(this.outlet, connected, this.reducedMotion ? 0 : this.time);
     colorFlower(this.waterFlower, '#fff1c5', this.pipesSolved);
     const bloom = this.pipesSolved ? 1.55 : .72;
-    this.waterFlower.scale.lerp(new T.Vector3(bloom, bloom, bloom), dt === 0 || this.reducedMotion ? 1 : this.paused ? 0 : 1 - Math.exp(-3 * dt));
+    this.waterFlower.scale.lerp(new T.Vector3(bloom * 1.12, bloom, bloom * 1.12), dt === 0 || this.reducedMotion ? 1 : this.paused ? 0 : 1 - Math.exp(-3 * dt));
     if (this.flowerPlatformScale !== this.waterFlower.scale.y) this.flowerPlatforms.forEach((collider, i) => {
       const scale = this.waterFlower.scale.y;
       collider.setTranslation({ x: 26, y: .49 + (i === 0 ? .38 : 1.24) * scale, z: -25.5 });
-      collider.setShape(new R.Cylinder((i === 0 ? .13 : .09) * scale, (i === 0 ? 1.05 : 1.12) * scale));
+      collider.setShape(new R.Cylinder((i === 0 ? .13 : .09) * scale, (i === 0 ? 1.2 : 1.28) * scale));
     });
     this.flowerPlatformScale = this.waterFlower.scale.y;
     this.watering.visible = connected;
@@ -1048,17 +1192,30 @@ export class PuzzleGarden {
     if (this.carryingGrain) this.grain.position.copy(this.carryPosition);
     else if (this.grainPlaced) this.grain.position.set(nestSpot.x, .66, nestSpot.z + 2);
     else this.grain.position.set(grainSpot.x, .4, grainSpot.z);
-    const grain = !this.carryingGrain && !this.grainPlaced && !this.animalSolved && this.near(grainSpot.x, grainSpot.z);
-    const chicken = this.near(this.chicken.position.x, this.chicken.position.z, 6);
-    const pipe = pipeSpots.some(spot => this.near(spot.x, spot.z, pipeReach));
-    const pickable = this.pieces.some(piece => !piece.placed && this.near(piece.x, piece.z));
-    const action = this.carried >= 0 ? '放下' : !pickable && !this.carryingGrain && this.nearGuide() ? '对话' : pipe ? '转水管' : this.carryingGrain && this.near(tunnelSpot.x, tunnelSpot.z, 2.5) ? '放谷粒' : grain ? '拿谷粒' : chicken ? '招呼小鸡' : pickable ? '拿起' : '看一看';
+    const action = this.updateInteraction();
+    if (this.hintDemo) {
+      const demo = this.hintDemo, elapsed = this.time - demo.start;
+      const blend = this.reducedMotion ? 1 : T.MathUtils.smoothstep(elapsed % 3, .6, 2.4);
+      demo.mesh.position.lerpVectors(demo.from, demo.to, blend);
+      if (demo.hop) demo.mesh.position.y += Math.sin(blend * Math.PI) * 1.2;
+      if (demo.turn) demo.mesh.rotation.y = demo.rotation + blend * Math.PI / 2;
+      if (elapsed > 12 || !this.hintActive) this.clearHintDemo();
+    }
     const waterDistance = Math.hypot(p.x - 24, p.z + 22);
     const pondTour = this.hintShot?.pond && !this.hintShot.returning;
     const tourWater = pondTour ? 1 - T.MathUtils.smoothstep(this.hintShot!.elapsed, 4.2, 6.9) : 0;
     this.audio?.water(this.state === 'racing' ? Math.max(tourWater, this.pipesSolved ? Math.max(0, 1 - waterDistance / 14) : 0) : 0, !!window.speechSynthesis?.speaking);
     const cue = this.state === 'racing' && !this.hintActive ? this.normalCue || this.cue : this.cue;
-    this.ui.updatePuzzle(this.state, this.paused, this.muted, cue, this.collected.filter(Boolean).length, action);
+    this.ui.updatePuzzle(this.state, this.paused, this.muted, cue, this.collected.filter(Boolean).length, action, !!this.hintShot);
+    const showFeedback = this.state === 'racing' && !this.paused && !this.workshop.active;
+    this.ui.pipeFeedback(showFeedback && this.time < this.flowFeedbackUntil ? `✓ 已接通 ${this.flowReached} / 3 段水管` : '');
+    if (showFeedback && this.carryingGrain && ['waiting', 'blocked'].includes(this.chickenMood)) {
+      const point = this.chicken.position.clone().add(new T.Vector3(0, 1.5, 0));
+      const behind = point.clone().applyMatrix4(this.camera.matrixWorldInverse).z > 0;
+      point.project(this.camera);
+      if (behind) { point.x *= -1; point.y = -1; }
+      this.ui.chickenMarker([point.x, point.y, behind], this.chickenMood);
+    } else this.ui.chickenMarker(null, this.chickenMood);
     this.renderer.render(this.scene, this.camera);
   }
   transfer?: (now: number) => boolean;

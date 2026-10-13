@@ -117,7 +117,7 @@ export class Race {
         this.renderer.toneMapping = T.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.12;
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = T.PCFSoftShadowMap;
+        this.renderer.shadowMap.type = T.PCFShadowMap;
         this.scene.fog = new T.Fog('#b8e4ed', 105, 300);
         this.scene.add(new T.HemisphereLight('#eefaff', '#8ab5b9', 1.45));
         this.sun.position.set(-18, 30, 10);

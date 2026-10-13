@@ -14,6 +14,7 @@ const audioState = (page: Page) => page.evaluate(() => (window as any).__PUZZLE_
 const warp = async (page: Page, x: number, z: number) => {
   await page.evaluate(({ x, z }) => (window as any).__PUZZLE_TEST__.warp(x, z), { x, z });
   await page.waitForTimeout(80);
+  await expect.poll(() => page.evaluate(() => (window as any).__PUZZLE_TEST__.hintCamera().elapsed), { timeout: 15000 }).toBeNull();
 };
 const action = async (page: Page) => { await page.keyboard.press('KeyE'); await page.waitForTimeout(80); };
 // Blocks are solid, so reach one from the side rather than standing inside it.
@@ -473,7 +474,7 @@ test('normal guidance follows the current task without pressing H', async ({ pag
   expect((await snapshot(page)).hintActive).toBe(false);
 });
 
-test('H repeats only the opening clue without numbered steps', async ({ page }) => {
+test('H progresses from observation to objects to demonstration', async ({ page }) => {
   await start(page);
   for (const [x, z, clue] of [
     [-24, -20, '机关上有一个正方形。工坊里有一样形状的积木吗？'],
@@ -483,7 +484,9 @@ test('H repeats only the opening clue without numbered steps', async ({ page }) 
     await warp(page, x, z);
     for (let i = 0; i < 4; i++) {
       await page.keyboard.press('KeyH');
-      await expect(page.locator('#cue')).toHaveText(clue);
+      if (i === 0) await expect(page.locator('#cue')).toHaveText(clue);
+      else if (i === 1) await expect(page.locator('#cue')).not.toHaveText(clue);
+      else await expect(page.locator('#cue')).toContainText('示范');
       await expect(page.locator('#cue')).not.toContainText('/3');
       await expect(page.locator('#hint')).toHaveText('?提示');
     }
@@ -494,7 +497,7 @@ test('H repeats only the opening clue without numbered steps', async ({ page }) 
   await page.locator('#hint').click();
   await expect(page.locator('#cue')).toHaveText('小鸡喜欢谷粒，也能钻进你进不去的小门。');
   await page.locator('#hint').click();
-  await expect(page.locator('#cue')).toHaveText('小鸡喜欢谷粒，也能钻进你进不去的小门。');
+  await expect(page.locator('#cue')).toContainText('带着谷粒');
   await page.screenshot({ path: resolve(outputs, 'hint-opening-mobile.png') });
 });
 test('only the square block presses the plate', async ({ page }) => {
@@ -504,7 +507,7 @@ test('only the square block presses the plate', async ({ page }) => {
     await beside(page, x, z); await action(page);
     expect((await snapshot(page)).carriedName).toBe(name);
     await page.keyboard.press('KeyH'); // While a decoy is held the hint names the square block.
-    await expect(page.locator('#cue')).toContainText('正方形');
+    await expect(page.locator('#cue')).toContainText(/正方形|正方体/);
     await warp(page, -24, -16); await action(page);
     const dropped = await snapshot(page);
     expect(dropped.carried).toBe(-1);
@@ -678,7 +681,7 @@ test('exploration: real paths, independent mechanics, wrong attempts, locks and 
 });
 
 test('all six key orders are playable without cross-puzzle dependencies', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await start(page);
   for (const order of [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]]) {
     const expected = [false, false, false];

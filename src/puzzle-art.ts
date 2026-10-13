@@ -22,6 +22,8 @@ export function waterPipe(curve: T.Curve<T.Vector3>) {
   }
   for (const t of [0, 1]) {
     const rim = part(root, new T.TorusGeometry(.36, .085, 8, 16), '#efc34f');
+    rim.material = rim.material.clone();
+    rim.name = `mouth-${t}`;
     rim.position.copy(curve.getPoint(t));
     rim.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), curve.getTangent(t).normalize());
   }
@@ -29,11 +31,12 @@ export function waterPipe(curve: T.Curve<T.Vector3>) {
   return root;
 }
 
-export function animateWater(root: T.Group, wet: boolean, time: number) {
+export function animateWater(root: T.Group, wet: boolean, time: number, reverse = false) {
   const flow = root.getObjectByName('flow')!; flow.visible = wet;
   const curve = root.userData.curve as T.Curve<T.Vector3>;
   if (wet) flow.children.slice(1).forEach((bead, i) => {
-    curve.getPoint((time * .48 + i / 7) % 1, bead.position); bead.position.y += .13;
+    const phase = (time * .48 + i / 7) % 1;
+    curve.getPoint(reverse ? 1 - phase : phase, bead.position); bead.position.y += .13;
   });
 }
 
