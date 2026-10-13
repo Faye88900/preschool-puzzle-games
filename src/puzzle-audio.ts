@@ -15,7 +15,6 @@ export class PuzzleAudio {
   waterGain = this.context.createGain();
   buffers = new Map<PuzzleSound, AudioBuffer>();
   sources = new Map<PuzzleSound, AudioBufferSourceNode>();
-  plays: Partial<Record<PuzzleSound, number>> = {};
   lastPlay = new Map<PuzzleSound, number>();
   ducked = false;
   muted = false;
@@ -67,7 +66,7 @@ export class PuzzleAudio {
       source.disconnect(); gain.disconnect();
       if (this.sources.get(id) === source) this.sources.delete(id);
     };
-    this.sources.set(id, source); this.plays[id] = (this.plays[id] ?? 0) + 1; source.start();
+    this.sources.set(id, source); source.start();
   }
   footstep(stone: boolean) {
     this.play(`${stone ? 'stepStone' : 'stepGrass'}${this.stepIndex++ % 3}` as PuzzleSound);

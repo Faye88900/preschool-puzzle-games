@@ -63,7 +63,6 @@ Attribution is optional under CC0; this ledger credits the authors voluntarily.
 
 All files: mono, 22,050 Hz, 16-bit PCM WAV. Short effects do not loop. Original excerpts were converted using native browser decoding, DC removal, peak normalization to 0.7, and short edge fades. Chick recording has a 1,200 Hz high-pass filter to reduce box/handling noise. Gate, pipe and flow have a 5,000 Hz low-pass filter; other files use 9,000 Hz. Pipe combines the first 0.5 seconds of creak1 with the first 0.15 seconds of metalLatch, starting at 0.35 seconds with layer gain 0.35. Water has a 300 ms overlap crossfade at the loop seam. No generated audio or API credentials were used.
 
-Only raw sources used by `scripts/prepare-puzzle-audio.mjs`, their licenses and verification metadata are kept in `artifacts/audio-sources/`; unused recordings and promotional shortcuts were removed. Run with a Vite server at port 5188, or set `AUDIO_PREP_URL`. Metadata: `artifacts/audio-sources/preparation.json`.
 
 ## Runtime behavior
 
@@ -81,7 +80,7 @@ Reference used for integration: `C:/Users/yongting/.codex/skills/threejs-audio-g
 
 - TypeScript and Vite production build passed.
 - Five selected Playwright checks passed: complete audio/key/exit flow, mobile audio controls, pond flow/pause/reset, square-only pressure plate, and mobile exploration. The audio control check was additionally rerun with a mobile browser context (`hasTouch`, `isMobile`) and actual touchscreen taps; passed.
-- All 14 WAV files decoded in Chrome. The asset check found non-silent PCM, peaks below 0.71, and recorded SHA-256 hashes in `artifacts/audio-sources/asset-check.json`. Runtime audio totals 632,534 bytes.
+- All 14 WAV files decoded in Chrome. The asset check found non-silent PCM, peaks below 0.71. Runtime audio totals 632,534 bytes.
 - Water loop stayed a single source across an entire loop, pause and resume. Mute blocked new effects and silenced the master gain. Restart/completion removed the old loop. No audio load/decode or page errors occurred in the full-flow check.
 - These are local browser and signal checks. Subjective listening on speakers/headphones and testing on physical mobile devices remain unverified.
 
@@ -89,7 +88,7 @@ Reference used for integration: `C:/Users/yongting/.codex/skills/threejs-audio-g
 
 - TypeScript and Vite production build passed. Four selected Playwright checks passed: full audio/puzzle/exit flow, mobile touchscreen controls, footsteps plus water-prefix progress, and pond flow/pause/reset.
 - Verified stone and grass footstep variations, no footsteps at rest or in midair, mute blocking new sounds, dry downstream pipes making no progress sound, no repeated reward for reconnecting an old prefix, and progress resetting on restart.
-- All 21 PCM WAV files are non-silent and have normalized peaks below 0.71. Total runtime audio is 852,738 bytes. Updated duration/RMS/SHA-256 records are in `artifacts/audio-sources/asset-check.json`.
+- All 21 PCM WAV files are non-silent and have normalized peaks below 0.71. Total runtime audio is 852,738 bytes.
 - Physical-device and subjective speaker/headphone listening remain unverified.
 
 ## User-provided background music
@@ -99,5 +98,9 @@ Reference used for integration: `C:/Users/yongting/.codex/skills/threejs-audio-g
 ## Completion fanfare verification, 2026-10-06
 
 - TypeScript/build and the full audio/puzzle/exit Playwright check passed. The completion panel triggered win once, the decoded clip was 7 seconds and remained active after 2.5 seconds, existing music was stopped, and restarting stopped the old fanfare.
-- Updated win.wav has non-silent musical content at 2–4 seconds, normalized peaks below 0.71, and SHA-256 recorded in `artifacts/audio-sources/asset-check.json`. It is 308,744 bytes. Subjective speaker/headphone listening remains unverified.
+- Updated win.wav has non-silent musical content at 2–4 seconds, normalized peaks below 0.71. It is 308,744 bytes. Subjective speaker/headphone listening remains unverified.
 
+
+2026-10-13 delivery cleanup: removed temporary raw recordings, preparation scripts and check reports. Runtime audio and all source/license records remain.
+
+2026-10-13 delivery cleanup: removed temporary raw recordings, preparation scripts and check reports. Runtime audio and all source/license records remain.

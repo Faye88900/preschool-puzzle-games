@@ -89,17 +89,11 @@ export class Race {
     acc = 0;
     last = 0;
     seed = 1;
-    frame = 0;
-    fps = 60;
-    testMode = false;
-    autoPlayer = false;
-    freeze = false;
     cueIndex = -1;
     audio?: AudioContext;
     countdownSound = this.media('audio/countdown-race.wav', .75);
     raceMusic = this.media('audio/race-sports-loop.mp3', .16, true);
     finishHorn = this.media('audio/finish-firework.wav', .68);
-    mediaPlays = { countdown: 0, music: 0, finish: 0 };
     confetti?: T.Points;
     sun = new T.DirectionalLight('#fff5e7', 2.4);
     cameraLook = new T.Vector3(0, 1, -8);
@@ -142,7 +136,7 @@ export class Race {
             if (this.state !== 'qualified' || this.transfer) return;
             this.keys.clear(); this.stick = { x: 0, y: 0 };
             this.transfer = cloudTransfer(this.scene, this.camera, this.people[0].mesh, false, () => {
-                location.assign('?level=2&cloudArrival=1' + (new URLSearchParams(location.search).has('test') ? '&test=1' : ''));
+                location.assign('?level=2&cloudArrival=1');
             });
         };
         addEventListener('keydown', e => { if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code))
@@ -167,7 +161,6 @@ export class Race {
         this.sync(0);
         this.camera.position.set(25, 29, 26);
         this.camera.lookAt(-8, 0, -36);
-        this.installHooks();
         requestAnimationFrame(t => this.tick(t));
     }
     box(x: number, y: number, z: number, w: number, h: number, d: number, color: string, kind = 'fixed') {
@@ -275,10 +268,10 @@ export class Race {
     } }
     media(path:string,volume:number,loop=false){const clip=new Audio(`${import.meta.env.BASE_URL}${path}`);clip.preload='auto';clip.volume=volume;clip.loop=loop;return clip;}
     applyAudioSettings(){this.raceMusic.muted=!this.settings.music;this.countdownSound.muted=this.finishHorn.muted=!this.settings.effects;}
-    playMedia(kind:keyof typeof this.mediaPlays,clip:HTMLAudioElement){clip.currentTime=0;clip.muted=!(kind==='music'?this.settings.music:this.settings.effects);this.mediaPlays[kind]++;void clip.play().catch(()=>{});}
+    playMedia(kind:'countdown'|'music'|'finish',clip:HTMLAudioElement){clip.currentTime=0;clip.muted=!(kind==='music'?this.settings.music:this.settings.effects);void clip.play().catch(()=>{});}
     stopMedia(clip:HTMLAudioElement){clip.pause();clip.currentTime=0;}
     syncMusic(){const on=!this.paused&&!document.hidden&&['ready','countdown','racing','qualified'].includes(this.state);if(!on)this.raceMusic.pause();else if(this.raceMusic.paused)void this.raceMusic.play().catch(()=>{});}
-    start() { this.state = 'countdown'; this.countdown = 3; this.time = 0; this.finished = 0; this.paused = false; this.acc = 0; this.cueIndex = -1; this.cue = '准备——出发！'; this.keys.clear(); this.jump = this.dive = false; this.stick = { x: 0, y: 0 }; this.autoPlayer = false; this.testMode = false; speechSynthesis?.cancel(); this.stopMedia(this.finishHorn);this.stopMedia(this.countdownSound);if(this.raceMusic.paused)this.playMedia('music',this.raceMusic); if (this.confetti) {
+    start() { this.state = 'countdown'; this.countdown = 3; this.time = 0; this.finished = 0; this.paused = false; this.acc = 0; this.cueIndex = -1; this.cue = '准备——出发！'; this.keys.clear(); this.jump = this.dive = false; this.stick = { x: 0, y: 0 }; speechSynthesis?.cancel(); this.stopMedia(this.finishHorn);this.stopMedia(this.countdownSound);if(this.raceMusic.paused)this.playMedia('music',this.raceMusic); if (this.confetti) {
         this.scene.remove(this.confetti);
         this.confetti.geometry.dispose();
         (this.confetti.material as T.Material).dispose();
@@ -368,7 +361,7 @@ export class Race {
                 continue;
             }
             let x = 0, z = 0, jump = false, dive = false;
-            const ai = c.id > 0 || this.autoPlayer;
+            const ai = c.id > 0;
             if (ai) {
                 // Each computer racer reacts to the starting signal at its own pace.
                 if (this.time < c.brain.startDelay) continue;
@@ -448,7 +441,7 @@ export class Race {
             if (-p.z >= 148 && Math.abs(p.x) < 9.5 && p.y > 0) {
                 c.finish = ++this.finished;
                 c.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-                if (c.id === 0 && !this.testMode)
+                if (c.id === 0)
                     this.end(c.finish <= QUALIFY_COUNT ? 'qualified' : 'eliminated');
             }
         }
@@ -470,7 +463,7 @@ export class Race {
             this.cueIndex = ci;
             this.say(cues[ci].text);
         }
-        if (!this.testMode && this.state === 'racing') {
+        if (this.state === 'racing') {
             if (this.finished >= QUALIFY_COUNT && !this.people[0].finish)
                 this.end('eliminated');
             else if (this.time >= 90)
@@ -492,19 +485,19 @@ export class Race {
     } }
     snapshot(): RaceSnapshot { const p = this.people[0]; return { state: this.state, time: Math.max(0, 90 - this.time), rank: p.finish || 1 + this.people.filter(c => c.id !== 0 && (c.finish || c.body.translation().z < p.body.translation().z)).length, finished: Math.min(QUALIFY_COUNT, this.finished), paused: this.paused, muted: this.muted, cue: this.cue, countdown: Math.ceil(this.countdown),racers:this.people.map(c=>({id:c.id,progress:T.MathUtils.clamp(-c.body.translation().z/148,0,1)})),diveReady:p.diveCD===0 }; }
     sync(dt: number) {
-        if(!this.freeze&&!this.paused)this.visualTime+=dt;
+        if(!this.paused)this.visualTime+=dt;
         this.balloons.forEach((balloon, i) => {
             balloon.position.y = balloon.userData.baseY + (this.reducedMotion ? 0 : Math.sin(this.visualTime * .55 + i) * .55);
             balloon.rotation.z = this.reducedMotion ? 0 : Math.sin(this.visualTime * .35 + i) * .04;
         });
-        if (this.confetti && !this.freeze && !this.paused) {
+        if (this.confetti && !this.paused) {
             this.confetti.rotation.y += dt * .1;
             this.confetti.position.y = Math.max(-2, this.confetti.position.y - dt * .35);
         }
         for (const c of this.people) {
             const p = c.body.translation();
             // Render between physics poses, avoiding 60 Hz stair-steps on fast displays.
-            c.mesh.position.copy(c.previous).lerp(p,dt===0||this.freeze?1:this.acc/FIXED_DT);
+            c.mesh.position.copy(c.previous).lerp(p,dt===0?1:this.acc/FIXED_DT);
             if(c.finish&&!this.reducedMotion)c.mesh.position.y+=Math.pow(Math.max(0,Math.sin(this.visualTime*5+c.finish*.7)),2)*.9;
             const avatar=c.mesh.getObjectByName('avatar')!;
             const v=c.body.linvel(),speed=Math.hypot(v.x,v.z);
@@ -548,28 +541,14 @@ export class Race {
         if (this.transfer) {
             this.transfer(t); this.renderer.render(this.scene, this.camera);
             requestAnimationFrame(v => this.tick(v)); return;
-        } const dt = Math.min((t - this.last) / 1000 || 0, .1); this.last = t; this.fps = this.fps * .95 + (1 / Math.max(dt, .001)) * .05; if (!this.paused && !this.freeze) {
+        } const dt = Math.min((t - this.last) / 1000 || 0, .1); this.last = t; if (!this.paused) {
         this.acc += dt;
         while (this.acc >= FIXED_DT) {
             this.step(FIXED_DT);
             this.acc -= FIXED_DT;
         }
     }
-        this.sync(dt);this.ui.update(this.snapshot());this.renderer.render(this.scene,this.camera);this.frame++;
-        const info=this.renderer.info;
-        Object.assign(window,{__THREE_GAME_DIAGNOSTICS__:{...this.snapshot(),frame:this.frame,fps:this.fps,
-            physics:{bodies:this.world.bodies.len(),colliders:this.world.colliders.len(),step:FIXED_DT},
-            models:{pendulumFrames:[129,139].filter(z=>this.scene.getObjectByName(`pendulum-frame-${z}`)).length,finishArch:!!this.scene.getObjectByName('finish-arch')},
-            media:{plays:{...this.mediaPlays},countdown:{readyState:this.countdownSound.readyState,paused:this.countdownSound.paused,muted:this.countdownSound.muted},music:{readyState:this.raceMusic.readyState,paused:this.raceMusic.paused,muted:this.raceMusic.muted,loop:this.raceMusic.loop,time:this.raceMusic.currentTime,src:this.raceMusic.src},finish:{readyState:this.finishHorn.readyState,paused:this.finishHorn.paused,muted:this.finishHorn.muted}},
-            hazards:this.moving.map(m=>({kind:m.kind,position:m.body.translation(),renderPosition:{x:m.mesh.position.x,y:m.mesh.position.y,z:m.mesh.position.z},renderRotation:{x:m.mesh.rotation.x,y:m.mesh.rotation.y,z:m.mesh.rotation.z}})),
-            people:this.people.map(c=>({id:c.id,expression:c.mesh.userData.expression,finish:c.finish,checkpoint:c.checkpoint,speed:c.speed,position:c.body.translation(),velocity:c.body.linvel(),renderPosition:{x:c.mesh.position.x,y:c.mesh.position.y,z:c.mesh.position.z},heading:c.heading,rotation:c.mesh.rotation.y,brain:{...c.brain},resets:c.resets})),
-            renderer:{calls:info.render.calls,triangles:info.render.triangles,geometries:info.memory.geometries,textures:info.memory.textures},
-            speech:{available:'speechSynthesis' in window,chinese:typeof speechSynthesis!=='undefined'&&speechSynthesis.getVoices().some(v=>v.lang.startsWith('zh'))}}});
+        this.sync(dt);this.ui.update(this.snapshot());this.renderer.render(this.scene,this.camera);
         requestAnimationFrame(v=>this.tick(v));
     }
-    installHooks() { if (!import.meta.env.DEV && !new URLSearchParams(location.search).has('test'))
-        return; Object.assign(window, { __THREE_GAME_TEST_HOOKS__: { seed: (n: number) => this.seed = n, balloons: () => this.balloons.map(b => ({ y: b.position.y, roll: b.rotation.z })), setState: (s: string) => { this.start(); this.state = 'racing'; if (['qualified', 'eliminated', 'timeout'].includes(s))
-                this.end(s as GameState); }, setPausedForScreenshot: (v: boolean) => this.freeze = v, setReducedMotion: (v:boolean) => {this.reducedMotion=v;}, snapshot: () => this.snapshot(), advance: (seconds: number) => { for (let i = 0; i < seconds / FIXED_DT; i++)
-                this.step(FIXED_DT); this.sync(0); }, auto: () => { this.state = 'racing'; this.testMode = true; this.autoPlayer = true; }, teleport: (x: number, y: number, z: number) => { this.people[0].body.setTranslation({ x, y, z }, true); this.people[0].body.setLinvel({ x: 0, y: 0, z: 0 }, true); }, finishAI: (n: number) => { for (let i = 1; i <= n; i++)
-                this.people[i].body.setTranslation({ x: 0, y: 1, z: -149 }, true); }, setTime: (t: number) => this.time = t } }); }
 }

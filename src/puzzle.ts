@@ -11,7 +11,7 @@ import { readSettings, saveSettings } from './settings';
 import { movement, acceleration, animateWalk } from './movement';
 import { setCharacterExpression } from './character';
 import { PuzzleAudio, type PuzzleSound } from './puzzle-audio';
-import { rounded, chickenCoop, gardenFlower, colorFlower, gateMesh, padlock, lantern, entranceArch, elbowCurve, waterPipe, animateWater } from './puzzle-art';
+import { rounded, workshopBlock, workshopPressurePlate, workshopGate, chickenCoop, gardenFlower, pondFlower, colorFlower, gateMesh, padlock, lantern, entranceArch, elbowCurve, waterPipe, animateWater } from './puzzle-art';
 
 const STEP = movement.step;
 const colors = ['#ffd15a', '#76cde8', '#f29bbe'];
@@ -50,7 +50,6 @@ export class PuzzleGarden {
   body!: R.RigidBody;
   player = bean('#ee5798', true);
   models = new Map<string, T.Group>();
-  overviewMode = false;
   previous = new T.Vector3();
   carryPosition = new T.Vector3();
   heading = 0;
@@ -105,6 +104,7 @@ export class PuzzleGarden {
   flowerPlatformScale = 0;
   locks: T.Group[] = [];
   plate!: T.Mesh;
+  plateIndicator!: T.Mesh<T.BufferGeometry, T.MeshStandardMaterial>;
   sun = new T.DirectionalLight('#ffe2b5', 3);
   cue = '花园里藏着3把钥匙，会在哪里呢？';
   last = 0;
@@ -185,56 +185,6 @@ export class PuzzleGarden {
     document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); });
     addEventListener('resize', () => { this.clearInput(); this.resize(); });
     this.resize(); this.render();
-    if (new URLSearchParams(location.search).has('test')) {
-      Object.assign(window, { __PUZZLE_TEST__: {
-        interaction: () => ({ target: this.interaction, ring: { visible: this.interactionRing.visible, position: this.interactionRing.position.toArray() }, hintLevel: this.hintLevels.get(this.nextHint().key) ?? 0, demo: this.hintDemo ? { position: this.hintDemo.mesh.position.toArray(), rotation: this.hintDemo.mesh.rotation.y } : null }),
-        workshop: () => ({ active: this.workshop.active, stage: this.workshop.stage, elapsed: this.workshop.elapsed,
-          returning: this.workshop.returning, pose: this.workshop.guide.userData.pose,
-          position: this.workshop.guide.position.toArray(), yaw: this.workshop.guide.rotation.y,
-          guide: this.workshop.guide.position.clone().project(this.camera).toArray(),
-          key: this.keyMeshes[0].position.clone().project(this.camera).toArray(),
-          keyClear: [[.3, 0], [-.3, 0], [0, -.6], [.2, -.9]].every(([x, y]) => {
-            const target = this.keyMeshes[0].position.clone().add(new T.Vector3(x, y, 0));
-            const ray = new T.Raycaster(this.camera.position, target.clone().sub(this.camera.position).normalize(), 0, target.distanceTo(this.camera.position));
-            return ray.intersectObject(this.gate.mesh, true).length === 0;
-          }),
-          plate: this.plate.position.clone().project(this.camera).toArray(),
-          blocks: this.pieces.map(piece => piece.mesh.position.clone().project(this.camera).toArray()) }),
-        hintCamera: () => ({ elapsed: this.hintShot?.elapsed ?? null, returning: this.hintShot?.returning ?? false, coopOnly: this.hintShot?.coopOnly ?? false, seen: this.animalHintSeen,
-          pond: !!this.hintShot?.pond, pondSeen: this.pondHintSeen, blocked: this.hintShot?.blocked,
-          pipes: pipeSpots.map(p => new T.Vector3(p.x, .85, p.z).project(this.camera).toArray()),
-          flower: this.waterFlower.position.clone().add(new T.Vector3(0, .5, 0)).project(this.camera).toArray(),
-          grain: this.grain.position.clone().project(this.camera).toArray(), chicken: this.chicken.position.clone().add(new T.Vector3(0, .3, 0)).project(this.camera).toArray(),
-          door: new T.Vector3(tunnelSpot.x, .7, tunnelSpot.z - 1).project(this.camera).toArray() }),
-        audio: () => ({ music: { paused: this.audio!.music.paused, muted: this.audio!.music.muted, loop: this.audio!.music.loop, time: this.audio!.music.currentTime, volume: this.audio!.music.volume, error: this.audio!.music.error?.code ?? null }, state: this.audio?.context.state, loaded: [...this.audio!.buffers.keys()], plays: { ...this.audio!.plays }, active: [...this.audio!.sources.keys()], master: this.audio!.master.gain.value, water: this.audio!.waterGain.gain.value, flowReached: this.flowReached, winDuration: this.audio!.buffers.get('win')?.duration }),
-        pond: () => ({ wet: this.pipeMeshes.map(pipe => pipe.getObjectByName('flow')!.visible),
-          mouths: this.pipeMeshes.map(pipe => [0, 1].map(end => ((pipe.getObjectByName(`mouth-${end}`) as T.Mesh).material as T.MeshStandardMaterial).emissiveIntensity)),
-          angles: this.pipeMeshes.map(pipe => pipe.rotation.y), watering: this.watering.visible,
-          bloom: this.waterFlower.scale.y, key: this.keyMeshes[1].position.toArray(), flowerTop: .49 + 1.33 * this.waterFlower.scale.y,
-          drops: this.outlet.getObjectByName('flow')!.children.slice(1).map(drop => drop.position.toArray()) }),
-        appearance: () => ({ plateY: this.plate.position.y, workshopY: this.gate.mesh.position.y,
-          blocks: this.pieces.map(piece => piece.mesh.position.toArray()),
-          exitYaw: ['left-leaf', 'right-leaf'].map(name => this.exit.mesh.getObjectByName(name)!.rotation.y),
-          outletColor: ((this.scene.getObjectByName('water-outlet') as T.Mesh).material as T.MeshStandardMaterial).color.getHexString(),
-        }),
-        models: () => ({ instances: this.scene.children.filter(node => this.models.has(node.name)).map(node => {
-          const bounds = new T.Box3().setFromObject(node);
-          return { name: node.name, min: bounds.min.toArray(), max: bounds.max.toArray(), ndc: bounds.getCenter(new T.Vector3()).project(this.camera).toArray() };
-        }), calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles }),
-        signs: () => this.scene.children.filter(node => node.name.startsWith('task-sign-')).map(node => ({ name: node.name,
-          loaded: !!(((node as T.Mesh).material as T.MeshBasicMaterial).map?.image as HTMLImageElement | undefined)?.complete })),
-        overview: () => {
-          this.overviewMode = true;
-          this.scene.fog = null;
-          this.camera.fov = 43; this.camera.updateProjectionMatrix();
-          this.camera.position.set(6, 77, 50); this.camera.lookAt(0, 0, -27);
-          this.renderer.render(this.scene, this.camera);
-        },
-        snapshot: () => ({ state: this.state, paused: this.paused, expression: this.player.userData.expression, collected: [...this.collected], animal: { state: this.chickenState, mood: this.chickenMood, position: this.chicken.position.toArray(), carryingGrain: this.carryingGrain, grainPlaced: this.grainPlaced, grainPosition: this.grain.position.toArray(), solved: this.animalSolved, key: this.keyMeshes[2].position.toArray() }, pipeTurns: [...this.pipeTurns], pipesSolved: this.pipesSolved, carried: this.carried, carriedName: this.carried < 0 ? null : this.pieces[this.carried].name, placed: this.pieces.map(p => p.placed), position: this.body.translation(), region: this.region, hintActive: this.hintActive, gateOpen: this.pieces[0].placed, exitOpen: this.collected.every(Boolean), camera: { type: this.camera.type, fov: this.camera.fov, position: this.camera.position.toArray(), look: this.cameraLook.toArray(), playerNdc: this.player.position.clone().project(this.camera).toArray() } }),
-        motion: () => ({ velocity: this.body.linvel(), heading: this.heading, rotation: this.player.rotation.y, gait: this.gait, bob: this.player.getObjectByName('avatar')!.position.y, roll: this.player.getObjectByName('avatar')!.rotation.z, feet: [-1, 1].map(s => this.player.getObjectByName('foot' + s)!.rotation.x), arms: [-1, 1].map(s => this.player.getObjectByName('arm' + s)!.rotation.x), carriedPosition: this.carried >= 0 ? this.pieces[this.carried].mesh.position.toArray() : null, playerPosition: this.player.position.toArray() }),
-        warp: (x: number, z: number, y = .8) => { this.body.setTranslation({ x, y, z }, true); this.previous.copy(this.body.translation()); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); this.render(); },
-      } });
-    }
     if (new URLSearchParams(location.search).has('cloudArrival')) {
       document.addEventListener('journey-arrival', () => {
         this.start(); this.render(0);
@@ -273,7 +223,8 @@ export class PuzzleGarden {
     const loader = new GLTFLoader().setDRACOLoader(draco);
     try {
       await Promise.all(['apple-tree', 'chicken', 'bld-general-store-01', 'home-cottage-01', 'home-thatched-house-01', 'tree-oak-01', 'bush-round-01', 'water-pond-01', 'cattail-reed-clump', 'bench-01', 'streetlamp-01', 'picket-fence-01', 'road-cobble-straight-01', 'road-cobble-corner-01', 'fire-hydrant', 'terrain-grass-01', 'crate-01', 'barrel-01'].map(async name => {
-        const { scene } = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${name}.glb`);
+        const file = name === 'chicken' ? 'chicken-rounded' : name;
+        const { scene } = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${file}.glb`);
         const bounds = new T.Box3().setFromObject(scene);
         if (name.startsWith('road-cobble-')) {
           // Fit the tile's earth slab, not the grass tufts protruding beyond its grid edges.
@@ -325,11 +276,9 @@ export class PuzzleGarden {
     }
     return root;
   }
-  piece(name: string, geometry: T.BufferGeometry, color: string, home: Spot, rest: number, square = false): Piece {
-    const mesh = new T.Mesh(geometry, mat(color));
+  piece(name: string, mesh: T.Mesh, home: Spot, rest: number, square = false): Piece {
     mesh.castShadow = mesh.receiveShadow = true; this.scene.add(mesh);
-    geometry.computeBoundingBox();
-    const size = geometry.boundingBox!.getSize(new T.Vector3());
+    const size = new T.Box3().setFromObject(mesh).getSize(new T.Vector3());
     const body = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(home.x, rest, home.z));
     this.world.createCollider(R.ColliderDesc.cuboid(size.x / 2, size.y / 2, size.z / 2), body);
     return { ...home, home: { ...home }, mesh, body, reach: Math.max(size.x, size.z) / 2, placed: false, name, square, rest };
@@ -350,8 +299,8 @@ export class PuzzleGarden {
     const flower = gardenFlower(symbol); flower.position.set(x, .18, z);
     this.scene.add(flower); return flower;
   }
-  door(x: number, z: number, width: number, color: string) {
-    const mesh = gateMesh(width, color, z === -72); mesh.position.set(x, 0, z); this.scene.add(mesh);
+  door(x: number, z: number, width: number, color: string, mesh = gateMesh(width, color, z === -72)) {
+    mesh.position.set(x, 0, z); this.scene.add(mesh);
     const body = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(x, 1.5, z));
     this.world.createCollider(R.ColliderDesc.cuboid(width / 2, 1.5, .15), body);
     return { mesh, body };
@@ -380,20 +329,23 @@ export class PuzzleGarden {
     }
     this.box(-24, 1.5, -34, 10.3, 3, .3, '#3a756b').visible = false;
     const rearFence = gateMesh(10.3, '#3a756b', false); rearFence.position.set(-24, 0, -34); this.scene.add(rearFence);
-    this.gate = this.door(-24, -24, 10, '#3a756b');
-    this.box(plateSpot.x, .13, plateSpot.z, 2.8, .26, 2.8, '#e8d9b6', false).geometry = rounded(2.8, .26, 2.8);
-    this.box(plateSpot.x, .265, plateSpot.z, 2.35, .08, 2.35, '#8c8065', false).geometry = rounded(2.35, .08, 2.35, .03);
-    this.plate = this.box(plateSpot.x, .34, plateSpot.z, 2.1, .14, 2.1, colors[0], false);
-    this.plate.geometry = rounded(2.1, .14, 2.1, .04);
+    const workshop = workshopGate(10);
+    this.gate = this.door(-24, -24, 10, '#3a756b', workshop.panel);
+    workshop.frame.position.set(-24, 0, -24); this.scene.add(workshop.frame);
+    for (const x of [-29, -19]) this.box(x, 1.825, -24, .6, 3.65, .6, '#dbb886').visible = false;
+    const pressure = workshopPressurePlate();
+    pressure.base.position.set(plateSpot.x, 0, plateSpot.z); this.scene.add(pressure.base);
+    this.plate = pressure.top; this.plate.position.set(plateSpot.x, .34, plateSpot.z); this.scene.add(this.plate);
+    this.plateIndicator = pressure.indicator;
     // One collider for the whole pedestal stack: the player stops at its rim or jumps on top.
     const pedestal = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(plateSpot.x, .205, plateSpot.z));
     this.world.createCollider(R.ColliderDesc.cuboid(1.4, .205, 1.4).setFriction(.7), pedestal);
     // The blocks are solid, so they flank the yard instead of standing on either walkway.
     this.pieces = [
-      this.piece('正方体', rounded(1.3, 1.3, 1.3, .09), colors[0], cubeHome, .78, true),
-      this.piece('圆柱积木', new T.CylinderGeometry(.62, .62, 1.2, 24), '#7fd0bb', { x: -19, z: -13 }, .73),
-      this.piece('三角积木', new T.CylinderGeometry(.82, .82, 1.1, 3), '#c6a3e4', { x: -29, z: -19 }, .68),
-      this.piece('长方体', rounded(1.9, .9, 1.1, .08), '#f0a079', { x: -19, z: -19 }, .58),
+      this.piece('正方体', workshopBlock('cube', colors[0]), cubeHome, .78, true),
+      this.piece('圆柱积木', workshopBlock('cylinder', '#7fd0bb'), { x: -19, z: -13 }, .73),
+      this.piece('三角积木', workshopBlock('triangle', '#c6a3e4'), { x: -29, z: -19 }, .68),
+      this.piece('长方体', workshopBlock('rectangle', '#f0a079'), { x: -19, z: -19 }, .58),
     ];
     for (let z = -18; z > -24; z -= 1) this.box(-24, .055, z, .15, .04, .5, '#eab443', false);
     for (const [x, z] of [[-32, -9], [-33, -13], [-16, -30]]) this.box(x, .55, z, 2, 1.1, 2, '#b5bdab');
@@ -435,8 +387,8 @@ export class PuzzleGarden {
     this.world.createCollider(R.ColliderDesc.cylinder(.19, 1.4).setFriction(.7), flowerBase);
     const basin = new T.Mesh(new T.CylinderGeometry(1.13, 1.13, .04, 24), mat('#a5b4b8'));
     basin.position.set(26, .46, -25.5); basin.name = 'water-outlet'; this.scene.add(basin);
-    this.waterFlower = this.flower(26, -25.5);
-    this.waterFlower.position.y = .49;
+    this.waterFlower = pondFlower();
+    this.waterFlower.position.set(26, .49, -25.5); this.scene.add(this.waterFlower);
     // Two thin discs approximate the broad leaves and petals as jumpable surfaces.
     for (const [y, radius, halfHeight] of [[.38, 1.2, .13], [1.24, 1.28, .09]]) {
       const collider = this.world.createCollider(R.ColliderDesc.cylinder(halfHeight, radius).setFriction(.7));
@@ -507,7 +459,7 @@ export class PuzzleGarden {
     const rampBody = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(13, .28, -58).setRotation(new T.Quaternion().setFromAxisAngle(new T.Vector3(1, 0, 0), .255)));
     this.world.createCollider(R.ColliderDesc.cuboid(.475, .06, 1.075), rampBody);
     for (const z of [-57.8, -58.4]) for (const x of [12.88, 13.12]) this.scene.add(orb('#9b7754', x, .07, z, .085, .025, .12));
-    this.chicken = this.prop('chicken', chickenHome.x, chickenHome.z, .48);
+    this.chicken = this.prop('chicken', chickenHome.x, chickenHome.z, .72);
     const grainBowl = new T.Mesh(new T.CylinderGeometry(.45, .32, .22, 16), mat('#cc8055'));
     this.grain.add(grainBowl);
     for (let i = 0; i < 12; i++) this.grain.add(orb('#ffe193', Math.sin(i * 2.4) * .28, .14, Math.cos(i * 2.4) * .28, .08));
@@ -515,7 +467,7 @@ export class PuzzleGarden {
     // Keep the coop forecourt open; two perimeter trees frame rather than hide it.
     for (const [x, z] of [[-15, -63], [22, -66]]) this.tree(x, z);
     for (const [x, z, angle] of [[32, -28, -.7], [34, -31, 1.4], [31, -38, 2.5]]) {
-      this.prop('chicken', x, z, .592, angle);
+      this.prop('chicken', x, z, .888, angle);
     }
 
     for (const x of [-20.5, 20.5]) this.box(x, 1.5, -72, 35, 3, .4, '#ead5a3');
@@ -615,7 +567,7 @@ export class PuzzleGarden {
       this.prop('bush-round-01', x + 1.7, z - 1.3, 2.4, z);
     }
     // Lantern pillars frame the existing entrances without narrowing the passages.
-    for (const [x, z] of [[-3.8, 13], [3.8, 13], [-3.8, -72], [3.8, -72], [-29.6, -24], [-18.4, -24]]) {
+    for (const [x, z] of [[-3.8, 13], [3.8, 13], [-3.8, -72], [3.8, -72]]) {
       this.box(x, .2, z, 1.2, .4, 1.2, '#e8d9b6').geometry = rounded(1.2, .4, 1.2);
       this.box(x, 2, z, .8, 4, .8, '#ecd6a6');
       this.box(x, 4.05, z, 1.1, .25, 1.1, '#fff0ce', false);
@@ -980,9 +932,10 @@ export class PuzzleGarden {
     const ux = dx / distance, uz = dz / distance, travel = Math.min(distance, 4.2 * STEP);
     // Three swept rays keep this small ground follower clear of the existing solid props.
     if (following) {
-      for (const side of [-.22, 0, .22]) {
-        const ray = new R.Ray({ x: pos.x - uz * side, y: .3, z: pos.z + ux * side }, { x: ux, y: 0, z: uz });
-        if (this.world.castRay(ray, travel + .26, true, undefined, undefined, undefined, this.body)) {
+      const width = this.chicken.scale.x;
+      for (const side of [-width * .46, 0, width * .46]) {
+        const ray = new R.Ray({ x: pos.x - uz * side, y: width * .625, z: pos.z + ux * side }, { x: ux, y: 0, z: uz });
+        if (this.world.castRay(ray, travel + width * .54, true, undefined, undefined, undefined, this.body)) {
           if (this.chickenMood !== 'blocked') this.audio?.play('chick');
           this.chickenMood = 'blocked'; this.chicken.rotation.z = 0; return;
         }
@@ -1127,10 +1080,12 @@ export class PuzzleGarden {
     this.camera.lookAt(this.cameraLook);
     this.camera.updateMatrixWorld();
     this.gate.mesh.position.y = this.pieces[0].placed ? 3.6 : 0;
+    // The toy gate retracts into the wooden header instead of floating above its posts.
+    this.gate.mesh.scale.y = this.pieces[0].placed ? .08 : 1;
     const exitOpen = this.collected.every(Boolean);
     this.exit.mesh.getObjectByName('left-leaf')!.rotation.y = exitOpen ? -Math.PI / 2 : 0;
     this.exit.mesh.getObjectByName('right-leaf')!.rotation.y = exitOpen ? Math.PI / 2 : 0;
-    this.plate.material = mat(this.pieces[0].placed ? '#7bd39c' : colors[0]);
+    this.plateIndicator.material = mat(this.pieces[0].placed ? '#79efb0' : '#557c70');
     this.plate.position.y = this.pieces[0].placed ? .285 : .34;
     let connected = true, wetCount = 0;
     this.pipeMeshes.forEach((group, i) => {
@@ -1221,9 +1176,6 @@ export class PuzzleGarden {
   transfer?: (now: number) => boolean;
   tick(now: number) {
     if (this.transfer) { this.transfer(now); this.renderer.render(this.scene, this.camera); requestAnimationFrame(t => this.tick(t)); return; }
-    if (this.overviewMode) {
-      this.renderer.render(this.scene, this.camera); requestAnimationFrame(t => this.tick(t)); return;
-    }
     const dt = Math.min((now - (this.last || now)) / 1000, .1); this.last = now;
     if (this.state === 'racing' && !this.paused && !this.workshop.active) {
       this.accumulator += dt;

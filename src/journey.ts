@@ -131,7 +131,6 @@ export function startJourney(dialog: HTMLDialogElement, destination: string) {
     renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   }
   addEventListener('resize', resize); resize();
-  const diagnostics = new URLSearchParams(location.search).has('test');
   function dispose() {
     if (disposed) return; disposed = true;
     cancelAnimationFrame(frame); removeEventListener('resize', resize);
@@ -255,7 +254,6 @@ export function startJourney(dialog: HTMLDialogElement, destination: string) {
       filter.frequency.setTargetAtTime(600 + surge * 500 + boost * 1200 + kick * 450, audio.currentTime, .1);
     }
     if (!revealed) renderer.render(scene, camera);
-    if (diagnostics) Object.assign(window, { __JOURNEY_DIAGNOSTICS__: { phase, elapsed, charge, kick, cloudHeight: cloud.scale.y, passing: passingMaterial.opacity, windLevel, distance: camera.position.distanceTo(ride.position), bank: ride.rotation.z, streaks: streaks.map(streak => ({ z: streak.position.z, opacity: streak.material.opacity, visible: streak.visible })), pose: { heading: player.rotation.y, body: avatar.rotation.toArray().slice(0, 3), arms: limbs.map(({ arm }) => [...arm.position.toArray(), arm.rotation.z]), feet: limbs.map(({ foot }) => foot.rotation.toArray().slice(0, 3)), expression: player.userData.expression }, camera: camera.position.toArray(), player: ride.position.toArray(), revealed, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, dpr: renderer.getPixelRatio() } });
     if (ready && (skipped || landing >= (fromExit ? 3.0 : 2.5))) {
       if (fromExit && !revealed) document.dispatchEvent(new Event('journey-arrival'));
       dispose();

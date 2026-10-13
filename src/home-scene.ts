@@ -268,7 +268,6 @@ export function createHomeScene(canvas: HTMLCanvasElement): () => void {
   }
   const observer = new ResizeObserver(resize); observer.observe(canvas); resize();
   let frame = 0;
-  const diagnostics = new URLSearchParams(location.search).has('test');
   const start = performance.now();
   const groundedY = player.position.y;
   let arrivalStart: number | undefined;
@@ -291,17 +290,6 @@ export function createHomeScene(canvas: HTMLCanvasElement): () => void {
       if (progress === 1) arrivalStart = undefined;
     }
     renderer.render(scene, camera);
-    if (diagnostics) {
-      const bounds = new T.Box3().setFromObject(player.getObjectByName('avatar')!);
-      const points: T.Vector3[] = [];
-      for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) points.push(new T.Vector3(x, y, z).project(camera));
-      Object.assign(window, { __HOME_DIAGNOSTICS__: {
-        calls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
-        geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures,
-        hero: { heightRatio: (Math.max(...points.map(p => p.y)) - Math.min(...points.map(p => p.y))) / 2, x: (player.position.clone().project(camera).x + 1) / 2 },
-        portrait, reducedMotion: reducedMotion.matches,
-      } });
-    }
     frame = requestAnimationFrame(render);
   }
   frame = requestAnimationFrame(render);
@@ -311,7 +299,6 @@ export function createHomeScene(canvas: HTMLCanvasElement): () => void {
     geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose());
     grassTexture.dispose(); contactTexture.dispose();
     instances.forEach(instance => instance.dispose());
-    if (diagnostics) Reflect.deleteProperty(window, '__HOME_DIAGNOSTICS__');
 
     // Character geometry/materials are shared with levels; only its per-instance marker is owned here.
     player.getObjectByName('player-marker')!.traverse(node => {

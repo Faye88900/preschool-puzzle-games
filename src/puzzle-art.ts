@@ -8,15 +8,32 @@ export const elbowCurve = new T.CatmullRomCurve3([
   new T.Vector3(-2, 0, 0), new T.Vector3(-.65, 0, 0), new T.Vector3(0, 0, -.65), new T.Vector3(0, 0, -2),
 ]);
 
-// Small moving beads make direction readable without a fluid simulation.
+// Scrolling ripples and beads make flow readable through the transparent shell.
 export function waterPipe(curve: T.Curve<T.Vector3>) {
   const root = new T.Group();
   const shell = new T.Mesh(new T.TubeGeometry(curve, 28, .36, 12, false), new T.MeshStandardMaterial({
-    color: '#128bd6', roughness: .24, transparent: true, opacity: .72, depthWrite: false,
+    color: '#128bd6', roughness: .24, transparent: true, opacity: .48, depthWrite: false,
   }));
   root.add(shell);
   const water = new T.Group(); water.name = 'flow'; root.add(water);
-  water.add(new T.Mesh(new T.TubeGeometry(curve, 28, .24, 10, false), mat('#45b6db')));
+  const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#269ecb'; ctx.fillRect(0, 0, 256, 128);
+  for (let i = -1; i < 5; i++) {
+    ctx.beginPath();
+    for (let y = 0; y <= 128; y++) {
+      const x = i * 64 + Math.sin(y / 128 * Math.PI * 2) * 12;
+      if (y === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#63d7ed'; ctx.lineWidth = 14; ctx.stroke();
+    ctx.strokeStyle = '#c9f7ff'; ctx.lineWidth = 3; ctx.stroke();
+  }
+  const ripples = new T.CanvasTexture(canvas);
+  ripples.colorSpace = T.SRGBColorSpace;
+  ripples.wrapS = ripples.wrapT = T.RepeatWrapping;
+  water.add(new T.Mesh(new T.TubeGeometry(curve, 28, .24, 10, false), new T.MeshStandardMaterial({
+    map: ripples, roughness: .25, emissive: '#67d4ee', emissiveMap: ripples, emissiveIntensity: .25,
+  })));
   for (let i = 0; i < 7; i++) {
     const bead = orb('#dcfaff', 0, .1, 0, .1, .07, .1); water.add(bead);
   }
@@ -34,6 +51,9 @@ export function waterPipe(curve: T.Curve<T.Vector3>) {
 export function animateWater(root: T.Group, wet: boolean, time: number, reverse = false) {
   const flow = root.getObjectByName('flow')!; flow.visible = wet;
   const curve = root.userData.curve as T.Curve<T.Vector3>;
+  const water = flow.children[0] as T.Mesh<T.TubeGeometry, T.MeshStandardMaterial>;
+  // Tube UV.x follows the curve; the middle elbow carries water in reverse.
+  if (wet) water.material.map!.offset.x = (reverse ? 1 : -1) * (time * .48 % 1);
   if (wet) flow.children.slice(1).forEach((bead, i) => {
     const phase = (time * .48 + i / 7) % 1;
     curve.getPoint(reverse ? 1 - phase : phase, bead.position); bead.position.y += .13;
@@ -44,6 +64,84 @@ function part(parent: T.Object3D, geometry: T.BufferGeometry, color: string, x =
   const mesh = new T.Mesh(geometry, mat(color));
   mesh.position.set(x, y, z); mesh.castShadow = mesh.receiveShadow = true; parent.add(mesh);
   return mesh;
+}
+
+function shapeBadge(parent: T.Object3D, sides: number, width: number, height: number) {
+  const outline = new T.Shape(), hole = new T.Path();
+  for (let i = 0; i < sides; i++) {
+    const angle = Math.PI / 2 + i * Math.PI * 2 / sides + (sides === 4 ? Math.PI / 4 : 0);
+    const x = Math.cos(angle) * width / 2, y = Math.sin(angle) * height / 2;
+    if (i === 0) { outline.moveTo(x, y); hole.moveTo(x * .72, y * .72); }
+    else { outline.lineTo(x, y); hole.lineTo(x * .72, y * .72); }
+  }
+  outline.closePath(); hole.closePath(); outline.holes.push(hole);
+  const badge = part(parent, new T.ShapeGeometry(outline), '#fff0cf');
+  badge.name = 'shape-badge'; return badge;
+}
+
+export function workshopBlock(kind: 'cube' | 'cylinder' | 'triangle' | 'rectangle', color: string) {
+  let geometry: T.BufferGeometry;
+  if (kind === 'triangle') {
+    const shape = new T.Shape();
+    shape.moveTo(-.67, -.51); shape.lineTo(.67, -.51); shape.lineTo(0, .51); shape.closePath();
+    geometry = new T.ExtrudeGeometry(shape, { depth: 1.02, bevelEnabled: true, bevelThickness: .04, bevelSize: .04, bevelSegments: 2, steps: 1 });
+    geometry.translate(0, 0, -.51);
+  } else geometry = kind === 'cylinder' ? new T.CylinderGeometry(.62, .62, 1.2, 24)
+    : kind === 'cube' ? rounded(1.3, 1.3, 1.3, .09) : rounded(1.9, .9, 1.1, .08);
+  const root = new T.Mesh(geometry, mat(color)); root.name = `workshop-${kind}`;
+  if (kind === 'cube' || kind === 'rectangle') {
+    const w = kind === 'cube' ? 1.3 : 1.9, h = kind === 'cube' ? 1.3 : .9, d = kind === 'cube' ? 1.3 : 1.1;
+    for (const side of [-1, 1]) {
+      part(root, rounded(w - .24, h - .24, .018, .008), '#dbb886', 0, 0, side * (d / 2 + .002));
+      const badge = shapeBadge(root, 4, (w - .42) * 1.4, (h - .42) * 1.4);
+      badge.position.z = side * (d / 2 + .014); badge.rotation.y = side < 0 ? Math.PI : 0;
+      part(root, rounded(.018, h - .24, d - .24, .008), '#dbb886', side * (w / 2 + .002));
+    }
+    const top = shapeBadge(root, 4, (w - .32) * 1.4, (d - .32) * 1.4);
+    top.rotation.x = -Math.PI / 2; top.position.y = h / 2 + .003;
+  } else if (kind === 'cylinder') {
+    part(root, new T.CylinderGeometry(.49, .49, .018, 24), '#dbb886', 0, .604);
+    const top = shapeBadge(root, 32, .79, .79); top.rotation.x = -Math.PI / 2; top.position.y = .616;
+    for (const side of [-1, 1]) {
+      const badge = shapeBadge(root, 32, .73, .73);
+      badge.position.z = side * .624; badge.rotation.y = side < 0 ? Math.PI : 0;
+    }
+  } else {
+    for (const side of [-1, 1]) {
+      const badge = shapeBadge(root, 3, 1.1, 1.1);
+      badge.position.set(0, -.14, side * .553); badge.rotation.y = side < 0 ? Math.PI : 0;
+    }
+  }
+  root.traverse(node => { if (node instanceof T.Mesh) node.castShadow = node.receiveShadow = true; });
+  return root;
+}
+
+export function workshopPressurePlate() {
+  const base = new T.Group(); base.name = 'workshop-plate-base';
+  part(base, rounded(2.8, .26, 2.8), '#dbb886', 0, .13);
+  part(base, rounded(2.35, .08, 2.35, .03), '#685b48', 0, .265);
+  for (const x of [-1.19, 1.19]) for (const z of [-1.19, 1.19])
+    part(base, rounded(.42, .41, .42), '#438f86', x, .205, z);
+  const indicator = part(base, rounded(.85, .07, .018, .008), '#557c70', 0, .15, 1.405);
+  indicator.name = 'plate-indicator';
+  const top = new T.Mesh(rounded(2.1, .14, 2.1, .04), mat('#ffd15a'));
+  top.castShadow = top.receiveShadow = true;
+  const badge = shapeBadge(top, 4, 2.02, 2.02); badge.rotation.x = -Math.PI / 2; badge.position.y = .074;
+  return { base, top, indicator };
+}
+
+export function workshopGate(width: number) {
+  const frame = new T.Group(), panel = new T.Group(); frame.name = 'workshop-gate-frame';
+  for (const x of [-width / 2, width / 2]) {
+    part(frame, rounded(.6, 3.65, .6), '#dbb886', x, 1.825);
+    part(frame, rounded(.74, .68, .72), '#dfad44', x, 3.4);
+    const badge = shapeBadge(frame, 4, .65, .65); badge.position.set(x, 3.4, .367);
+  }
+  part(frame, rounded(width - .6, .3, .5), '#dbb886', 0, 3.8);
+  for (const y of [.24, 2.84]) part(panel, rounded(width - .6, .22, .24), '#438f86', 0, y);
+  for (let x = -width / 2 + .7; x < width / 2 - .5; x += .72)
+    part(panel, rounded(.15, 2.6, .18, .055), '#438f86', x, 1.54);
+  return { frame, panel };
 }
 
 export function gardenFlower(symbol?: number) {
@@ -76,7 +174,37 @@ export function gardenFlower(symbol?: number) {
   return root;
 }
 
+export function pondFlower() {
+  const root = new T.Group(); root.name = 'water-flower';
+  part(root, new T.CylinderGeometry(.18, .23, .94, 16), '#528d38', 0, .61);
+  const leaves = new T.Group(); leaves.name = 'leaves'; root.add(leaves);
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    const leaf = orb(i % 2 ? '#6fa943' : '#609b39', Math.cos(a) * .57, .28, Math.sin(a) * .57, .64, .23, .46);
+    leaf.rotation.y = -a; leaf.castShadow = leaf.receiveShadow = true; leaves.add(leaf);
+  }
+  const petals = new T.Group(); petals.name = 'petals'; root.add(petals);
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    const petal = orb('#fff5de', Math.cos(a) * .65, 1.10, Math.sin(a) * .65, .59, .23, .45);
+    petal.rotation.set(0, -a, 0, 'YXZ'); petal.castShadow = petal.receiveShadow = true;
+    const inset = orb('#f6d979', .12, .84, 0, .65, .18, .62);
+    petal.add(inset); petals.add(petal);
+  }
+  const center = orb('#edbf43', 0, 1.22, 0, .48, .11, .48);
+  center.name = 'flower-center'; center.castShadow = center.receiveShadow = true; root.add(center);
+  return root;
+}
+
 export function colorFlower(root: T.Group, color: string, active: boolean) {
+  if (root.name === 'water-flower') {
+    const open = active ? T.MathUtils.clamp((root.scale.y - .72) / .83, 0, 1) : 0;
+    root.getObjectByName('petals')!.children.forEach(petal => {
+      petal.rotation.z = -.65 * (1 - open);
+      petal.position.y = .93 + .17 * open;
+    });
+    return;
+  }
   root.getObjectByName('petals')!.children.forEach(petal => (petal as T.Mesh).material = mat(active ? color : '#b5b8b2'));
   const icon = root.getObjectByName('flower-symbol') as T.Mesh | undefined;
   if (icon) icon.material = mat(active ? color : '#6d746d');

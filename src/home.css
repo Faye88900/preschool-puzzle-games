@@ -1,4 +1,4 @@
-@font-face{font-family:Lilita;src:url('../public/fonts/LilitaOne-Regular.ttf') format('truetype');font-display:swap}
+@font-face{font-family:Lilita;src:url('/fonts/LilitaOne-Regular.ttf') format('truetype');font-display:swap}
 #home{position:fixed;inset:0;pointer-events:none;color:#403673;isolation:isolate}
 #home button,#home a,#home dialog{pointer-events:auto}
 .home-menu{position:absolute;left:7%;top:15%;width:clamp(230px,25vw,360px)}

@@ -60,7 +60,6 @@ export function cloudTransfer(scene: T.Scene, camera: T.PerspectiveCamera, playe
     new T.Vector3(4, 3, -5), new T.Vector3(1, 9, -24)
   ]);
   const tangent = new T.Vector3();
-  const diagnostics = new URLSearchParams(location.search).has('test');
   let touchdown = 0, jumpHeight = 0, wobble = 0;
   return (now: number) => {
     const dt = Math.min((now - last) / 1000, .05); last = now;
@@ -129,9 +128,6 @@ export function cloudTransfer(scene: T.Scene, camera: T.PerspectiveCamera, playe
       cover.style.opacity = String(smooth(t, 6.2, 7.2));
       mist.style.opacity = String(smooth(t, 5.1, 6.4)); mist.style.transform = 'scale(' + (1 + fly) + ')';
     }
-    const stage = arriving ? 'landing' : t < 1.3 ? 'turning' : t < 2.35 ? 'waving' : t < 4.25 ? 'boarding' : t < 6.2 ? 'following' : 'covered';
-    Object.assign(window, { __TRANSFER_STAGE__: stage });
-    if (diagnostics) Object.assign(window, { __TRANSFER_DIAGNOSTICS__: { elapsed: t, wobble, cameraDistance: camera.position.distanceTo(player.position), touchdown, jumpHeight, cloud: cloud.position.toArray(), cloudHeight: cloud.scale.y, markerVisible: marker?.visible, contact: contactMaterial.opacity } });
     if (!complete && t >= (arriving ? 2 : 7.3)) {
       complete = true; scene.remove(cloud, trails); geometry.dispose(); material.dispose(); trailGeometry.dispose(); trailMaterial.dispose();
       contact.geometry.dispose(); contactMaterial.dispose(); vapor.dispose(); texture.dispose();
