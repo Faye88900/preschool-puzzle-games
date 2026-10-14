@@ -1,4 +1,6 @@
 import { cloudTransfer } from './cloud-transfer';
+import { assistedVelocity } from './race-assist';
+import { language } from './i18n';
 import * as T from 'three';
 import R from '@dimforge/rapier3d-compat';
 import { UI } from './ui';
@@ -125,7 +127,7 @@ export class Race {
         this.createPeople();
         this.applyAudioSettings();
         this.ui = new UI({ start: () => this.start(), pause: () => this.pause(), mute: () => {
-            this.settings = { music: this.muted, effects: this.muted }; saveSettings(this.settings); this.applyAudioSettings();
+            this.settings = { ...readSettings(), music: this.muted, effects: this.muted }; saveSettings(this.settings); this.applyAudioSettings();
             if (!this.settings.effects) speechSynthesis?.cancel(); else this.syncMusic();
         }, jump: () => this.jump = true, dive: () => this.dive = true, move: (x, y) => this.stick = { x, y } });
         const nextLevel = document.querySelector<HTMLAnchorElement>('#game-ui .level-link')!;
@@ -136,7 +138,7 @@ export class Race {
             if (this.state !== 'qualified' || this.transfer) return;
             this.keys.clear(); this.stick = { x: 0, y: 0 };
             this.transfer = cloudTransfer(this.scene, this.camera, this.people[0].mesh, false, () => {
-                location.assign('?level=2&cloudArrival=1');
+                location.assign(`?level=2&cloudArrival=1&lang=${language}`);
             });
         };
         addEventListener('keydown', e => { if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code))
@@ -271,7 +273,7 @@ export class Race {
     playMedia(kind:'countdown'|'music'|'finish',clip:HTMLAudioElement){clip.currentTime=0;clip.muted=!(kind==='music'?this.settings.music:this.settings.effects);void clip.play().catch(()=>{});}
     stopMedia(clip:HTMLAudioElement){clip.pause();clip.currentTime=0;}
     syncMusic(){const on=!this.paused&&!document.hidden&&['ready','countdown','racing','qualified'].includes(this.state);if(!on)this.raceMusic.pause();else if(this.raceMusic.paused)void this.raceMusic.play().catch(()=>{});}
-    start() { this.state = 'countdown'; this.countdown = 3; this.time = 0; this.finished = 0; this.paused = false; this.acc = 0; this.cueIndex = -1; this.cue = '准备——出发！'; this.keys.clear(); this.jump = this.dive = false; this.stick = { x: 0, y: 0 }; speechSynthesis?.cancel(); this.stopMedia(this.finishHorn);this.stopMedia(this.countdownSound);if(this.raceMusic.paused)this.playMedia('music',this.raceMusic); if (this.confetti) {
+    start() { this.settings.assist = readSettings().assist; this.state = 'countdown'; this.countdown = 3; this.time = 0; this.finished = 0; this.paused = false; this.acc = 0; this.cueIndex = -1; this.cue = '准备——出发！'; this.keys.clear(); this.jump = this.dive = false; this.stick = { x: 0, y: 0 }; speechSynthesis?.cancel(); this.stopMedia(this.finishHorn);this.stopMedia(this.countdownSound);if(this.raceMusic.paused)this.playMedia('music',this.raceMusic); if (this.confetti) {
         this.scene.remove(this.confetti);
         this.confetti.geometry.dispose();
         (this.confetti.material as T.Material).dispose();
@@ -288,6 +290,7 @@ export class Race {
         c.mesh.position.copy(c.previous);
     } this.audio ??= new AudioContext(); void this.audio.resume(); this.countdownBeat(); }
     pause() { if (this.state === 'racing' || this.state === 'countdown') {
+        this.settings.assist = readSettings().assist;
         this.paused = !this.paused;
         this.keys.clear();
         this.stick = { x: 0, y: 0 };
@@ -428,6 +431,7 @@ export class Race {
                     break;
                 }
             }
+            if (!ai && this.settings.assist) vx = assistedVelocity(p.x, p.z, p.y, vx);
             c.body.setLinvel({ x:vx, y:vy, z:vz }, true);
             if (len > .1)c.heading=Math.atan2(-x,-z);
             c.gait+=Math.hypot(v.x,v.z)*dt*movement.gait;

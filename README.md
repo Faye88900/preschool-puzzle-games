@@ -23,5 +23,7 @@ npm run dev
 
 构建：`npm run build`，结果在 `dist`。本地预览：`npm run preview`。
 
-首页设置可开关背景音乐、音效与语音。素材来源和许可证保留在 `public` 中。
+首页设置内可切换中文、英文、马来文，也支持 `?lang=zh`、`?lang=en`、`?lang=ms`。本次仅切换文字，语音仍沿用原有中文朗读。
+首页设置可开关背景音乐、音效与语音，以及「4岁辅助转向」。辅助默认关闭，也可在赛道暂停菜单中切换：靠近左右边缘时帮助回正，跳跃和躲避仍由玩家控制。
+运行 `node tests/feedback.test.mjs` 检查三语提示、旧设置兼容和辅助转向边界。素材来源和许可证保留在 `public` 中。
 推送到 `main` 后，现有 GitHub Actions 会构建并更新 GitHub Pages。

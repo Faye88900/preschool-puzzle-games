@@ -1,5 +1,9 @@
 import './style.css';
+import { language, t, localize } from './i18n';
 import { readSettings } from './settings';
+document.documentElement.lang = language === 'zh' ? 'zh-CN' : language;
+document.title = t('云端冒险 · Bean Rush');
+localize(document.querySelector('#game')!);
 
 const buttonSound = new Audio(`${import.meta.env.BASE_URL}audio/ui/button-click.wav`);
 buttonSound.id = 'button-sound'; buttonSound.hidden = true;
@@ -40,7 +44,7 @@ document.addEventListener('click', event => {
 const params = new URLSearchParams(location.search);
 const loading = document.createElement('dialog');
 loading.className = 'game-loading';
-loading.setAttribute('aria-label', '加载中');
+loading.setAttribute('aria-label', t('加载中'));
 document.body.append(loading);
 loading.showModal();
 async function boot() {
@@ -66,5 +70,6 @@ async function start() {
 }
 start().catch(error => {
   document.body.innerHTML = '<main style="padding:40px;font:24px sans-serif">暂时无法打开游戏，请刷新再试一次。</main>';
+  localize(document.body);
   console.error(error);
 }).finally(() => { loading.close(); loading.remove(); });

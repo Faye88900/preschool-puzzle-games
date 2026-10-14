@@ -24,3 +24,6 @@
 @media(prefers-reduced-motion:reduce){#home *{transition:none!important}}
 .home-avatar{position:absolute;right:-12px;top:-38px;width:64px;height:64px;transform:rotate(5deg);text-shadow:none}.home-avatar svg{width:100%;height:100%}.home-logo small{display:block;margin-top:24px;font:800 22px system-ui,sans-serif;letter-spacing:4px;text-shadow:0 2px 0 #253da8}
 @media(max-width:650px) and (orientation:portrait){.home-logo{bottom:calc(100dvh - 255px)}.home-avatar{top:-26px;right:0;width:48px;height:48px}}
+.home-language select{min-height:44px;max-width:210px;border:1px solid #c7b6df;border-radius:10px;background:white;color:#403673;font:700 17px system-ui;padding:5px 10px;cursor:pointer}
+html:not([lang="zh-CN"]) .home-logo small{letter-spacing:0;font-size:18px}
+@media(max-width:650px) and (orientation:portrait){.home-language select{max-width:190px}}

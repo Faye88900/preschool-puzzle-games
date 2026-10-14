@@ -1,4 +1,5 @@
 import { cloudTransfer } from './cloud-transfer';
+import { t } from './i18n';
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -158,7 +159,7 @@ export class PuzzleGarden {
     this.interactionRing.visible = false;
     this.scene.add(this.interactionRing);
     this.ui = new UI({ start: () => this.start(), pause: () => this.pause(), mute: () => {
-      this.settings = { music: this.muted, effects: this.muted }; saveSettings(this.settings);
+      this.settings = { ...readSettings(), music: this.muted, effects: this.muted }; saveSettings(this.settings);
       if (!this.settings.effects) window.speechSynthesis?.cancel();
       this.audio?.applySettings(this.settings);
     }, move: (x, y) => { if (!this.hintShot) this.stick = { x, y }; }, jump: () => { if (!this.hintShot) this.jumpRequested = true; }, dive: () => this.interact(), hint: () => this.hint() });
@@ -167,7 +168,7 @@ export class PuzzleGarden {
       this.clearInput(); this.previous.copy(this.body.translation());
     }, (x, z) => this.pieces.every((piece, i) => i === this.carried || Math.hypot(x - piece.x, z - piece.z) > piece.reach + .65));
     this.scene.add(this.workshop.guide);
-    document.querySelector('#game')!.setAttribute('aria-label', '第二关：解谜花园');
+    document.querySelector('#game')!.setAttribute('aria-label', t('第二关：解谜花园'));
     addEventListener('keydown', event => {
       if (this.workshop.active && !this.paused) return;
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) event.preventDefault();

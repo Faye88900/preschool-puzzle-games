@@ -1,4 +1,6 @@
 import { GAME_NAME, PLAYER_AVATAR, TASKS, taskIcon } from './identity';
+import { t, localize } from './i18n';
+import { readSettings, saveSettings } from './settings';
 type Callbacks = { start: () => void; pause: () => void; mute: () => void; jump: () => void; dive: () => void; move: (x: number, y: number) => void; hint?: () => void };
 type Snapshot = { state: string; time: number; rank: number; finished: number; paused: boolean; muted: boolean; cue: string; countdown: number; diveReady?: boolean };
 
@@ -48,6 +50,15 @@ export class UI {
     levelLink.href = '?level=2';
     levelLink.textContent = '下一关 · 解谜花园 →';
     this.get('menu').querySelector('.menu-card')!.append(levelLink);
+    const assist = document.createElement('label');
+    assist.className = 'race-assist-setting';
+    assist.hidden = true;
+    assist.innerHTML = '<input type="checkbox" role="switch"> <span>4岁辅助转向</span>';
+    const assistInput = assist.querySelector('input')!;
+    assistInput.checked = readSettings().assist;
+    assistInput.onchange = () => saveSettings({ ...readSettings(), assist: assistInput.checked });
+    this.get('menu-tips').after(assist);
+    localize(this.root);
     this.get<HTMLButtonElement>('pause').onclick = callbacks.pause;
     this.get<HTMLButtonElement>('sound').onclick = callbacks.mute;
     this.get<HTMLButtonElement>('restart').onclick = callbacks.start;
@@ -59,8 +70,8 @@ export class UI {
       const button = this.get<HTMLButtonElement>('fullscreen');
       const active = Boolean(document.fullscreenElement);
       button.innerHTML = active ? icons.minimize : icons.fullscreen;
-      button.title = active ? '退出全屏' : '全屏';
-      button.setAttribute('aria-label', active ? '退出全屏' : '全屏游戏');
+      button.title = t(active ? '退出全屏' : '全屏');
+      button.setAttribute('aria-label', t(active ? '退出全屏' : '全屏游戏'));
     });
     for (const action of ['jump', 'dive'] as const) this.wireAction(action, callbacks[action]);
     const stick = this.get('stick');
@@ -91,6 +102,7 @@ export class UI {
     button.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); action(); } });
   }
   private text(id: string, value: string) {
+    value = t(value);
     const element = this.get(id);
     if (element.textContent !== value) element.textContent = value;
   }
@@ -109,12 +121,15 @@ export class UI {
     this.root.querySelector('.keyboard-guide')!.innerHTML = '<kbd>W A S D</kbd> / 方向键 移动　<kbd>空格</kbd> 跳跃　<kbd>E</kbd> 互动　<kbd>H</kbd> 提示';
     this.root.querySelector<HTMLAnchorElement>('.level-link')!.hidden = true;
     this.get('primary').insertAdjacentHTML('afterend', '<a id="menu-home" class="secondary-button" href="./?homeArrival=1" hidden>返回主页</a>');
+    this.root.querySelector('.race-assist-setting')!.remove();
+    localize(this.root);
   }
   updatePuzzle(state: string, paused: boolean, muted: boolean, cue: string, count: number, action: string, cinematic: boolean) {
     this.update({ state, paused, muted, cue, finished: count, rank: 1, time: 0, countdown: 0 });
     for (const id of ['jump', 'dive', 'hint']) this.get<HTMLButtonElement>(id).disabled = cinematic;
     if (cinematic && this.get('stick').getAttribute('aria-disabled') !== 'true') this.resetInput();
     this.get('stick').setAttribute('aria-disabled', String(cinematic));
+    action = t(action);
     const buttonLabel = this.get('dive').querySelector('b')!;
     if (buttonLabel.textContent !== action) buttonLabel.textContent = action;
   }
@@ -124,7 +139,7 @@ export class UI {
     if (!point) return;
     const [x, y] = point;
     this.text('chicken-marker', '🐥');
-    marker.setAttribute('aria-label', mood === 'blocked' ? '小鸡被挡住了' : '小鸡落后了');
+    marker.setAttribute('aria-label', t(mood === 'blocked' ? '小鸡被挡住了' : '小鸡落后了'));
     marker.dataset.mood = mood;
     const margin = Math.max(12, (marker.offsetWidth / 2 + 12) / innerWidth * 100);
     marker.style.left = `${Math.max(margin, Math.min(100 - margin, (x + 1) * 50))}%`;
@@ -151,13 +166,13 @@ export class UI {
     const sound = this.get<HTMLButtonElement>('sound');
     const soundIcon = snapshot.muted ? icons.muted : icons.sound;
     if (sound.querySelector('svg')?.dataset.icon !== (snapshot.muted ? 'volume-x' : 'volume-2')) sound.innerHTML = soundIcon;
-    sound.title = snapshot.muted ? '打开声音' : '关闭声音';
+    sound.title = t(snapshot.muted ? '打开声音' : '关闭声音');
     sound.setAttribute('aria-label', sound.title);
     const pause = this.get<HTMLButtonElement>('pause');
     const pauseIcon = snapshot.paused ? icons.play : icons.pause;
     if (pause.querySelector('svg')?.dataset.icon !== (snapshot.paused ? 'play' : 'pause')) pause.innerHTML = pauseIcon;
-    pause.title = snapshot.paused ? '继续' : '暂停';
-    pause.setAttribute('aria-label', snapshot.paused ? '继续游戏' : '暂停游戏');
+    pause.title = t(snapshot.paused ? '继续' : '暂停');
+    pause.setAttribute('aria-label', t(snapshot.paused ? '继续游戏' : '暂停游戏'));
     this.text('countdown', snapshot.state === 'countdown' ? String(Math.max(1, Math.ceil(snapshot.countdown))) : '');
     const mode = snapshot.paused ? 'paused' : snapshot.state;
     if (mode === this.lastMode) return;
@@ -175,6 +190,7 @@ export class UI {
     const won = mode === 'qualified';
     const ready = mode === 'ready';
     const paused = mode === 'paused';
+    if (!this.puzzle) this.root.querySelector<HTMLElement>('.race-assist-setting')!.hidden = !paused;
     this.root.classList.toggle('card-mode', this.puzzle || !ready);
     this.get('menu-badge').innerHTML = paused ? icons.pause : won ? icons.star : ready ? icons.key : icons.retry;
     this.get('menu-title').innerHTML = this.puzzle ? (ready ? '找齐钥匙' : paused ? '休息一下' : '大门打开啦！') : ready ? '前 8 名到达终点<br><span>即可晋级</span>' : paused ? '休息一下' : won ? '晋级啦！' : '再来挑战吧！';
@@ -197,6 +213,7 @@ export class UI {
     const primary = this.get<HTMLButtonElement>('primary');
     primary.innerHTML = paused ? '继续玩 <span>▶</span>' : ready ? '开始玩 <span>▶</span>' : '再玩一次 <span>↻</span>';
     primary.onclick = paused ? this.actions.pause : this.actions.start;
+    localize(this.root);
     if (!ready) (primary.hidden ? nextLevel : primary).focus({ preventScroll: true });
   }
 }

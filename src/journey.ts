@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { t, localize } from './i18n';
 
 import { createPlayerCharacter, setCharacterExpression } from './character';
 import { readSettings } from './settings';
@@ -10,6 +11,7 @@ export function startJourney(dialog: HTMLDialogElement, destination: string) {
   dialog.setAttribute('aria-label', '乘云前往' + destination);
   dialog.innerHTML = `<div class="journey-sky"></div><canvas aria-label="小精灵乘云穿过云海"></canvas><div class="journey-curtain"></div><div class="journey-caption"><small>云端冒险</small><p role="status">乘着云，出发吧</p></div><button class="journey-skip" autofocus>跳过动画 <span aria-hidden="true">↗</span></button>`;
   document.body.classList.add('journey-active');
+  localize(dialog);
   const canvas = dialog.querySelector('canvas')!;
   const sky = dialog.querySelector<HTMLElement>('.journey-sky')!;
   sky.style.backgroundImage = `url(${import.meta.env.BASE_URL}images/journey-cloudscape.png)`;
@@ -117,7 +119,7 @@ export function startJourney(dialog: HTMLDialogElement, destination: string) {
   }
   startWind();
   dialog.addEventListener('pointerdown', startWind);
-  const requestSkip = () => { skipped = true; skip.disabled = true; caption.textContent = '正在准备' + destination + '…'; };
+  const requestSkip = () => { skipped = true; skip.disabled = true; caption.textContent = t('正在准备' + destination + '…'); };
   skip.onclick = requestSkip;
   const cancel = (event: Event) => { event.preventDefault(); requestSkip(); };
   dialog.addEventListener('cancel', cancel);
@@ -247,7 +249,7 @@ export function startJourney(dialog: HTMLDialogElement, destination: string) {
     }
     const phase = landing > 0 ? 'arriving' : elapsed < 1.6 ? 'takeoff' : 'flying';
     dialog.dataset.phase = phase;
-    if (!skipped) caption.textContent = landing > .9 ? destination + '，我们来啦' : elapsed < 1.6 ? '乘着云，出发吧' : '下一站 · ' + destination;
+    if (!skipped) caption.textContent = t(landing > .9 ? destination + '，我们来啦' : elapsed < 1.6 ? '乘着云，出发吧' : '下一站 · ' + destination);
     const windLevel = (.06 * surge + .22 * boost + kick * .09) * (1 - charge * .65) * Math.min(1, Math.pow(8 / camera.position.distanceTo(ride.position), 1.1)) * (1 - cover);
     if (audio && wind && filter) {
       wind.gain.setTargetAtTime(readSettings().effects ? windLevel : 0, audio.currentTime, .08);

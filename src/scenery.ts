@@ -34,7 +34,7 @@ export function decorateCourse(scene: T.Scene) {
         add('orb', '#b887e8', x, 5.2, -6, .48, .48, .48);
     }
     add('box', '#9867d4', 0, 5.2, -6, 13.4, .7, .7);
-    const start = label('软 糖 冲 刺', '#ffffff', '#9867d4');
+    const start = label('BEAN RUSH', '#ffffff', '#9867d4');
     start.position.set(0, 5.18, -5.59); start.scale.set(.75, .60, 1); scene.add(start);
     for (let i = 0; i < 18; i++) {
         const z = 1 - i * 9;

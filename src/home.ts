@@ -1,4 +1,5 @@
 import './home.css';
+import { language, changeLanguage, localize, t } from './i18n';
 import { createHomeScene } from './home-scene';
 import { readSettings, saveSettings } from './settings';
 import { GAME_NAME, PLAYER_AVATAR } from './identity';
@@ -24,13 +25,19 @@ export function showHome() {
     </dialog>
     <dialog id="settings-dialog" aria-labelledby="settings-heading">
       <button class="home-close" aria-label="关闭">×</button><h2 id="settings-heading">设置</h2>
+      <label class="home-setting home-language"><span>语言</span><select id="language" aria-label="语言 / Language / Bahasa"><option value="zh">中文</option><option value="en">English</option><option value="ms">Bahasa Melayu</option></select></label>
       <label class="home-setting">背景音乐<input type="checkbox" id="music-setting" role="switch" /></label>
       <label class="home-setting">音效与语音<input type="checkbox" id="effects-setting" role="switch" /></label>
+      <label class="home-setting">4岁辅助转向<input type="checkbox" id="assist-setting" role="switch" /></label>
+      <p>靠近边缘时帮助回正，跳跃仍由你控制。</p>
       <button class="home-done">完成</button>
     </dialog>`;
   document.body.append(root);
+  localize(root);
+  const languages = root.querySelector<HTMLSelectElement>('#language')!;
+  languages.value = language; languages.onchange = () => changeLanguage(languages.value);
   const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
-  canvas.setAttribute('aria-label', '云端空岛与紫耳小精灵');
+  canvas.setAttribute('aria-label', t('云端空岛与紫耳小精灵'));
   const cleanup = createHomeScene(canvas);
   addEventListener('pagehide', event => { if (!event.persisted) cleanup(); });
   const settings = readSettings();
@@ -47,7 +54,7 @@ export function showHome() {
   addEventListener('pagehide', () => music.pause());
   addEventListener('pageshow', syncMusic);
   syncMusic();
-  for (const key of ['music', 'effects'] as const) {
+  for (const key of ['music', 'effects', 'assist'] as const) {
     const input = root.querySelector<HTMLInputElement>(`#${key}-setting`)!;
     input.checked = settings[key];
     input.onchange = () => { settings[key] = input.checked; saveSettings(settings); syncMusic(); };

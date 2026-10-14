@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { t } from './i18n';
 import { setCharacterExpression } from './character';
 
 /** Takes over an existing scene for boarding or landing; caller suspends its normal tick. */
@@ -46,7 +47,7 @@ export function cloudTransfer(scene: T.Scene, camera: T.PerspectiveCamera, playe
   const limbs = [-1, 1].map(side => ({ side, arm: player.getObjectByName('arm' + side)!, foot: player.getObjectByName('foot' + side)!, ear: player.getObjectByName('ear' + side)! }));
   const cover = document.createElement('div');
   cover.style.cssText = 'position:fixed;inset:0;z-index:100;pointer-events:auto;opacity:0;background:radial-gradient(ellipse at 25% 65%,#fffdf7,transparent 70%),linear-gradient(#dceaf5,#fffaf1 60%,#d7e4f2)';
-  cover.setAttribute('aria-label', arriving ? '乘云降落' : '登云前往解谜花园');
+  cover.setAttribute('aria-label', t(arriving ? '乘云降落' : '登云前往解谜花园'));
   if (!arriving) document.body.append(cover);
   const mist = document.createElement('div');
   mist.style.cssText = 'position:absolute;inset:-50%;background:radial-gradient(ellipse at 15% 60%,#fff 8%,#f3f6facc 20%,transparent 38%),radial-gradient(ellipse at 80% 30%,#fff7ea 8%,#f1f5faaa 22%,transparent 40%);opacity:0';

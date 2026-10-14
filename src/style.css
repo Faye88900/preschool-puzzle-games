@@ -108,39 +108,54 @@
 
 /* The speaker tab and soft speech silhouette belong to the garden's toy-like characters. */
 body.workshop-talking #game-ui { visibility: hidden; }
-.workshop-dialogue { --speaker-color: #b5dfcb; --speaker-ink: #265749; position: fixed; inset: auto 0 max(24px, env(safe-area-inset-bottom)); width: min(820px, calc(100% - 48px)); max-width: none; max-height: calc(100dvh - 32px); padding: 23px 8px 12px; margin: 0 auto; overflow: auto; border: 0; background: transparent; color: #344d49; font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+.workshop-dialogue { --speaker-color: #b5dfcb; --speaker-ink: #265749; position: fixed; inset: auto 0 max(12px, env(safe-area-inset-bottom)); width: min(820px, calc(100% - 48px)); max-width: none; max-height: calc(100dvh - 32px); padding: 16px 8px 10px; margin: 0 auto; overflow: auto; border: 0; background: transparent; color: #344d49; font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
 .workshop-dialogue[data-speaker="player"] { --speaker-color: #ddd0f3; --speaker-ink: #594277; }
 .workshop-dialogue[data-speaker="observe"] { --speaker-color: #f5dfa7; --speaker-ink: #70552b; }
 .workshop-dialogue::backdrop { background: linear-gradient(transparent 65%, #25434424); pointer-events: auto; }
-.workshop-bubble { position: relative; padding: 36px 46px 17px; background: #fffaf0; border-radius: 45px 57px 47px 55px / 38px 44px 36px 42px; box-shadow: 0 7px 0 #dbd7bd, 0 14px 24px #243f4026; }
-#workshop-speaker { position: absolute; left: 35px; top: -19px; display: inline-flex; align-items: center; min-height: 39px; padding: 7px 24px; border-radius: 17px 20px 16px 12px; background: var(--speaker-color); color: var(--speaker-ink); font-size: 18px; font-weight: 800; letter-spacing: 1px; transform: rotate(-3deg); box-shadow: 0 3px 0 #223f4610; }
-#workshop-line { min-height: 68px; margin: 0; padding-right: 12px; font-size: clamp(21px, 2.2vw, 26px); line-height: 1.65; font-weight: 600; letter-spacing: .5px; overflow-wrap: anywhere; }
+.workshop-bubble { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; padding: 32px 40px 14px; background: #fffaf0; border-radius: 36px 42px 37px 40px; box-shadow: 0 5px 0 #dbd7bd, 0 10px 18px #243f4026; }
+#workshop-speaker { position: absolute; left: 30px; top: -16px; display: inline-flex; align-items: center; min-height: 34px; padding: 6px 18px; border-radius: 14px 17px 13px 11px; background: var(--speaker-color); color: var(--speaker-ink); font-size: 18px; font-weight: 800; transform: rotate(-3deg); box-shadow: 0 3px 0 #223f4610; }
+#workshop-line { grid-column: 1 / -1; min-height: 52px; margin: 0; padding-right: 24px; font-size: clamp(22px, 2vw, 26px); line-height: 1.55; font-weight: 600; overflow-wrap: anywhere; }
 .workshop-bubble { cursor: pointer; user-select: none; touch-action: manipulation; }
-.workshop-dialogue-footer { display: flex; justify-content: flex-end; margin-top: 4px; }
+.workshop-dialogue-footer { grid-column: 2; grid-row: 2; align-self: end; display: flex; justify-content: flex-end; }
 .workshop-dialogue button { border: 0; cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-.workshop-leave { position: absolute; top: 7px; right: 12px; display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; color: #74867b; background: transparent; border-radius: 50%; }
-.workshop-leave svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.workshop-leave { position: absolute; top: 3px; right: 5px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; color: #74867b; background: transparent; border-radius: 50%; }
+.workshop-leave svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
 .workshop-leave:hover { background: #e8ecdf; color: #344d49; }
-.workshop-next { display: inline-flex; align-items: center; justify-content: flex-end; gap: 11px; min-height: 44px; min-width: 128px; padding: 5px 8px 5px 14px; border-radius: 20px; background: transparent; color: #526d60; font-size: 16px !important; font-weight: 700 !important; }
+.workshop-next { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; min-height: 44px; min-width: 104px; padding: 5px 12px; border-radius: 20px; background: transparent; color: #526d60; font-size: 16px !important; font-weight: 700 !important; }
 .workshop-next kbd { display: inline-grid; place-items: center; min-width: 43px; height: 25px; padding: 0 6px; border: 1.5px solid #9daa9d; border-bottom-width: 3px; border-radius: 7px; font: 600 11px system-ui, sans-serif; color: #6d8172; }
 .workshop-next-arrow { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 10px solid #c58b25; margin-left: 2px; }
 .workshop-next:hover { background: #eee9d6; color: #344d49; }
 .workshop-next:active { transform: translateY(2px); }
 .workshop-dialogue button:focus-visible { outline: 3px solid #548b79; outline-offset: 2px; }
 @media (max-width: 600px) {
-  .workshop-dialogue { width: calc(100% - 22px); bottom: max(14px, env(safe-area-inset-bottom)); padding: 22px 5px 10px; }
-  .workshop-bubble { padding: 32px 24px 12px; border-radius: 30px 37px 30px 35px / 30px 32px 28px 30px; }
-  #workshop-speaker { left: 22px; font-size: 16px; min-height: 36px; padding: 6px 20px; }
-  #workshop-line { font-size: 20px; min-height: 66px; line-height: 1.7; padding-right: 9px; }
-  .workshop-leave { top: 4px; right: 7px; }
-  .workshop-next { min-width: 104px; }
+  .workshop-dialogue { width: calc(100% - 16px); bottom: max(8px, env(safe-area-inset-bottom)); padding: 16px 4px 8px; }
+  .workshop-bubble { gap: 6px; padding: 28px 20px 10px; border-radius: 28px; }
+  #workshop-speaker { left: 20px; font-size: 16px; }
+  #workshop-line { font-size: 20px; min-height: 48px; }
+  .workshop-dialogue-footer { grid-column: 1 / -1; grid-row: 3; }
+}
+.workshop-portrait { display: none; position: absolute; left: 4px; bottom: 0; width: 210px; height: 180px; overflow: hidden; border-bottom-left-radius: 36px; pointer-events: none; }
+.workshop-portrait img { display: block; width: 128%; max-width: none; height: auto; margin-left: -14%; }
+.workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) { padding-top: 40px; }
+.workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) .workshop-portrait { display: block; }
+.workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) .workshop-bubble { padding-left: 226px; }
+.workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) #workshop-speaker { left: 226px; }
+@media (max-width: 600px) {
+  .workshop-portrait { left: 0; width: 116px; height: 103px; border-bottom-left-radius: 28px; }
+  .workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) { padding-top: 16px; }
+  .workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) .workshop-bubble { padding-left: 124px; }
+  .workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) #workshop-speaker { left: 124px; }
 }
 @media (pointer: coarse) { .workshop-next kbd { display: none; } }
 @media (max-height: 450px) {
-  .workshop-dialogue { bottom: max(8px, env(safe-area-inset-bottom)); width: min(720px, calc(100% - 32px)); }
-  .workshop-bubble { padding: 25px 32px 7px; }
-  #workshop-line { min-height: 32px; font-size: 19px; line-height: 1.5; }
-  #workshop-speaker { font-size: 15px; min-height: 32px; top: -17px; }
+  .workshop-dialogue { bottom: max(6px, env(safe-area-inset-bottom)); width: min(820px, calc(100% - 24px)); }
+  .workshop-bubble { padding: 20px 18px 5px; gap: 5px 12px; }
+  #workshop-line { font-size: 18px; min-height: 28px; line-height: 1.4; }
+  #workshop-speaker { font-size: 14px; }
+  .workshop-portrait { width: 126px; height: 112px; }
+  .workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) { padding-top: 32px; }
+  .workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) .workshop-bubble { padding-left: 138px; }
+  .workshop-dialogue:is([data-speaker="guide"], [data-speaker="player"]) #workshop-speaker { left: 138px; }
 }
 .chicken-marker, .pipe-feedback { position: absolute; z-index: 5; pointer-events: none; padding: 9px 13px; border: 2px solid #fff; border-radius: 18px; background: #fff5cb; color: #584428; font: 700 16px system-ui, sans-serif; box-shadow: 0 3px 0 #7c66352b; }
 .chicken-marker { transform: translate(-50%, -100%); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 26px; }
@@ -149,4 +164,16 @@ body.workshop-talking #game-ui { visibility: hidden; }
 .brand-avatar{display:block;width:46px;height:48px}.brand-avatar svg{width:100%;height:100%}.wordmark small{display:block;font:700 11px system-ui,sans-serif;letter-spacing:2px;margin-top:4px}
 @media(max-width:700px){.brand-avatar{width:30px;height:34px}}
 .key-count-icon .control-icon{stroke:#c17b06;width:28px;height:28px}#stick[aria-disabled="true"]{opacity:.4}
+.workshop-shapes{grid-column:1;grid-row:2;display:flex;justify-content:center;gap:8px;margin:0;padding:6px 8px;background:#f0eadb;border-radius:12px}
+.workshop-shapes figure{flex:1;min-width:0;margin:0;text-align:center;font:600 13px system-ui}
+.workshop-shapes svg{display:block;width:32px;height:30px;margin:0 auto 2px}
+@media(max-width:600px){.workshop-shapes{grid-column:1 / -1}.workshop-shapes figure{font-size:12px}}
+.race-assist-setting{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0;min-height:48px;font-size:16px;cursor:pointer}
+.race-assist-setting input{width:26px;height:26px;accent-color:#7759b8}
+html:not([lang="zh-CN"]) .action-button b{font-size:13px;white-space:normal}
+html:not([lang="zh-CN"]) .wordmark small{letter-spacing:0}
+@media(max-height:450px){.workshop-shapes svg{width:26px;height:24px}.workshop-shapes figure{font-size:12px}}
 .menu-tips svg{width:32px;height:35px;display:block}
+
+/* Player portraits include tall ears and use their own framing. */
+.workshop-dialogue[data-speaker="player"] .workshop-portrait img { width: 104%; margin-left: -2%; margin-top: 4%; }

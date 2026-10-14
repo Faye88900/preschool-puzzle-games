@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { t, localize } from './i18n';
 import { animateWorkshopGuide, animateGuideWalk, createWorkshopGuide } from './workshop-guide';
 
 const patrol = [new T.Vector3(-26, .68, -10), new T.Vector3(-26, .68, -13),
@@ -22,6 +23,7 @@ export class WorkshopDialogue {
   private collected = false;
   private introduced = false;
   private shortHint?: string;
+  private gateConcern = false;
   private waypoint = 0;
   private gait = 0;
   private walkSpeed = 0;
@@ -39,8 +41,23 @@ export class WorkshopDialogue {
     this.panel.className = 'workshop-dialogue';
     this.panel.setAttribute('aria-labelledby', 'workshop-speaker');
     this.panel.setAttribute('aria-describedby', 'workshop-line');
-    this.panel.innerHTML = `<div class="workshop-bubble"><strong id="workshop-speaker"></strong><button type="button" class="workshop-leave" aria-label="退出对话" title="退出对话（Esc）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button><p id="workshop-line" aria-live="polite"></p><div class="workshop-dialogue-footer"><button type="button" class="workshop-next"><kbd aria-hidden="true">Enter</kbd><span class="workshop-next-label">继续</span><span class="workshop-next-arrow" aria-hidden="true"></span></button></div></div>`;
+    this.panel.innerHTML = `<div class="workshop-bubble"><strong id="workshop-speaker"></strong><button type="button" class="workshop-leave" aria-label="退出对话" title="退出对话（Esc）"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 16M20 4 4 20"/></svg></button><p id="workshop-line" aria-live="polite"></p><div class="workshop-dialogue-footer"><button type="button" class="workshop-next"><kbd aria-hidden="true">Enter</kbd><span class="workshop-next-label">继续</span><span class="workshop-next-arrow" aria-hidden="true"></span></button></div></div>`;
+    this.panel.querySelector('.workshop-bubble')!.insertAdjacentHTML('afterbegin',
+      `<div class="workshop-portrait" aria-hidden="true"><img src="${import.meta.env.BASE_URL}images/workshop-guide-dialogue.png" alt="" draggable="false"></div>`);
+    const close = this.panel.querySelector<HTMLButtonElement>('.workshop-leave')!;
+    close.title = t('退出对话');
+    this.panel.querySelector('#workshop-line')!.insertAdjacentHTML('afterend', `<div class="workshop-shapes" hidden aria-label="找找一样的形状">${[
+      ['正方体', '#ffd15a', '<path d="M12 4 28 4 28 20 12 20Z M12 4 4 10 4 26 12 20 M4 26 20 26 28 20 M20 26 20 10 4 10 M20 10 28 4"/>'],
+      ['圆柱积木', '#7fd0bb', '<path d="M5 8v17c0 6 24 6 24 0V8"/><ellipse cx="17" cy="8" rx="12" ry="5"/><path d="M5 25c0-6 24-6 24 0"/>'],
+      ['三角积木', '#c6a3e4', '<path d="M3 26 15 5 27 26Z M15 5 21 2 33 23 27 26 M3 26 9 23"/>'],
+      ['长方体', '#f0a079', '<path d="M2 12 26 12 26 28 2 28Z M2 12 9 5 33 5 33 21 26 28 M26 12 33 5"/>'],
+    ].map(([name, color, shape]) => `<figure><svg viewBox="0 0 36 34" aria-hidden="true" fill="${color}" stroke="#544a65" stroke-width="1.4" stroke-linejoin="round">${shape}</svg><figcaption>${name}</figcaption></figure>`).join('')}</div>`);
+    localize(this.panel);
     document.body.append(this.panel);
+    for (const expression of ['curious', 'surprised', 'thinking', 'determined']) {
+      const image = new Image();
+      image.src = `${import.meta.env.BASE_URL}images/player-dialogue/${expression}.png`;
+    }
     this.next = this.panel.querySelector('.workshop-next')!;
     // The touch interaction opens on pointerdown; its release must not advance this new panel.
     const bubble = this.panel.querySelector<HTMLElement>('.workshop-bubble')!;
@@ -67,30 +84,38 @@ export class WorkshopDialogue {
   }
   start(solved: boolean, collected: boolean, hint?: string) {
     if (this.active) return;
-    this.shortHint = this.introduced ? hint : undefined; this.introduced = true;
+    this.shortHint = this.introduced ? hint ?? lines[3][1] : undefined;
     this.solved = solved; this.collected = collected;
-    this.stage = 0; this.elapsed = 0; this.capture = true;
+    this.stage = 0; this.elapsed = 0; this.capture = true; this.gateConcern = false;
     this.clearInput();
     document.body.classList.add('workshop-talking');
     this.panel.showModal(); this.showLine();
   }
   private showLine() {
-    const [speaker, text] = this.collected ? ['工坊向导', '你找到工坊的钥匙啦！去其他地方看看吧。']
+    const [speaker, originalText] = this.collected ? ['工坊向导', '你找到工坊的钥匙啦！去其他地方看看吧。']
       : this.solved ? ['工坊向导', '铁门打开了！快去拿里面的钥匙吧。'] : this.shortHint ? ['工坊向导', this.shortHint] : lines[this.stage];
-    this.panel.querySelector('#workshop-speaker')!.textContent = speaker;
-    this.panel.querySelector('#workshop-line')!.textContent = text;
+    const text = speaker === '玩家' && this.stage === 2 ? (this.gateConcern ? '可是门关着……' : '看到了！') : originalText;
+    const expression = this.stage === 0 ? 'curious' : this.stage === 5 ? 'determined' : this.gateConcern ? 'thinking' : 'surprised';
+    this.panel.querySelector<HTMLImageElement>('.workshop-portrait img')!.src = `${import.meta.env.BASE_URL}images/${speaker === '玩家' ? `player-dialogue/${expression}.png` : 'workshop-guide-dialogue.png'}`;
+    this.panel.querySelector('#workshop-speaker')!.textContent = t(speaker);
+    this.panel.querySelector('#workshop-line')!.textContent = t(text);
+    this.panel.querySelector<HTMLElement>('.workshop-shapes')!.hidden = !this.introduced || this.solved || this.collected || !/积木|正方体|机关/.test(text);
     this.panel.dataset.speaker = speaker === '玩家' ? 'player' : speaker === '工坊向导' ? 'guide' : 'observe';
-    this.next.querySelector('.workshop-next-label')!.textContent = this.stage === 5 || this.solved || this.collected || this.shortHint ? '出发吧' : '继续';
+    this.next.querySelector('.workshop-next-label')!.textContent = t(this.stage === 5 || this.solved || this.collected || this.shortHint ? '出发吧' : '继续');
     this.next.focus({ preventScroll: true });
     this.speak(text);
   }
   advance() {
     if (this.stage < 0) return;
     if (this.stage === 5 || this.solved || this.collected || this.shortHint) { this.close(); return; }
+    if (this.stage === 2 && !this.gateConcern) {
+      this.gateConcern = true; this.showLine(); return;
+    }
     this.stage++; this.elapsed = 0; this.capture = true; this.showLine();
   }
   close(immediate = false) {
     if (!this.active) return;
+    if (this.stage === 5 && !this.shortHint && !this.solved && !this.collected) this.introduced = true;
     this.panel.close(); this.stage = -1; this.returning = !immediate;
     this.elapsed = 0; this.capture = true;
     document.body.classList.remove('workshop-talking');
