@@ -8,7 +8,7 @@ Three.js + Rapier 3D 小游戏，支持电脑键盘和手机屏幕按钮。
 
 ## 交给同事上传
 
-`bean-rush-website-2026-10-13.zip` 是已构建的网页。解压后，将 `index.html` 与 `assets`、`audio`、`fonts`、`images`、`models` 文件夹一起上传到网站的同一目录，保持名称和结构。
+`bean-rush.zip` 是本地打包的网页。解压后，将 `index.html` 与 `assets`、`audio`、`fonts`、`images`、`models` 文件夹一起上传到网站的同一目录，保持名称和结构。
 
 网站入口为该目录下的 `index.html`。支持网站子目录；无需安装 Node.js 或重新构建。请通过 HTTP / HTTPS 网站打开。
 

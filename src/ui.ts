@@ -108,6 +108,7 @@ export class UI {
     this.root.insertAdjacentHTML('beforeend', '<div id="chicken-marker" class="chicken-marker" hidden role="status"></div><div id="pipe-feedback" class="pipe-feedback" hidden role="status"></div>');
     this.root.querySelector('.keyboard-guide')!.innerHTML = '<kbd>W A S D</kbd> / 方向键 移动　<kbd>空格</kbd> 跳跃　<kbd>E</kbd> 互动　<kbd>H</kbd> 提示';
     this.root.querySelector<HTMLAnchorElement>('.level-link')!.hidden = true;
+    this.get('primary').insertAdjacentHTML('afterend', '<a id="menu-home" class="secondary-button" href="./?homeArrival=1" hidden>返回主页</a>');
   }
   updatePuzzle(state: string, paused: boolean, muted: boolean, cue: string, count: number, action: string, cinematic: boolean) {
     this.update({ state, paused, muted, cue, finished: count, rank: 1, time: 0, countdown: 0 });
@@ -165,6 +166,7 @@ export class UI {
     const playing = mode === 'racing' || mode === 'countdown';
     this.get('menu').hidden = playing;
     this.get('go-home').hidden = playing;
+    if (this.puzzle) this.get('menu-home').hidden = mode !== 'qualified';
     this.get('touch-controls').hidden = mode !== 'racing';
     this.get('guidance').hidden = !playing;
     this.get<HTMLButtonElement>('pause').disabled = !playing && mode !== 'paused';

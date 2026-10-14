@@ -85,6 +85,7 @@
 #game-ui.card-mode[data-state] :is(.primary-button,.level-link):active{transform:translateY(2px);border-bottom-width:3px}
 #game-ui.card-mode[data-state] .secondary-button{order:2;width:100%;min-height:50px;margin-top:12px;border:2px solid var(--card-line);border-radius:16px;background:#ffffff99;color:var(--card-ink);font-size:16px;transition:background .12s}
 #game-ui.card-mode[data-state] .secondary-button:hover{background:#fff}
+#menu-home{display:flex;align-items:center;justify-content:center;text-decoration:none}
 #game-ui.card-mode .menu-card :is(button,a):focus-visible{outline:3px solid var(--card-ink);outline-offset:3px}
 @keyframes card-pop{from{opacity:0;transform:translateY(18px) scale(.94)}}
 @keyframes badge-pop{from{opacity:0;transform:scale(.4) rotate(-18deg)}}
