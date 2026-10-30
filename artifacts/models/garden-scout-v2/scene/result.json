@@ -1,0 +1,249 @@
+{
+  "pass": true,
+  "behavior": {
+    "yaw": 2.791592653589793,
+    "angles": [
+      2.791592653589793,
+      2.791592653589793,
+      2.791592653589793,
+      2.791592653589793
+    ],
+    "cameraOffsets": [
+      [
+        0,
+        16.000000000000004
+      ],
+      [
+        0,
+        16.000000000000004
+      ],
+      [
+        0,
+        16.000000000000004
+      ],
+      [
+        0,
+        16.000000000000004
+      ]
+    ],
+    "first": 1.2230027413973295,
+    "second": 1.4504162414563693,
+    "raised": 0.7899136016605127,
+    "rest": 0.05,
+    "boots": true,
+    "render": {
+      "frame": 12,
+      "calls": 185,
+      "triangles": 179944,
+      "points": 0,
+      "lines": 0
+    }
+  },
+  "cues": [
+    "scoutChest",
+    "scoutCollect",
+    "crystalFlying",
+    "scoutBoat",
+    "scoutKeyWaiting",
+    "scoutKey",
+    "scoutExit"
+  ],
+  "expressions": [
+    {
+      "line": "scoutHello",
+      "expression": "greeting",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.449951171875,
+      "opaque": 0.442138671875,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "line": "scoutChest",
+      "expression": "thinking",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.4462890625,
+      "opaque": 0.444580078125,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "line": "scoutCollect",
+      "expression": "surprised",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.4453125,
+      "opaque": 0.44775390625,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "line": "crystalFlying",
+      "expression": "surprised",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.4453125,
+      "opaque": 0.44775390625,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "line": "scoutBoat",
+      "expression": "guiding",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.436279296875,
+      "opaque": 0.4541015625,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "line": "scoutKeyWaiting",
+      "expression": "encouraging",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.447998046875,
+      "opaque": 0.445068359375,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "line": "scoutKey",
+      "expression": "celebrating",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.447265625,
+      "opaque": 0.44775390625,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "line": "scoutExit",
+      "expression": "celebrating",
+      "width": 512,
+      "height": 512,
+      "transparent": 0.447265625,
+      "opaque": 0.44775390625,
+      "corners": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "layouts": [
+    {
+      "name": "desktop",
+      "line": {
+        "x": 464,
+        "y": 646,
+        "right": 1010,
+        "bottom": 714,
+        "width": 546,
+        "height": 68
+      },
+      "next": {
+        "x": 863,
+        "y": 722,
+        "right": 1010,
+        "bottom": 766,
+        "width": 147,
+        "height": 44
+      },
+      "portrait": {
+        "x": 242,
+        "y": 598,
+        "right": 452,
+        "bottom": 778,
+        "width": 210,
+        "height": 180
+      }
+    },
+    {
+      "name": "portrait",
+      "line": {
+        "x": 136,
+        "y": 646,
+        "right": 358,
+        "bottom": 766,
+        "width": 222,
+        "height": 120
+      },
+      "next": {
+        "x": 211,
+        "y": 774,
+        "right": 358,
+        "bottom": 818,
+        "width": 147,
+        "height": 44
+      },
+      "portrait": {
+        "x": 12,
+        "y": 725,
+        "right": 128,
+        "bottom": 828,
+        "width": 116,
+        "height": 103
+      }
+    },
+    {
+      "name": "landscape",
+      "line": {
+        "x": 158,
+        "y": 244,
+        "right": 806,
+        "bottom": 317,
+        "width": 648,
+        "height": 73
+      },
+      "next": {
+        "x": 659,
+        "y": 325,
+        "right": 806,
+        "bottom": 369,
+        "width": 147,
+        "height": 44
+      },
+      "portrait": {
+        "x": 24,
+        "y": 262,
+        "right": 150,
+        "bottom": 374,
+        "width": 126,
+        "height": 112
+      }
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,250 @@
+{
+  "pass": true,
+  "groupNames": [
+    "boss-blockout-water-channel-0",
+    "boss-blockout-water-channel-1",
+    "boss-blockout-water-channel-2",
+    "leaf-channel-inlet"
+  ],
+  "precise": [
+    {
+      "count": 6,
+      "waterExcluded": true
+    },
+    {
+      "count": 6,
+      "waterExcluded": true
+    },
+    {
+      "count": 6,
+      "waterExcluded": true
+    },
+    {
+      "count": 2,
+      "waterExcluded": true
+    }
+  ],
+  "wholeGroupRegistered": false,
+  "near": [
+    {
+      "x": 206,
+      "z": -32,
+      "oldBoxBlocked": true,
+      "blocked": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 206,
+      "z": -33,
+      "oldBoxBlocked": true,
+      "blocked": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 205.5,
+      "z": -34,
+      "oldBoxBlocked": true,
+      "blocked": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 205,
+      "z": -35.5,
+      "oldBoxBlocked": true,
+      "blocked": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 204,
+      "z": -37,
+      "oldBoxBlocked": true,
+      "blocked": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 203.5,
+      "z": -39,
+      "oldBoxBlocked": true,
+      "blocked": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    }
+  ],
+  "behind": [
+    {
+      "x": 205.7,
+      "z": -43,
+      "oldBoxBlocked": true,
+      "blocked": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 204.8,
+      "z": -43,
+      "oldBoxBlocked": true,
+      "blocked": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 207,
+      "z": -43,
+      "oldBoxBlocked": true,
+      "blocked": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    },
+    {
+      "x": 206.5,
+      "z": -42.7,
+      "oldBoxBlocked": true,
+      "blocked": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "opacity": [
+        0.16,
+        1,
+        1,
+        1
+      ],
+      "curtainOpacity": 1,
+      "curtainFade": 1
+    }
+  ],
+  "restored": {
+    "x": 206,
+    "z": -32,
+    "oldBoxBlocked": true,
+    "blocked": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "opacity": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "curtainOpacity": 1,
+    "curtainFade": 1
+  },
+  "before": [
+    192,
+    265
+  ],
+  "after": [
+    192,
+    265
+  ],
+  "errors": []
+}

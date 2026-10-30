@@ -1,0 +1,81 @@
+{
+  "model": {
+    "chest": {
+      "meshes": 16,
+      "triangles": 27288,
+      "finite": true,
+      "bounds": [
+        2.5941267013549805,
+        2.1167531486740336,
+        1.9397999739646912
+      ]
+    },
+    "crystal": {
+      "meshes": 4,
+      "triangles": 1308,
+      "finite": true,
+      "bounds": [
+        1.254911720752716,
+        1.760489692329429,
+        0.5299527794122696
+      ]
+    }
+  },
+  "captures": [
+    {
+      "name": "game-closed-desktop",
+      "colors": 477,
+      "calls": 168,
+      "triangles": 150046
+    },
+    {
+      "name": "game-rising-desktop",
+      "colors": 453,
+      "calls": 174,
+      "triangles": 151482
+    },
+    {
+      "name": "game-open-desktop",
+      "colors": 453,
+      "calls": 174,
+      "triangles": 151482
+    },
+    {
+      "name": "game-open-laptop",
+      "colors": 327,
+      "calls": 169,
+      "triangles": 148854
+    },
+    {
+      "name": "game-open-portrait",
+      "colors": 181,
+      "calls": 103,
+      "triangles": 128048
+    },
+    {
+      "name": "game-open-landscape",
+      "colors": 188,
+      "calls": 182,
+      "triangles": 154298
+    },
+    {
+      "name": "game-pickup-flight-desktop",
+      "colors": 453,
+      "calls": 172,
+      "triangles": 151354
+    },
+    {
+      "name": "game-collected-desktop",
+      "colors": 453,
+      "calls": 170,
+      "triangles": 151226
+    },
+    {
+      "name": "game-collected-portrait",
+      "colors": 178,
+      "calls": 77,
+      "triangles": 121952
+    }
+  ],
+  "errors": []
+}

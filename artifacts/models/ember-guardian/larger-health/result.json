@@ -1,0 +1,36 @@
+{
+  "pass": true,
+  "layouts": [
+    {
+      "width": 640,
+      "height": 800,
+      "left": 320,
+      "right": 960,
+      "top": 92,
+      "bottom": 142,
+      "frameHeight": 19,
+      "guidance": 76
+    },
+    {
+      "width": 358,
+      "height": 844,
+      "left": 16,
+      "right": 374,
+      "top": 206,
+      "bottom": 256,
+      "frameHeight": 19,
+      "guidance": 196
+    },
+    {
+      "width": 640,
+      "height": 390,
+      "left": 102,
+      "right": 742,
+      "top": 92,
+      "bottom": 142,
+      "frameHeight": 19,
+      "guidance": 76
+    }
+  ],
+  "errors": []
+}

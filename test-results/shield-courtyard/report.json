@@ -1,0 +1,84 @@
+{
+  "views": [
+    {
+      "name": "approach-pc",
+      "width": 1280,
+      "height": 800,
+      "coarse": false,
+      "touchVisible": false,
+      "entryBlocksKnight": false,
+      "calls": 141,
+      "triangles": 175970
+    },
+    {
+      "name": "combat-pc",
+      "width": 1280,
+      "height": 800,
+      "coarse": false,
+      "touchVisible": false,
+      "entryBlocksKnight": false,
+      "calls": 135,
+      "triangles": 174066
+    },
+    {
+      "name": "narrow-pc",
+      "width": 390,
+      "height": 844,
+      "coarse": false,
+      "touchVisible": false,
+      "entryBlocksKnight": false,
+      "calls": 123,
+      "triangles": 184084
+    },
+    {
+      "name": "landscape-pc",
+      "width": 844,
+      "height": 390,
+      "coarse": false,
+      "touchVisible": false,
+      "entryBlocksKnight": false,
+      "calls": 149,
+      "triangles": 178844
+    }
+  ],
+  "states": {
+    "initial": {
+      "visible": false,
+      "light": 0.04
+    },
+    "cleared": {
+      "visible": true,
+      "light": 0.65
+    },
+    "floor": 1024
+  },
+  "collisions": {
+    "wall": {
+      "x": 25,
+      "y": 0.6499200463294983,
+      "z": -6.67500638961792
+    },
+    "bed": {
+      "x": 30.125,
+      "y": 0.6499198079109192,
+      "z": -5.25
+    },
+    "entry": {
+      "x": 27.5,
+      "y": 0.649919867515564,
+      "z": 13.07498836517334
+    },
+    "entranceWalk": {
+      "x": 25,
+      "y": 0.649919331073761,
+      "z": 7.435525894165039
+    },
+    "center": true,
+    "exit": true
+  },
+  "reset": {
+    "trail": false,
+    "light": 0.04
+  },
+  "errors": []
+}

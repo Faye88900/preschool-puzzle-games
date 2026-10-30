@@ -21,6 +21,7 @@ export function showHome() {
       <div class="home-level-grid">
         <a href="?level=1"><img class="level-art" src="${import.meta.env.BASE_URL}images/sky-race-cover.png" alt="" width="1774" height="887" /><small>第一关</small><strong>天空赛道</strong><span>跑一跑，跳向终点</span></a>
         <a href="?level=2"><img class="level-art" src="${import.meta.env.BASE_URL}images/puzzle-garden-cover.png" alt="" width="1774" height="887" /><small>第二关</small><strong>解谜花园</strong><span>找齐钥匙，打开花园</span></a>
+        <a href="?level=3"><img class="level-art" src="${import.meta.env.BASE_URL}images/whispering-maze-cover.png" alt="" width="1774" height="887" /><small>第三关</small><strong>风语迷宫</strong><span>寻找魔杖，探索迷宫</span></a>
       </div>
     </dialog>
     <dialog id="settings-dialog" aria-labelledby="settings-heading">

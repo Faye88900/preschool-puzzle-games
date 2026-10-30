@@ -1,0 +1,101 @@
+{
+  "models": [
+    {
+      "name": "garden-windmill",
+      "finite": true,
+      "meshes": 10,
+      "triangles": 16048,
+      "min": [
+        -1.475000023841858,
+        0.005999996326863766,
+        -1.1221499896049498
+      ],
+      "max": [
+        1.475000023841858,
+        3.975000023841858,
+        1.0399999618530273
+      ]
+    },
+    {
+      "name": "garden-windmill-bridge",
+      "finite": true,
+      "meshes": 7,
+      "triangles": 14136,
+      "min": [
+        -0.26499998569488525,
+        -0.04999999999999999,
+        -2.3167500495910645
+      ],
+      "max": [
+        5.264999866485596,
+        1.1850000143051147,
+        2.3167500495910645
+      ]
+    },
+    {
+      "name": "garden-exit-gate",
+      "finite": true,
+      "meshes": 10,
+      "triangles": 19470,
+      "min": [
+        -2.5850000381469727,
+        0.009999999776482582,
+        -0.4180999994277954
+      ],
+      "max": [
+        2.5850000381469727,
+        4.482800006866455,
+        0.4180999994277954
+      ]
+    },
+    {
+      "name": "garden-shortcut-gate",
+      "finite": true,
+      "meshes": 7,
+      "triangles": 18052,
+      "min": [
+        -2.5850000381469727,
+        0.009999999776482582,
+        -0.4180999994277954
+      ],
+      "max": [
+        2.5850000381469727,
+        4.112800121307373,
+        0.4180999994277954
+      ]
+    }
+  ],
+  "passages": [
+    {
+      "closed": true,
+      "open": true,
+      "below": true
+    },
+    {
+      "closed": true,
+      "open": true,
+      "below": true
+    }
+  ],
+  "raised": true,
+  "shared": true,
+  "files": [
+    {
+      "name": "garden-windmill",
+      "bytes": 520260
+    },
+    {
+      "name": "garden-windmill-bridge",
+      "bytes": 475820
+    },
+    {
+      "name": "garden-exit-gate",
+      "bytes": 729424
+    },
+    {
+      "name": "garden-shortcut-gate",
+      "bytes": 632884
+    }
+  ],
+  "errors": []
+}

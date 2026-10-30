@@ -1,0 +1,280 @@
+import * as T from 'three';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createDarkKnight } from './dark-knight';
+import { rounded } from './puzzle-art';
+import { TessellateModifier } from 'three/addons/modifiers/TessellateModifier.js';
+import { createGuardianFlames } from './guardian-flames';
+import { bindGuardianRig } from './guardian-rig';
+
+const armor=new T.MeshStandardMaterial({color:'#343b46',roughness:.56,metalness:.32});
+const iron=new T.MeshStandardMaterial({color:'#252b34',roughness:.58,metalness:.18});
+const silver=new T.MeshStandardMaterial({color:'#a3adbb',roughness:.43,metalness:.55});
+const faceSteel=new T.MeshStandardMaterial({color:'#747f90',roughness:.40,metalness:.38});
+const crimson=new T.MeshStandardMaterial({color:'#8f3043',roughness:.9,side:T.DoubleSide});
+const jewel=new T.MeshStandardMaterial({color:'#b33c54',roughness:.36,metalness:.25});
+const iris=new T.MeshStandardMaterial({color:'#ffb849',emissive:'#d77314',emissiveIntensity:.65,roughness:.4});
+const leather=new T.MeshStandardMaterial({color:'#625047',roughness:.9});
+const ember=new T.MeshStandardMaterial({color:'#ff7d2d',emissive:'#ff4d0a',emissiveIntensity:1,roughness:.4});
+const gold=new T.MeshStandardMaterial({color:'#d7b66b',roughness:.45,metalness:.4});
+const sphere=new T.SphereGeometry(1,20,14),box=rounded(1,1,1,.12),bar=new T.CylinderGeometry(1,1,1,20);
+const bladeDirection=new T.Vector3(),bladeNormal=new T.Vector3(),bladeAcross=new T.Vector3(),bladeBasis=new T.Matrix4(),bladeRotation=new T.Quaternion();
+
+export function aimGuardianSword(root:T.Group,x:number,y:number,z:number) {
+  const wrist=root.getObjectByName('wrist1')!;
+  bladeDirection.set(x,y,z).normalize();
+  if(Math.abs(bladeDirection.x)<.0001) {
+    // Keep the overhead cut from flipping the wrist as its tip passes horizontal.
+    bladeAcross.set(1,0,0);bladeNormal.crossVectors(bladeAcross,bladeDirection).normalize();
+  }else {
+    bladeNormal.set(0,0,1).addScaledVector(bladeDirection,-bladeDirection.z).normalize();
+    bladeAcross.crossVectors(bladeDirection,bladeNormal).normalize();
+  }
+  bladeBasis.makeBasis(bladeAcross,bladeDirection,bladeNormal);bladeRotation.setFromRotationMatrix(bladeBasis);
+  // The hand and sword share a wrist pivot; aim the whole grip rather than rotating a blade through the fist.
+  wrist.quaternion.identity();
+  const chain:T.Object3D[]=[];for(let joint=wrist.parent;joint&&joint!==root;joint=joint.parent)chain.unshift(joint);
+  for(const joint of chain)wrist.quaternion.multiply(joint.quaternion);
+  wrist.quaternion.invert().multiply(bladeRotation);
+}
+
+export function holdGuardianSwordReady(root:T.Group) {
+  const arm=root.getObjectByName('arm1')!,elbow=root.getObjectByName('elbow1')!;
+  arm.rotation.set(.02,0,.04);elbow.rotation.set(.12,0,0);
+  aimGuardianSword(root,.025,-.365,-.93);
+  root.getObjectByName('wrist1')!.rotateY(Math.PI);
+}
+
+const bladeSections=[[.18,.055,.045],[.29,.092,.055],[.42,.089,.053],[1.08,.068,.038],[1.25,.040,.024],[1.38,0,0]];
+function swordBlade() {
+  const geometry=new T.BufferGeometry(),vertices:number[]=[];
+  const section=([y,w,t]:number[])=>[[-w,y,-.003],[0,y,-t],[w,y,-.003],[w,y,.003],[0,y,t],[-w,y,.003]];
+  const rings=bladeSections.map(section);
+  for(let face=0;face<6;face++) {
+    const start=vertices.length/3;
+    for(let i=0;i<rings.length-1;i++) {
+      const next=(face+1)%6,a=rings[i][face],b=rings[i][next],c=rings[i+1][next],d=rings[i+1][face];
+      vertices.push(...a,...c,...b,...a,...d,...c);
+    }
+    geometry.addGroup(start,vertices.length/3-start,face===2||face===5?2:face===0||face===3?0:1);
+  }
+  const start=vertices.length/3;
+  for(let i=1;i<5;i++)vertices.push(...rings[0][0],...rings[0][i],...rings[0][i+1]);
+  geometry.addGroup(start,vertices.length/3-start,1);
+  geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geometry.computeVertexNormals();return geometry;
+}
+
+function bladeSurface(x:number,y:number) {
+  const index=Math.min(bladeSections.length-2,bladeSections.findIndex((_,i)=>i<bladeSections.length-1&&y<=bladeSections[i+1][0]));
+  const a=bladeSections[Math.max(0,index)],b=bladeSections[Math.max(0,index)+1],t=T.MathUtils.clamp((y-a[0])/(b[0]-a[0]),0,1);
+  const width=T.MathUtils.lerp(a[1],b[1],t),depth=T.MathUtils.lerp(a[2],b[2],t);
+  return -T.MathUtils.lerp(depth,.003,Math.min(1,Math.abs(x)/Math.max(.001,width)))-.003;
+}
+
+function plate(points:number[][],depth=.05) {
+  const shape=new T.Shape(points.map(([x,y])=>new T.Vector2(x,y)));
+  return new T.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelSize:.018,bevelThickness:.012,bevelSegments:2,steps:1,curveSegments:8}).translate(0,0,-depth/2);
+}
+function part(parent:T.Object3D,name:string,geometry:T.BufferGeometry,material:T.Material,x=0,y=0,z=0,sx=1,sy=sx,sz=sx) {
+  const mesh=new T.Mesh(geometry,material);mesh.name=name;mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);
+  mesh.castShadow=mesh.receiveShadow=true;parent.add(mesh);return mesh;
+}
+function seam(parent:T.Object3D,points:number[][]) {
+  const curve=new T.CurvePath<T.Vector3>();
+  for(let i=1;i<points.length;i++)curve.add(new T.LineCurve3(new T.Vector3(...points[i-1] as [number,number,number]),new T.Vector3(...points[i] as [number,number,number])));
+  return part(parent,'ember-seam',new T.TubeGeometry(curve,points.length*2,.005,5,false),ember);
+}
+
+function curvedPlate(points:number[][],depth=.03,bend=.065,fitChest=false) {
+  const flat=plate(points,depth),geometry=new TessellateModifier(.045,4).modify(flat);flat.dispose();
+  const p=geometry.attributes.position;
+  for(let i=0;i<p.count;i++)p.setZ(i,p.getZ(i)-bend*Math.sqrt(Math.max(.08,1-(p.getX(i)/.30)**2-(fitChest?((p.getY(i)+.08)/.27)**2:0))));
+  geometry.deleteAttribute('normal');const smooth=mergeVertices(geometry);smooth.computeVertexNormals();geometry.dispose();return smooth;
+}
+
+function shoulderPlate(inset=1,offset=0) {
+  const shape=new T.Shape();shape.moveTo(0,.23);
+  shape.bezierCurveTo(.10,.20,.21,.08,.20,-.03);shape.quadraticCurveTo(.18,-.16,0,-.24);
+  shape.quadraticCurveTo(-.18,-.16,-.20,-.03);shape.bezierCurveTo(-.21,.08,-.10,.20,0,.23);
+  const flat=new T.ExtrudeGeometry(shape,{depth:.045,bevelEnabled:true,bevelSize:.015,bevelThickness:.012,bevelSegments:2,curveSegments:8,steps:1}).translate(0,0,-.0225);
+  const geometry=new TessellateModifier(.055,3).modify(flat);flat.dispose();
+  const p=geometry.attributes.position;
+  for(let i=0;i<p.count;i++) {
+    const x=p.getX(i)*inset,y=p.getY(i)*inset;
+    p.setXYZ(i,x,y,p.getZ(i)+offset-.13*Math.sqrt(Math.max(0,1-(x/.23)**2-(y/.28)**2)));
+  }
+  geometry.deleteAttribute('normal');const smooth=mergeVertices(geometry);smooth.computeVertexNormals();geometry.dispose();return smooth;
+}
+
+function drapedCape() {
+  const columns=32,rows=40,positions:number[]=[],colors:number[]=[],indices:number[]=[];
+  const stride=columns+1,layer=stride*(rows+1);
+  // Both cloth faces share the same drape; a stitched edge gives the torn hem real thickness.
+  for(let face=0;face<2;face++)for(let row=0;row<=rows;row++)for(let col=0;col<=columns;col++) {
+    const u=col/columns*2-1,v=row/rows,x=u*(.27+.115*v);
+    const hem=.055*Math.sin(col*2.1)+.026*Math.cos(col*3.7);
+    const y=-.91*v-.045*(1-u*u)*(1-v)+hem*v**12;
+    const sag=v-.24*(1-u*u),fold=.065*Math.cos(sag*27)*Math.exp(-v*2.8)*(1-u*u);
+    const flute=Math.sin(u*12+v*.9)*(.012+.037*v)*Math.min(1,v*5);
+    positions.push(x,y,.025+v*.24+fold+flute+face*.022);
+    const shade=.92-.15*v+.055*Math.cos(u*12+v*.9);colors.push(shade,shade*.97,shade*.96);
+  }
+  const cell=(row:number,col:number)=>row>=0&&row<rows&&col>=0&&col<columns&&!(row===32&&col===9||row===34&&col===24||row===35&&col===25||row===37&&col===16);
+  for(let row=0;row<rows;row++)for(let col=0;col<columns;col++) {
+    if(!cell(row,col))continue;
+    const a=row*stride+col,b=a+1,c=a+stride+1,d=a+stride;
+    indices.push(a,b,c,a,c,d,a+layer,c+layer,b+layer,a+layer,d+layer,c+layer);
+    for(const [p,q,exposed]of[[a,b,!cell(row-1,col)],[b,c,!cell(row,col+1)],[c,d,!cell(row+1,col)],[d,a,!cell(row,col-1)]] as [number,number,boolean][])if(exposed)indices.push(p,q+layer,q,p,p+layer,q+layer);
+  }
+  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));geometry.setIndex(indices);geometry.computeVertexNormals();return geometry;
+}
+
+export function createEmberGuardian(flameTexture?:T.Texture) {
+  const root=new T.Group();root.name='ember-guardian';
+  const body=new T.Group();body.name='body';root.add(body);
+  const head=new T.Group();head.name='head';head.position.y=.77;head.scale.setScalar(.75);body.add(head);
+  const donor=createDarkKnight().getObjectByName('body')!;
+  for(const child of [...donor.children])if(/^(helmet-dome|visor|brow-ridge|vented-faceguard|ear-guard|eye)/.test(child.name)) {
+    if(child instanceof T.Mesh) {
+      if(child.name==='helmet-dome'||child.name==='ear-guard')child.material=armor;
+      if(child.name==='brow-ridge'||child.name==='ear-guard-rim')child.material=silver;
+      if(child.name==='brow-ridge')child.position.z=-.025;
+      if(child.name==='vented-faceguard')child.material=faceSteel;
+    }
+    if(child.name.startsWith('eye')) {
+      child.position.y+=.015;
+      const eye=child.getObjectByName('ember-eye') as T.Mesh;eye.material=iris;eye.scale.set(.089,.085,.021);
+      child.getObjectByName('pupil')!.scale.set(.023,.061,.009);
+      child.getObjectByName('eye-glint')!.scale.set(.008,.010,.005);
+    }
+    head.add(child);
+  }
+  const crestGeometry=plate([[-.24,-.10],[-.20,.04],[-.06,.16],[.06,.18],[.04,.11],[.15,.12],[.24,-.10],[.10,-.055],[-.08,-.055]],.075).rotateY(Math.PI/2);
+  part(head,'leaf-crest',crestGeometry,silver,0,1.14,0,1,.70,1);
+  for(const side of [-1,1]) {
+    part(head,'crest-inset',crestGeometry,armor,side*.046,1.14,0,.12,.53,.78);
+    const inlay=part(head,'crest-ember-inlay',new T.OctahedronGeometry(1),gold,side*.054,1.175,.015,.009,.018,.07);inlay.rotation.x=-.4;
+  }
+  const jawPoints=Array.from({length:9},(_,i)=>{const t=i/8,x=.315*(1-2*t),y=.45-.28*t*(1-t),z=-.46*Math.sqrt(Math.max(.08,1-(x/.515)**2-((y-.66)/.51)**2))-.025;return new T.Vector3(x,y,z);});
+  const jawCurve=new T.CatmullRomCurve3(jawPoints);
+  part(head,'rolled-jaw-rim',new T.TubeGeometry(jawCurve,20,.012,6,false),silver);
+  part(body,'waist',sphere,iron,0,.54,.025,.21,.16,.18);
+  part(body,'breastplate',sphere,armor,0,.80,.025,.255,.25,.185);
+  const chestPoints=[[-.23,.105],[0,.15],[.23,.105],[.195,-.09],[.11,-.15],[0,-.13],[-.11,-.15],[-.195,-.09]];
+  part(body,'chest-rim',curvedPlate(chestPoints,.025,.215,true),silver,0,.86,-.008);
+  part(body,'chest-face',curvedPlate(chestPoints.map(([x,y])=>[x*.94,y*.88]),.025,.215,true),armor,0,.86,-.032);
+  for(const y of [.69]) {
+    const bandPoints=[[-.212,.03],[0,.005],[.212,.03],[.189,-.045],[0,-.06],[-.189,-.045]];
+    part(body,'waist-armor-rim',curvedPlate(bandPoints,.022,.04),silver,0,y,-.16);
+    part(body,'waist-armor',curvedPlate(bandPoints.map(([x,y])=>[x*.94,y*.80]),.022,.04),armor,0,y+.004,-.185);
+  }
+  part(body,'belt',bar,leather,0,.59,0,.245,.08,.195);
+  part(body,'buckle',box,silver,0,.595,-.215,.085,.075,.025);
+  seam(body,[[-.19,.94,-.19],[-.15,.89,-.23],[-.17,.84,-.235],[-.12,.79,-.257]]);
+  seam(body,[[.20,.85,-.218],[.14,.81,-.25],[.17,.76,-.24]]);
+  const key=new T.Group();key.name='belt-key';key.position.set(.20,.55,-.25);body.add(key);
+  part(key,'key-ring',new T.TorusGeometry(.045,.012,6,12),gold);
+  part(key,'key-stem',box,gold,0,-.084,0,.018,.12,.018);
+  for(const y of [-.1,-.14])part(key,'key-tooth',box,gold,.02,y,0,.045,.018,.018);
+  for(const side of [-1,1]) {
+    const leg=new T.Group();leg.name=`leg${side}`;leg.position.set(side*.19,.49,0);body.add(leg);
+    part(leg,'thigh',sphere,iron,0,-.07,0,.115,.14,.13);
+    part(leg,'knee-rim',sphere,silver,0,-.19,-.055,.122,.095,.13);
+    part(leg,'knee-plate',sphere,armor,0,-.18,-.092,.113,.073,.12);
+    part(leg,'greave-core',sphere,iron,0,-.29,-.005,.105,.155,.115);
+    const shin=curvedPlate([[-.095,.11],[.095,.14],[.09,-.10],[0,-.13],[-.085,-.10]],.03,.025);
+    part(leg,'shin-plate',shin,armor,0,-.29,-.095,1,.90,.7);
+    for(const y of [-.245,-.355]) {
+      const band=part(leg,'greave-wrap-rim',bar,silver,0,y,-.025,.116,.035,.125);band.rotation.z=side*.13;
+      const strap=part(leg,'greave-wrap',bar,leather,0,y+.002,-.025,.119,.016,.128);strap.rotation.z=side*.13;
+    }
+    part(leg,'boot-sole',sphere,silver,0,-.435,-.065,.16,.055,.225);
+    part(leg,'boot',sphere,iron,0,-.39,-.08,.155,.09,.22);
+    part(leg,'boot-toe-cap',sphere,armor,0,-.38,-.16,.145,.075,.155);
+    const knee=new T.Group();knee.name=`knee${side}`;knee.position.y=-.19;leg.add(knee);
+    const ankle=new T.Group();ankle.name=`ankle${side}`;ankle.position.y=-.20;knee.add(ankle);
+    for(const child of [...leg.children]) {
+      if(!(child instanceof T.Mesh)||child.name==='thigh')continue;
+      const target=child.name.startsWith('boot')?ankle:knee;child.position.y+=target===ankle?.39:.19;target.add(child);
+    }
+    const arm=new T.Group();arm.name=`arm${side}`;arm.position.set(side*.34,1.01,.015);body.add(arm);
+    part(arm,'upper-arm',sphere,iron,side*.035,-.10,0,.115,.16,.12);
+    const elbow=new T.Group();elbow.name=`elbow${side}`;elbow.position.set(side*.04,-.23,-.01);arm.add(elbow);
+    part(elbow,'elbow-joint',sphere,iron,0,0,0,.108,.09,.12);
+    part(elbow,'elbow-rim',bar,silver,0,0,0,.117,.032,.127);
+    part(elbow,'forearm',sphere,armor,0,-.085,-.015,.11,.125,.12);
+    for(const y of [-.02,-.11])part(elbow,'vambrace-rim',bar,silver,0,y,-.015,.112,.025,.122);
+    const wrist=new T.Group();wrist.name=`wrist${side}`;wrist.position.set(0,-.19,-.03);elbow.add(wrist);
+    if(side===1) {
+      part(wrist,'gripping-palm',sphere,iron,0,0,.032,.078,.105,.060);
+      part(wrist,'hand-back-plate',box,armor,0,.005,.083,.133,.16,.035);
+      for(let finger=0;finger<4;finger++) {
+        const y=-.066+finger*.043,curve=new T.CatmullRomCurve3([new T.Vector3(.067,y,.04),new T.Vector3(.066,y,-.025),new T.Vector3(.02,y,-.058),new T.Vector3(-.034,y,-.034)]);
+        part(wrist,`wrapped-finger${finger}`,new T.TubeGeometry(curve,9,.018,7,false),iron);
+        part(wrist,'knuckle-plate',box,armor,.039,y,-.059,.046,.032,.022);
+      }
+      const thumb=part(wrist,'gripping-thumb',sphere,iron,-.065,.047,.0,.025,.065,.034);thumb.rotation.z=-.55;
+    }else {
+      part(wrist,'gauntlet',sphere,iron,-.005,0,0,.115,.115,.13);
+      for(let finger=0;finger<3;finger++)part(wrist,'knuckle',box,armor,(finger-1)*.052,0,-.113,.042,.055,.035);
+    }
+    const shoulder=new T.Group();shoulder.name=`shoulder${side}`;shoulder.position.set(side*.39,1.035,0);body.add(shoulder);
+    part(shoulder,'pauldron-shell',sphere,armor,0,.015,0,.165,.165,.17);
+    const badge=new T.Group();badge.name=side>0?'side-crest':'pauldron-side';badge.position.set(side*.085,-.015,0);badge.rotation.y=-side*Math.PI/2;shoulder.add(badge);
+    badge.rotateX(.36);badge.scale.setScalar(.90);
+    const guard=shoulderPlate();
+    part(badge,'side-crest-rim',guard,silver);
+    part(badge,'side-crest-groove',shoulderPlate(.91,-.028),iron);
+    part(badge,'side-crest-inner-rim',shoulderPlate(.86,-.042),silver);
+    part(badge,'side-crest-face',shoulderPlate(.78,-.058),armor);
+    for(const y of [-.16,.15])part(badge,'pauldron-rivet',sphere,silver,0,y,-.151,.012,.012,.008);
+    if(side>0) {
+      part(badge,'crimson-diamond',new T.OctahedronGeometry(1),jewel,0,.015,-.225,.060,.108,.024);
+      part(badge,'diamond-inlay',new T.OctahedronGeometry(1),silver,0,.015,-.249,.016,.032,.006);
+    }
+  }
+  const cape=new T.Group();cape.name='cape';cape.position.set(0,1.10,.22);body.add(cape);
+  const fabric=crimson.clone();fabric.vertexColors=true;
+  part(cape,'tattered-cape',drapedCape(),fabric);
+  for(const [y,r]of[[1.055,.285],[1.02,.29]]){const scarf=part(body,'mantle',new T.TorusGeometry(r,.045,8,28,Math.PI*1.65),crimson,0,y,.02);scarf.rotation.x=Math.PI/2;scarf.rotation.z=.7;}
+  for(const side of [-1,1]) {
+    const tail=part(body,'mantle-tail',plate([[-.06,.08],[.055,.08],[.05,-.08],[.015,-.04],[-.005,-.13],[-.035,-.075],[-.065,-.10]],.015),crimson,side*.27,1.02,-.19);tail.rotation.y=-side*.45;tail.rotation.z=side*.18;
+    part(body,'mantle-clasp-rim',new T.OctahedronGeometry(1),silver,side*.23,1.06,-.24,.05,.063,.022).rotation.z=side*.25;
+    part(body,'mantle-clasp-gem',new T.OctahedronGeometry(1),crimson,side*.23,1.06,-.262,.029,.039,.012).rotation.z=side*.25;
+  }
+  const sword=new T.Group();sword.name='ember-sword';body.getObjectByName('wrist1')!.add(sword);
+  // The blade's cutting plane follows the knuckles, perpendicular to the back of the hand.
+  sword.rotation.y=Math.PI/2;
+  part(sword,'grip',bar,crimson,0,.02,0,.034,.21,.034);
+  for(let i=0;i<6;i++){const wrap=part(sword,'grip-wrap',new T.TorusGeometry(.035,.007,5,12),iron,0,-.065+i*.031,0);wrap.rotation.x=Math.PI/2;wrap.rotation.z=.18;}
+  part(sword,'pommel',sphere,silver,0,-.10,0,.055,.055,.045);
+  part(sword,'crossguard',plate([[-.23,.10],[-.23,.15],[-.09,.19],[0,.175],[.09,.19],[.23,.15],[.23,.10],[.12,.13],[0,.12],[-.12,.13]],.09),silver);
+  part(sword,'guard-gem',new T.OctahedronGeometry(1),crimson,0,.145,-.05,.045,.06,.02);
+  const blade=swordBlade();
+  const bladeDark=new T.MeshStandardMaterial({color:'#4d5867',roughness:.39,metalness:.55});
+  const bladeLight=new T.MeshStandardMaterial({color:'#8d9aab',roughness:.28,metalness:.66});
+  const bladeMesh=new T.Mesh(blade,[bladeDark,bladeLight,silver]);bladeMesh.name='forged-blade';bladeMesh.castShadow=bladeMesh.receiveShadow=true;sword.add(bladeMesh);
+  const heat=new T.Group();heat.name='blade-fissures';sword.add(heat);
+  for(const side of [-1,1]) {
+    const crack=(points:number[][])=>seam(heat,points.map(([x,y])=>[x,y,bladeSurface(x,y)*side]));
+    crack([[-.045,.31],[.012,.53],[-.027,.72],[.028,.94],[0,1.25]]);
+    crack([[.012,.53],[.060,.63],[.067,.66]]);crack([[-.027,.72],[-.060,.81],[-.067,.86]]);
+  }
+  const glow=part(sword,'blade-glow',blade,new T.MeshBasicMaterial({color:'#ff872f',transparent:true,opacity:.045,depthWrite:false,blending:T.AdditiveBlending}),0,0,0,1.025,1,1.08);glow.castShadow=false;
+  const chest=new T.Group();chest.name='chest';chest.position.y=.70;body.add(chest);
+  for(const child of [...body.children])if(child!==chest&&(child.position.y>.70||child.name==='ember-seam')){child.position.y-=.70;chest.add(child);}
+  // Batch only rigid subassemblies; the head, limbs, cape and sword keep their pivots.
+  for(const assembly of [head,body,chest,cape,sword,heat,...[-1,1].flatMap(side=>[body.getObjectByName(`arm${side}`)!,body.getObjectByName(`elbow${side}`)!,body.getObjectByName(`wrist${side}`)!,body.getObjectByName(`leg${side}`)!,body.getObjectByName(`knee${side}`)!,body.getObjectByName(`ankle${side}`)!,body.getObjectByName(`shoulder${side}`)!]),body.getObjectByName('side-crest')!,body.getObjectByName('pauldron-side')!]) {
+    const batches=new Map<T.Material,T.BufferGeometry[]>();
+    for(const child of [...assembly.children]) {
+      if(!(child instanceof T.Mesh)||child===glow||child.children.length||Array.isArray(child.material))continue;child.updateMatrix();
+      const geometry=(child.geometry.index?child.geometry.toNonIndexed():child.geometry.clone()).applyMatrix4(child.matrix);geometry.deleteAttribute('uv');
+      const material=child.material as T.Material;if(!batches.has(material))batches.set(material,[]);batches.get(material)!.push(geometry);assembly.remove(child);
+    }
+    for(const [material,parts]of batches){part(assembly,'armor-batch',mergeGeometries(parts)!,material);parts.forEach(p=>p.dispose());}
+  }
+  if(flameTexture)sword.add(createGuardianFlames(flameTexture));
+  bindGuardianRig(root);
+  holdGuardianSwordReady(root);
+  return root;
+}
+

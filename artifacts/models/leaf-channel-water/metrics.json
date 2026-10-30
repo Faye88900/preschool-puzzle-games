@@ -1,0 +1,119 @@
+{
+  "pass": true,
+  "model": {
+    "animation": {
+      "mean": 0.24983796296296296,
+      "changed": 29462
+    },
+    "deterministic": {
+      "mean": 0,
+      "changed": 0
+    },
+    "reduced": {
+      "mean": 0,
+      "changed": 0
+    },
+    "sprayFade": 0.16,
+    "cloudQuads": 12,
+    "cloudTop": -17.100000739097595,
+    "waterfallBottom": -27.5,
+    "meshes": 25,
+    "triangles": 23192,
+    "finite": true,
+    "materials": 12,
+    "textures": 1,
+    "shaders": [
+      {
+        "name": "leaf-water-ripple-surface",
+        "time": 0,
+        "fade": 1
+      },
+      {
+        "name": "leaf-water-ripple-surface",
+        "time": 0,
+        "fade": 1
+      },
+      {
+        "name": "leaf-water-ripple-surface",
+        "time": 0,
+        "fade": 1
+      },
+      {
+        "name": "leaf-water-turbulent-cascades",
+        "time": 0,
+        "fade": 1
+      },
+      {
+        "name": "leaf-water-spray",
+        "time": 0,
+        "fade": 1
+      },
+      {
+        "name": "leaf-water-local-clouds",
+        "time": 0,
+        "fade": 1
+      }
+    ],
+    "render": {
+      "frame": 8,
+      "calls": 26,
+      "triangles": 23192,
+      "points": 78,
+      "lines": 0
+    }
+  },
+  "cloudMotion": {
+    "changed": 3025,
+    "reducedChanged": 0
+  },
+  "gameplay": {
+    "before": 0,
+    "animated": [
+      0.3,
+      0.3,
+      0.3,
+      0.3,
+      0.3
+    ],
+    "pausedTime": 0.3,
+    "paused": [
+      0.3,
+      0.3,
+      0.3,
+      0.3,
+      0.3
+    ],
+    "reduced": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "bodies": [
+      192,
+      265
+    ],
+    "reset": [
+      192,
+      265
+    ],
+    "shown": {
+      "frame": 8,
+      "calls": 177,
+      "triangles": 234382,
+      "points": 78,
+      "lines": 0
+    },
+    "hidden": {
+      "frame": 9,
+      "calls": 151,
+      "triangles": 211190,
+      "points": 0,
+      "lines": 0
+    },
+    "geometries": 648,
+    "textures": 29
+  },
+  "errors": []
+}

@@ -1,0 +1,56 @@
+{
+  "model": {
+    "finite": true,
+    "triangles": 4332,
+    "meshes": 13,
+    "idempotent": true,
+    "travels": true,
+    "hit": true,
+    "empty": true,
+    "reduced": true,
+    "stopped": true
+  },
+  "captures": [
+    {
+      "name": "desktop",
+      "beforePixels": 536,
+      "afterPixels": 3361,
+      "ratio": 6.270522388059701,
+      "render": {
+        "calls": 655,
+        "triangles": 662988,
+        "geometries": 433,
+        "textures": 20
+      }
+    },
+    {
+      "name": "mobile",
+      "beforePixels": 453,
+      "afterPixels": 2860,
+      "ratio": 6.313465783664459,
+      "render": {
+        "calls": 148,
+        "triangles": 228924,
+        "geometries": 434,
+        "textures": 20
+      }
+    },
+    {
+      "name": "landscape",
+      "beforePixels": 103,
+      "afterPixels": 815,
+      "ratio": 7.912621359223301,
+      "render": {
+        "calls": 967,
+        "triangles": 841606,
+        "geometries": 446,
+        "textures": 23
+      }
+    }
+  ],
+  "state": {
+    "paused": true,
+    "reduced": true
+  },
+  "errors": []
+}

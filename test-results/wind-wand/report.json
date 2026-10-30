@@ -1,0 +1,29 @@
+{
+  "model": {
+    "meshes": 18,
+    "triangles": 4532,
+    "finite": true,
+    "size": [
+      0.624,
+      1.8699999916553498,
+      0.5560746188679695
+    ],
+    "rotor": false,
+    "casting": 0.76,
+    "idle": 0.16,
+    "spun": 0.7000000000000001,
+    "reducedStill": true,
+    "pausedStill": true,
+    "calls": 18
+  },
+  "attachment": {
+    "maxGripGap": 0,
+    "minBottom": 0.06984667564983313,
+    "calls": 778,
+    "triangles": 733504,
+    "geometries": 461,
+    "textures": 25
+  },
+  "socketGap": 0,
+  "errors": []
+}

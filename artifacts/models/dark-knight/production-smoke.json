@@ -1,0 +1,10 @@
+{
+  "url": "http://127.0.0.1:4198/?level=3&lang=zh",
+  "canvas": {
+    "width": 1280,
+    "height": 800,
+    "displayWidth": 1280,
+    "displayHeight": 800
+  },
+  "errors": []
+}

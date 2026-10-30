@@ -174,6 +174,19 @@ export function gardenFlower(symbol?: number) {
   return root;
 }
 
+export function gardenFlowerBed(color: string) {
+  const root = new T.Group(); root.name = 'garden-flower-bed';
+  part(root, rounded(4.8, .2, 2.7, .2), '#765d41', 0, .1);
+  for (const x of [-2.5, 2.5]) part(root, new T.BoxGeometry(.15, .3, 2.95), '#c7a16c', x, .23);
+  for (const z of [-1.4, 1.4]) part(root, new T.BoxGeometry(5.15, .3, .15), '#c7a16c', 0, .23, z);
+  const template = gardenFlower(); colorFlower(template, color, true);
+  for (let i = 0; i < 5; i++) for (const z of [-.6, .6]) {
+    const bloom = template.clone(true); bloom.name = 'garden-bed-flower';
+    bloom.position.set(-1.8 + i * .9, .18, z); bloom.scale.setScalar(.3); root.add(bloom);
+  }
+  return root;
+}
+
 export function pondFlower() {
   const root = new T.Group(); root.name = 'water-flower';
   part(root, new T.CylinderGeometry(.18, .23, .94, 16), '#528d38', 0, .61);

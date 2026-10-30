@@ -1,0 +1,83 @@
+{
+  "pass": true,
+  "geometry": {
+    "finite": true,
+    "triangles": 16760,
+    "meshes": 9,
+    "noPond": true,
+    "noGate": true,
+    "seaY": -0.65,
+    "boatY": -1.00810362428758,
+    "hullBottom": -0.9941310000825272,
+    "piles": -1.2306947708129883,
+    "opening": 0,
+    "bayBounds": {
+      "min": [
+        90,
+        -0.6500000000000021,
+        -47
+      ],
+      "max": [
+        180,
+        -0.6499999999999979,
+        23
+      ]
+    },
+    "outsideSeaHits": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "cloudHeights": [
+      -7,
+      -2,
+      3,
+      8
+    ],
+    "distantHeights": [
+      8,
+      -3,
+      10,
+      2,
+      5,
+      -6
+    ],
+    "sailingDistance": 57.81660661090377,
+    "oldIslandGround": null,
+    "bossLandingGround": 0.09499979019165039,
+    "bossArenaGround": 0,
+    "waterGap": null,
+    "oldPondGround": -0.9981145858764648,
+    "besideDockGround": -1.326786994934082,
+    "grassGround": 0,
+    "lamp": true,
+    "sign": true
+  },
+  "animation": {
+    "changed": 25774,
+    "repeatDifference": 0
+  },
+  "render": {
+    "calls": 77,
+    "triangles": 128616,
+    "geometries": 637,
+    "textures": 32,
+    "dpr": 1,
+    "seaCalls": 1,
+    "slopes": {
+      "width": 128,
+      "height": 128,
+      "min": 82,
+      "max": 171,
+      "repeat": true,
+      "mipmaps": true
+    }
+  },
+  "swell": {
+    "range": 0.6500626379669725,
+    "boatError": 1.1102230246251565e-16
+  },
+  "paused": 1.0000000000000002,
+  "errors": []
+}

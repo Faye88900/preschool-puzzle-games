@@ -1,0 +1,13 @@
+{
+  "url": "http://127.0.0.1:5210/?level=3&lang=zh",
+  "texture": true,
+  "ui": {
+    "canvas": [
+      1280,
+      800
+    ],
+    "touchVisible": false,
+    "guide": "WASD / 方向键 移动 · 空格 跳跃 · Shift 闪避 · E 互动 / 吹风 · H 提示"
+  },
+  "errors": []
+}

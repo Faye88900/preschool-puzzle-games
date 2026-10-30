@@ -1,0 +1,16 @@
+Use case: precise-object-edit.
+Asset type: corrected preview of Bean Rush level 3 selection cover, preserve the exact 2:1 landscape aspect ratio and original resolution.
+Input image 1: EDIT TARGET, the existing Zelda-inspired cover.
+Input image 2: STRICT OBJECT REFERENCE, a render of the actual in-game garden windmill from createGardenWindmill in src/plaza-mechanisms.ts. This image is only the windmill object reference, not a scene or lighting reference.
+Primary request: Correct ONLY the inaccurate windmill at the right end of the wooden bridge in image 1 using the exact recognizable windmill design in image 2. The current unsupported four-sail wheel is wrong. Replace it with a complete SMALL TOWER WINDMILL standing securely on a grassy stone bank at the bridgehead. Locally extend that bridgehead's stone bank only as needed for a natural grounded base.
+Required windmill identity from image 2:
+- stout cream/beige subtly tapered round stone tower, visible horizontal masonry courses;
+- honey wood horizontal reinforcement hoops and little brass rivets around the tower, especially lower base;
+- a distinctive THREE-TIER flared teal/turquoise conical roof with small gold ball finial;
+- four STRAIGHT RECTANGULAR off-center cream sails, each held in a honey wooden frame with several thin ladder-like crossbars; radial cross rotor mounted on the FRONT of the upper tower;
+- teal circular rotor hub with gold rim and gold leaf motif;
+- second smaller teal/gold leaf medallion on lower tower front.
+Match image 2's shape, proportions, construction, colors, rectangular blade shape and distinctive roof. No triangular canvas sails, no propeller, no waterwheel, no giant wheel dangling off the cliff, no freestanding unsupported rotor. Windmill must have a clearly visible full tower and base anchored to land. Keep it at a reasonable midground landmark scale. It may occupy the old rotor area and a little immediately adjacent space. Fit the reference object into image 1's perspective and painterly sunlit lighting, rather than pasting the gray-background render.
+Position: same RIGHT MIDDLE bridge area as the old wrong rotor, complete tower on the bridgehead land beside the existing bridge. The bridge deck remains usable and unobstructed; orient the rotor toward the viewer enough to read all four rectangular sails and roof.
+The existing magical wind ribbon should still flow from the hero's crystal toward this corrected windmill and curl gently around the rotor, with minimal local adjustment.
+Strict invariants: keep the hero's face, body, ears, feet, pose, expression, wind staff and crystal unchanged; preserve maze geometry, ruins, old tree, foreground terrace, clouds, sky, sailboat, guardian island and guardian. Keep original overall composition, color grading, sun direction, shadows and Zelda-inspired painterly adventure rendering. Do not redesign or move the hero, boat or guardian. No unrelated additions. No text, logos, labels, panel borders or watermarks. Output just the corrected complete cover, not an object sheet or comparison.

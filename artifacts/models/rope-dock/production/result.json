@@ -1,0 +1,68 @@
+{
+  "pass": true,
+  "bridge": {
+    "opened": true,
+    "x": 24.79838752746582,
+    "y": 0.6498473882675171,
+    "z": 40,
+    "grounded": true
+  },
+  "approach": {
+    "x": 100.13785552978516,
+    "y": 0.7449197173118591,
+    "z": -10.005483627319336,
+    "grounded": true
+  },
+  "edges": [
+    {
+      "key": "KeyW",
+      "x": 100,
+      "y": 0.7449198961257935,
+      "z": -11.080012321472168,
+      "grounded": true
+    },
+    {
+      "key": "KeyS",
+      "x": 100,
+      "y": 0.7449198961257935,
+      "z": -8.919987678527832,
+      "grounded": true
+    },
+    {
+      "key": "KeyD",
+      "x": 101.98844146728516,
+      "y": 0.7413520216941833,
+      "z": -10,
+      "grounded": false
+    }
+  ],
+  "contact": {
+    "bodyY": 0.7449183464050293,
+    "grounded": true,
+    "visible": true
+  },
+  "structure": {
+    "both": true,
+    "mooringParent": "wind-garden-dock",
+    "bossMooringParent": "boss-island-dock",
+    "bayDimensions": [
+      90,
+      70
+    ],
+    "bayCenter": [
+      135,
+      -0.65,
+      -12
+    ],
+    "cloudFirstY": -7,
+    "bodies": 180,
+    "colliders": 249
+  },
+  "landing": {
+    "x": 167.19334411621094,
+    "y": 0.7449196577072144,
+    "z": -15,
+    "grounded": true
+  },
+  "errors": []
+}

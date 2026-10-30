@@ -1,0 +1,43 @@
+{
+  "initial": {
+    "duration": 41.96,
+    "context": "running",
+    "asleep": true,
+    "target": "choir"
+  },
+  "verse": {
+    "time": 11.050666666666666,
+    "lyric": "风儿轻轻吹过来",
+    "signal": 0.21885693073272705,
+    "source": true
+  },
+  "frozen": 14.805333333333332,
+  "loop": {
+    "time": 42.64533333333333,
+    "playing": true,
+    "sameSource": true,
+    "loop": true,
+    "awake": true,
+    "captionVisible": true,
+    "music": 0.035
+  },
+  "left": {
+    "source": false,
+    "dozing": true,
+    "captionHidden": true,
+    "music": 0.22,
+    "target": "chest"
+  },
+  "settling": {
+    "time": 0.5499999999999999,
+    "head": 0.10190468749999998,
+    "petals": 0.9536796875
+  },
+  "resources": [
+    {
+      "name": "http://127.0.0.1:5209/audio/maze/flower-choir.mp3",
+      "bytes": 1015241
+    }
+  ],
+  "errors": []
+}

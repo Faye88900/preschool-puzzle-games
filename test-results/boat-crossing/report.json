@@ -1,0 +1,143 @@
+{
+  "topology": {
+    "closed": {
+      "dock": true,
+      "boss": false,
+      "exit": false
+    },
+    "key": {
+      "dock": true,
+      "boss": false,
+      "exit": true
+    },
+    "waterWalkable": false,
+    "waterFloor": false,
+    "bodies": 180,
+    "colliders": 249
+  },
+  "midpoint": {
+    "boat": [
+      112.27745662633036,
+      -0.8,
+      -10.744570887702288
+    ],
+    "player": {
+      "x": 112.97745513916016,
+      "y": 0.5,
+      "z": -10.7445707321167
+    },
+    "elapsed": 2.549999999999999
+  },
+  "arena": [
+    0.1815349750945765,
+    0.16526791316883035,
+    0.17164119195943836,
+    0.18236044923361447
+  ],
+  "returnRoute": [
+    {
+      "target": [
+        85,
+        -10
+      ],
+      "distance": 0.1515223632665453
+    },
+    {
+      "target": [
+        85,
+        0
+      ],
+      "distance": 0.1505553850333008
+    },
+    {
+      "target": [
+        75,
+        0
+      ],
+      "distance": 0.1737775882956131
+    },
+    {
+      "target": [
+        75,
+        15
+      ],
+      "distance": 0.15429693147173604
+    },
+    {
+      "target": [
+        55,
+        15
+      ],
+      "distance": 0.17690345971155252
+    },
+    {
+      "target": [
+        55,
+        0
+      ],
+      "distance": 0.1719048541610617
+    },
+    {
+      "target": [
+        25,
+        0
+      ],
+      "distance": 0.19244735318158493
+    },
+    {
+      "target": [
+        5,
+        0
+      ],
+      "distance": 0.17757763527124815
+    },
+    {
+      "target": [
+        5,
+        25
+      ],
+      "distance": 0.1979974288852375
+    },
+    {
+      "target": [
+        5,
+        35
+      ],
+      "distance": 0.17208882234087206
+    },
+    {
+      "target": [
+        -10,
+        35
+      ],
+      "distance": 0.17827046517602568
+    },
+    {
+      "target": [
+        -10,
+        27
+      ],
+      "distance": 0.16510210912172374
+    }
+  ],
+  "reset": {
+    "crossing": true,
+    "enabled": true,
+    "trip": false,
+    "onBoss": false,
+    "boat": [
+      103.7,
+      -0.8,
+      -10
+    ],
+    "key": false,
+    "treasure": false,
+    "bodies": 180,
+    "colliders": 249
+  },
+  "metrics": {
+    "calls": 91,
+    "triangles": 136186
+  },
+  "errors": []
+}

@@ -1,0 +1,89 @@
+{
+  "pass": true,
+  "model": {
+    "meshes": 22,
+    "triangles": 10536,
+    "finite": true,
+    "materials": 8,
+    "textures": 1,
+    "min": [
+      -1.4049999713897705,
+      4.76837147544984e-9,
+      -0.5199999809265137
+    ],
+    "size": [
+      2.857235083580017,
+      4.2499999952316285,
+      1.1477499866485597
+    ],
+    "palette": [
+      "weapon-rack-aged-bronze|b18b48|0.62|0.5|false",
+      "weapon-rack-jade-leaves-and-cloth|337b62|0.91|0|false",
+      "weapon-rack-leather-and-seams|5b3d29|0.91|0|false",
+      "weapon-rack-moss|708b3a|0.91|0|false",
+      "weapon-rack-old-wood|ffffff|0.91|0|true",
+      "weapon-rack-rope|c4b183|0.91|0|false",
+      "weapon-rack-steel|86968e|0.48|0.64|false",
+      "weapon-rack-worn-wood-ends|ba874e|0.91|0|false"
+    ],
+    "shared": true,
+    "spears": [
+      {
+        "top": 4.25,
+        "thickness": 0.14676471470750505
+      },
+      {
+        "top": 3.9000000953674316,
+        "thickness": 0.14676471419002055
+      },
+      {
+        "top": 3.549999952316284,
+        "thickness": 0.14676471453501036
+      }
+    ],
+    "shieldThickness": 0.14901323030638358,
+    "rearStrapDepth": -0.16249999403953552,
+    "notch": 1.9900000095367432,
+    "beamTop": 2.0950000286102295,
+    "pixelRange": 224.66666666666666
+  },
+  "glbBytes": 1465088,
+  "gameplay": {
+    "position": [
+      176.5,
+      0,
+      -43
+    ],
+    "frontOpacity": 1,
+    "blockedOpacity": 0.16,
+    "restoredOpacity": 1,
+    "stop": {
+      "x": 176.5,
+      "y": 0.6498386263847351,
+      "z": -41.950050354003906
+    },
+    "bodies": [
+      192,
+      265
+    ],
+    "reset": [
+      192,
+      265
+    ],
+    "shown": {
+      "frame": 8,
+      "calls": 196,
+      "triangles": 244710,
+      "points": 78,
+      "lines": 0
+    },
+    "hidden": {
+      "frame": 7,
+      "calls": 174,
+      "triangles": 234174,
+      "points": 78,
+      "lines": 0
+    }
+  },
+  "errors": []
+}

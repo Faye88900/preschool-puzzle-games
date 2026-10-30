@@ -51,19 +51,20 @@ async function boot() {
   const level = params.get('level');
   if (level === '1') return new (await import('./race')).Race().init();
   if (level === '2') return new (await import('./puzzle')).PuzzleGarden().init();
+  if (level === '3') return new (await import('./maze')).MazeAdventure().init();
   return (await import('./home')).showHome();
 }
 async function start() {
   const level = params.get('level');
   const homeArrival = params.get('homeArrival') === '1';
-  if (level !== '1' && level !== '2' && !homeArrival) return boot();
+  if (level !== '1' && level !== '2' && level !== '3' && !homeArrival) return boot();
   if (homeArrival) {
     const url = new URL(location.href);
     url.searchParams.delete('homeArrival');
     history.replaceState(null, '', url);
   }
   const { startJourney } = await import('./journey');
-  const destination = level === '1' ? '天空赛道' : level === '2' ? '解谜花园' : '空岛';
+  const destination = level === '1' ? '天空赛道' : level === '2' ? '解谜花园' : level === '3' ? '风语迷宫' : '空岛';
   const journey = startJourney(loading, destination);
   try { await boot(); await journey.arrive(); }
   finally { journey.dispose(); }

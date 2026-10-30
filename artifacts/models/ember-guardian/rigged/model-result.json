@@ -1,0 +1,57 @@
+{
+  "pass": true,
+  "metrics": {
+    "meshes": 70,
+    "triangles": 58058,
+    "bounds": {
+      "min": [
+        -0.7303135066209927,
+        7.450580596923828e-9,
+        -1.3745033772974584
+      ],
+      "max": [
+        0.7711733240841461,
+        1.728400468826294,
+        0.5557330846786499
+      ]
+    },
+    "size": [
+      1.5014868307051388,
+      1.7284004613757133,
+      1.9302364619761083
+    ],
+    "heightRatio": 1.372931559396401
+  },
+  "fire": {
+    "changed": 12746,
+    "visible": 7700,
+    "reducedStill": true,
+    "instances": 9,
+    "texture": [
+      512,
+      512
+    ],
+    "calls": 76
+  },
+  "animation": {
+    "bones": 17,
+    "clips": [
+      "idle",
+      "walk",
+      "hurt",
+      "death",
+      "windup0",
+      "strike0",
+      "recover0",
+      "windup1",
+      "strike1",
+      "recover1",
+      "windup2",
+      "strike2",
+      "recover2"
+    ]
+  },
+  "bytes": 8761324,
+  "darkPixels": 193420,
+  "errors": []
+}

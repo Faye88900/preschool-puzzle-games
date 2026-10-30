@@ -95,7 +95,7 @@ export class UI {
   }
 
   private get<T extends HTMLElement = HTMLElement>(id: string) { return this.root.querySelector<T>(`#${id}`)!; }
-  private wireAction(id: string, action: () => void) {
+  wireAction(id: string, action: () => void) {
     const button = this.get<HTMLButtonElement>(id);
     button.addEventListener('pointerdown', event => { event.preventDefault(); action(); button.setPointerCapture(event.pointerId); button.classList.add('pressed'); });
     for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(name, () => button.classList.remove('pressed'));
@@ -119,7 +119,10 @@ export class UI {
     this.wireAction('hint', () => this.actions.hint?.());
     this.root.insertAdjacentHTML('beforeend', '<div id="chicken-marker" class="chicken-marker" hidden role="status"></div><div id="pipe-feedback" class="pipe-feedback" hidden role="status"></div>');
     this.root.querySelector('.keyboard-guide')!.innerHTML = '<kbd>W A S D</kbd> / 方向键 移动　<kbd>空格</kbd> 跳跃　<kbd>E</kbd> 互动　<kbd>H</kbd> 提示';
-    this.root.querySelector<HTMLAnchorElement>('.level-link')!.hidden = true;
+    const nextLevel = this.root.querySelector<HTMLAnchorElement>('.level-link')!;
+    nextLevel.href = '?level=3';
+    nextLevel.textContent = '下一关 · 风语迷宫 →';
+    nextLevel.hidden = true;
     this.get('primary').insertAdjacentHTML('afterend', '<a id="menu-home" class="secondary-button" href="./?homeArrival=1" hidden>返回主页</a>');
     this.root.querySelector('.race-assist-setting')!.remove();
     localize(this.root);
@@ -207,6 +210,7 @@ export class UI {
       this.get('primary').hidden = won;
     }
     if (this.puzzle) {
+      nextLevel.hidden = !won;
       this.get('menu-description').textContent = ready ? '解开三个谜题，打开花园。' : paused ? '准备好，就继续找钥匙。' : '太棒了，三把钥匙找齐了！';
       this.get('menu-tips').innerHTML = TASKS.map((task, i) => `<span>${taskIcon(i)}<small>${task.name}</small></span>`).join('');
     }

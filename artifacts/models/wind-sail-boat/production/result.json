@@ -1,0 +1,24 @@
+{
+  "pass": true,
+  "model": {
+    "hull": true,
+    "sail": true,
+    "crystal": false
+  },
+  "riding": {
+    "elapsed": 2.3999999999999995,
+    "offset": [
+      0.6999980222972084,
+      1.2999999867676981,
+      4.365851218324224e-7
+    ],
+    "enabled": false,
+    "visible": true
+  },
+  "returning": [
+    -0.6999980222972226,
+    1.3000000264378233,
+    -4.365851218324224e-7
+  ],
+  "errors": []
+}

@@ -12,7 +12,7 @@ import { readSettings, saveSettings } from './settings';
 import { movement, acceleration, animateWalk } from './movement';
 import { setCharacterExpression } from './character';
 import { PuzzleAudio, type PuzzleSound } from './puzzle-audio';
-import { rounded, workshopBlock, workshopPressurePlate, workshopGate, chickenCoop, gardenFlower, pondFlower, colorFlower, gateMesh, padlock, lantern, entranceArch, elbowCurve, waterPipe, animateWater } from './puzzle-art';
+import { rounded, workshopBlock, workshopPressurePlate, workshopGate, chickenCoop, gardenFlower, gardenFlowerBed, pondFlower, colorFlower, gateMesh, padlock, lantern, entranceArch, elbowCurve, waterPipe, animateWater } from './puzzle-art';
 
 const STEP = movement.step;
 const colors = ['#ffd15a', '#76cde8', '#f29bbe'];
@@ -431,13 +431,8 @@ export class PuzzleGarden {
     }
     // Low planted beds balance the coop without hiding the animal or the next turn.
     for (const z of [-57.5, -62]) {
-      this.box(-9.5, .1, z, 4.8, .2, 2.7, '#765d41', false).geometry = rounded(4.8, .2, 2.7, .2);
-      for (const x of [-12, -7]) this.box(x, .23, z, .15, .3, 2.95, '#c7a16c', false);
-      for (const edge of [-1.4, 1.4]) this.box(-9.5, .23, z + edge, 5.15, .3, .15, '#c7a16c', false);
-      for (let i = 0; i < 5; i++) for (const row of [-.6, .6]) {
-        const bloom = this.flower(-11.3 + i * .9, z + row); bloom.scale.setScalar(.3);
-        colorFlower(bloom, z < -60 ? '#f3ca67' : '#f1aeb9', true);
-      }
+      const bed = gardenFlowerBed(z < -60 ? '#f3ca67' : '#f1aeb9');
+      bed.position.set(-9.5, 0, z); this.scene.add(bed);
     }
     this.prop('bench-01', -10.8, -51, 3.1, .15, true);
     this.prop('barrel-01', 17.5, -62.5, 1.1, 0, true);

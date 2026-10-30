@@ -1,0 +1,235 @@
+{
+  "pass": true,
+  "model": {
+    "meshes": 12,
+    "triangles": 8740,
+    "finite": true,
+    "materials": 6,
+    "textures": 1,
+    "min": [
+      -1.0376550091505605,
+      0,
+      -0.3799999952316284
+    ],
+    "size": [
+      2.3762220247146892,
+      2.3509535789489746,
+      0.88944397880283
+    ],
+    "palette": [
+      "stele-aged-gold|b08c4d|0.68|0.35|false",
+      "stele-deep-carving|706d59|0.94|0|false",
+      "stele-fracture|96988b|0.94|0|false",
+      "stele-jade|3b7d69|0.86|0|false",
+      "stele-limestone|ffffff|0.94|0|true",
+      "stele-moss|768d3f|0.94|0|false"
+    ],
+    "shared": true,
+    "leafPoints": [
+      {
+        "z": 0.13699999451637268,
+        "material": "stele-jade"
+      },
+      {
+        "z": 0.13699999451637268,
+        "material": "stele-jade"
+      },
+      {
+        "z": 0.13699999451637268,
+        "material": "stele-jade"
+      }
+    ],
+    "separators": [
+      {
+        "z": 0.17100000381469727,
+        "material": "stele-limestone"
+      },
+      {
+        "z": 0.17100000381469704,
+        "material": "stele-limestone"
+      }
+    ],
+    "face": {
+      "z": 0.1710000038146975,
+      "material": "stele-limestone"
+    },
+    "missing": null,
+    "thickness": 0.3560000061988833,
+    "fragments": [
+      {
+        "name": "stele-large-fragment",
+        "min": [
+          0.6297484980461189,
+          0,
+          -0.12433930892088291
+        ],
+        "size": [
+          0.7088185175180096,
+          0.7193337245691005,
+          0.6337832924920845
+        ],
+        "materials": [
+          "stele-fracture",
+          "stele-limestone",
+          "stele-jade",
+          "stele-aged-gold"
+        ]
+      },
+      {
+        "name": "stele-small-fragment",
+        "min": [
+          -1.0376550091505605,
+          0,
+          0.04092367566224958
+        ],
+        "size": [
+          0.46514206031143424,
+          0.41917325480195183,
+          0.46650470943281913
+        ],
+        "materials": [
+          "stele-fracture",
+          "stele-limestone"
+        ]
+      }
+    ],
+    "pixelRange": 199.33333333333331
+  },
+  "glbBytes": 1069072,
+  "gameplay": {
+    "position": [
+      172.5,
+      0,
+      -8
+    ],
+    "visibility": [
+      {
+        "x": 170,
+        "z": -10,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 171,
+        "z": -11,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 172.5,
+        "z": -12,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 174,
+        "z": -11,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 174.2,
+        "z": -9.8,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 172.5,
+        "z": -6,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 171.8,
+        "z": -8.9,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 172,
+        "z": -8.9,
+        "opacity": 0.16,
+        "blocked": true
+      },
+      {
+        "x": 172.2,
+        "z": -8.9,
+        "opacity": 0.16,
+        "blocked": true
+      },
+      {
+        "x": 172.5,
+        "z": -8.9,
+        "opacity": 0.16,
+        "blocked": true
+      },
+      {
+        "x": 172,
+        "z": -9,
+        "opacity": 0.16,
+        "blocked": true
+      },
+      {
+        "x": 171.8,
+        "z": -9.1,
+        "opacity": 1,
+        "blocked": false
+      },
+      {
+        "x": 172.5,
+        "z": -9,
+        "opacity": 0.16,
+        "blocked": true
+      }
+    ],
+    "stop": {
+      "x": 172.48663330078125,
+      "y": 0.6498390436172485,
+      "z": -8.824987411499023
+    },
+    "routes": [
+      {
+        "x": 174.2265167236328,
+        "z": -11.515313148498535,
+        "y": 0.6634080410003662,
+        "distance": 0.17415780113458632
+      },
+      {
+        "x": 174.35899353027344,
+        "z": -9.164148330688477,
+        "y": 0.6498392820358276,
+        "distance": 0.1691928043010382
+      },
+      {
+        "x": 171.91122436523438,
+        "z": -11.349048614501953,
+        "y": 0.6498644351959229,
+        "distance": 0.17512119835079817
+      }
+    ],
+    "bodies": [
+      192,
+      265
+    ],
+    "reset": [
+      192,
+      265
+    ],
+    "nearOpacity": 1,
+    "shown": {
+      "frame": 21,
+      "calls": 284,
+      "triangles": 343468,
+      "points": 78,
+      "lines": 0
+    },
+    "hidden": {
+      "frame": 20,
+      "calls": 272,
+      "triangles": 334728,
+      "points": 78,
+      "lines": 0
+    }
+  },
+  "errors": []
+}

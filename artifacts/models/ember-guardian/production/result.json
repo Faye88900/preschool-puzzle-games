@@ -1,0 +1,169 @@
+{
+  "pass": true,
+  "attacks": [
+    {
+      "attack": 0,
+      "warning": {
+        "visible": true,
+        "aim": [
+          0,
+          0,
+          1
+        ],
+        "position": [
+          180,
+          0,
+          -30
+        ]
+      },
+      "impact": {
+        "hp": 2,
+        "range": 126,
+        "position": [
+          180,
+          0,
+          -30
+        ],
+        "phase": "lunge"
+      }
+    },
+    {
+      "attack": 1,
+      "warning": {
+        "visible": true,
+        "aim": [
+          0,
+          0,
+          1
+        ],
+        "position": [
+          180,
+          0,
+          -30
+        ]
+      },
+      "impact": {
+        "hp": 2,
+        "range": 126,
+        "position": [
+          180,
+          0,
+          -30
+        ],
+        "phase": "lunge"
+      }
+    },
+    {
+      "attack": 2,
+      "warning": {
+        "visible": true,
+        "aim": [
+          0,
+          0,
+          1
+        ],
+        "position": [
+          180,
+          0,
+          -30
+        ]
+      },
+      "impact": {
+        "hp": 2,
+        "range": 126,
+        "position": [
+          180,
+          0,
+          -30
+        ],
+        "phase": "lunge"
+      }
+    }
+  ],
+  "escapes": [
+    {
+      "hearts": 3,
+      "phase": "rest",
+      "aim": [
+        0,
+        0,
+        1
+      ],
+      "oldAim": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "hearts": 3,
+      "phase": "rest",
+      "aim": [
+        0,
+        0,
+        1
+      ],
+      "oldAim": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "hearts": 3,
+      "phase": "rest",
+      "aim": [
+        0,
+        0,
+        1
+      ],
+      "oldAim": [
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "sequence": [
+    0,
+    1,
+    2,
+    0
+  ],
+  "pursuit": {
+    "phase": "warn",
+    "position": [
+      193.6500000000042,
+      0,
+      -30
+    ],
+    "distance": 2.349999999995788,
+    "homeDistance": 13.650000000004212
+  },
+  "displacedKey": {
+    "distance": 0,
+    "collected": true
+  },
+  "reset": {
+    "counts": [
+      183,
+      256
+    ],
+    "after": [
+      183,
+      256
+    ],
+    "hp": 3,
+    "key": false,
+    "attack": 0,
+    "range": 0,
+    "warning": false
+  },
+  "metrics": {
+    "calls": 116,
+    "triangles": 121524,
+    "geometries": 593,
+    "textures": 26
+  },
+  "errors": []
+}

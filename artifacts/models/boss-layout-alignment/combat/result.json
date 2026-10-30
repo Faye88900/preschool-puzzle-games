@@ -1,0 +1,238 @@
+{
+  "pass": true,
+  "recoveryFacing": {
+    "hearts": 3,
+    "heading": 3.141592653589793,
+    "distance": 0
+  },
+  "reactions": [
+    {
+      "attack": 0,
+      "start": [
+        187.5,
+        0,
+        -34
+      ],
+      "entryAngle": 0.05293802606581624,
+      "roll": 0.0349999988052522,
+      "pitch": 0.28000000106166,
+      "yaw": 0.04500000149469076,
+      "hp": 2,
+      "repeatedHp": 2,
+      "stars": false,
+      "settled": true,
+      "distance": 0.3500000000000014
+    },
+    {
+      "attack": 1,
+      "start": [
+        187.5,
+        0,
+        -34
+      ],
+      "entryAngle": 0.06556120258394334,
+      "roll": -0.22944271695351665,
+      "pitch": 0.07999999904633757,
+      "yaw": 0.45155415643590985,
+      "hp": 2,
+      "repeatedHp": 2,
+      "stars": false,
+      "settled": true,
+      "distance": 0.2799999999999452
+    },
+    {
+      "attack": 2,
+      "start": [
+        187.5,
+        0,
+        -34
+      ],
+      "entryAngle": 0.09346192808941865,
+      "roll": 0.03499999940199889,
+      "pitch": -0.38000000308862747,
+      "yaw": 0.04499999844827948,
+      "hp": 2,
+      "repeatedHp": 2,
+      "stars": false,
+      "settled": true,
+      "distance": 0
+    }
+  ],
+  "attacks": [
+    {
+      "attack": 0,
+      "warning": {
+        "visible": true,
+        "aim": [
+          0,
+          0,
+          1
+        ],
+        "position": [
+          187.5,
+          0,
+          -34
+        ]
+      },
+      "impact": {
+        "hp": 2,
+        "range": 108,
+        "position": [
+          187.5,
+          0,
+          -34
+        ],
+        "phase": "lunge"
+      }
+    },
+    {
+      "attack": 1,
+      "warning": {
+        "visible": true,
+        "aim": [
+          0,
+          0,
+          1
+        ],
+        "position": [
+          187.5,
+          0,
+          -34
+        ]
+      },
+      "impact": {
+        "hp": 2,
+        "range": 126,
+        "position": [
+          187.5,
+          0,
+          -34
+        ],
+        "phase": "lunge"
+      }
+    },
+    {
+      "attack": 2,
+      "warning": {
+        "visible": true,
+        "aim": [
+          0,
+          0,
+          1
+        ],
+        "position": [
+          187.5,
+          0,
+          -34
+        ]
+      },
+      "impact": {
+        "hp": 2,
+        "range": 126,
+        "position": [
+          187.5,
+          0,
+          -34
+        ],
+        "phase": "lunge"
+      }
+    }
+  ],
+  "escapes": [
+    {
+      "hearts": 3,
+      "phase": "rest",
+      "aim": [
+        0,
+        0,
+        1
+      ],
+      "oldAim": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "hearts": 3,
+      "phase": "rest",
+      "aim": [
+        0,
+        0,
+        1
+      ],
+      "oldAim": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "hearts": 3,
+      "phase": "rest",
+      "aim": [
+        0,
+        0,
+        1
+      ],
+      "oldAim": [
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "sequence": [
+    0,
+    1,
+    2,
+    0
+  ],
+  "pursuit": {
+    "phase": "warn",
+    "position": [
+      201.1502266906923,
+      0,
+      -34
+    ],
+    "distance": 2.349773309307693,
+    "homeDistance": 13.650226690692307
+  },
+  "retreat": {
+    "maxSpeed": 1.6000000000005343,
+    "maxTurn": 3.500000000000003,
+    "walked": true,
+    "distance": 0.01850693342151999,
+    "settled": true,
+    "reacquired": true,
+    "blocked": true
+  },
+  "displacedKey": {
+    "distance": 0,
+    "collected": true
+  },
+  "reset": {
+    "counts": [
+      191,
+      264
+    ],
+    "after": [
+      191,
+      264
+    ],
+    "hp": 3,
+    "key": false,
+    "attack": 0,
+    "range": 0,
+    "warning": false,
+    "heading": 3.141592653589793,
+    "homeDistance": 0
+  },
+  "metrics": {
+    "calls": 132,
+    "triangles": 139352,
+    "geometries": 624,
+    "textures": 28
+  },
+  "errors": []
+}
