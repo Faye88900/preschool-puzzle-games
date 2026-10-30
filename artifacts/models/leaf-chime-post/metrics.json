@@ -125,7 +125,7 @@
       [
         169.5,
         0,
-        -41
+        -39.5
       ],
       [
         205,
@@ -135,21 +135,21 @@
     ],
     "hidden": {
       "frame": 5,
-      "calls": 174,
-      "triangles": 229942,
-      "points": 0,
+      "calls": 243,
+      "triangles": 372215,
+      "points": 78,
       "lines": 0
     },
     "shown": {
       "frame": 6,
-      "calls": 206,
-      "triangles": 264054,
-      "points": 0,
+      "calls": 275,
+      "triangles": 406327,
+      "points": 78,
       "lines": 0
     },
     "occluders": 2,
-    "geometries": 619,
-    "textures": 28
+    "geometries": 741,
+    "textures": 32
   },
   "travel": {
     "routes": [
@@ -182,7 +182,7 @@
       {
         "x": 170.44979858398438,
         "y": 0.6498389840126038,
-        "z": -41
+        "z": -39.5
       },
       {
         "x": 204.05020141601562,

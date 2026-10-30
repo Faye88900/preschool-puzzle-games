@@ -1,5 +1,4 @@
 import * as T from 'three';
-import { mat } from './models';
 import { BOSS_ARENA } from './ferry-shore-layout';
 import { createAncientWindSword } from './ancient-wind-sword';
 import { createWrappingSwordRoots } from './wrapping-sword-roots';
@@ -9,20 +8,16 @@ import { createLeafWaterChannel, LEAF_CHANNEL_FLOORS, LEAF_CHANNEL_SPACING } fro
 import { createLeafWeaponRack } from './leaf-weapon-rack';
 import { createCampfireRemains } from './campfire-remains';
 import { createLeafEmblemStele } from './leaf-emblem-stele';
+import { createCourtyardGardenProps } from './courtyard-garden-props';
+import { createFloatingRock } from './floating-islands';
 
 export function createBossCourtyardBlockout() {
   const root=new T.Group();root.name='boss-courtyard-blockout';root.userData.stage='blockout';
   const {left,right,top,bottom}=BOSS_ARENA;
   root.position.set((left+right)/2,0,(top+bottom)/2);
   const colliders:{x:number;y:number;z:number;width:number;height:number;depth:number}[]=[];
-  const cube=new T.BoxGeometry(1,1,1),round=new T.CylinderGeometry(1,1,1,8);
-  const stone=mat('#aaa99e'),wood=mat('#9b927e');
   const group=(name:string,x:number,z:number)=>{
     const object=new T.Group();object.name=`boss-blockout-${name}`;object.position.set(x,0,z);root.add(object);return object;
-  };
-  const part=(parent:T.Group,geometry:T.BufferGeometry,material:T.Material,x:number,y:number,z:number,w:number,h:number,d:number)=>{
-    const mesh=new T.Mesh(geometry,material);mesh.position.set(x,y,z);mesh.scale.set(w,h,d);
-    mesh.castShadow=mesh.receiveShadow=true;parent.add(mesh);return mesh;
   };
   const base=(parent:T.Group,w:number,h:number,d:number)=>{
     colliders.push({x:root.position.x+parent.position.x,y:h/2,z:root.position.z+parent.position.z,width:w,height:h,depth:d});
@@ -42,7 +37,7 @@ export function createBossCourtyardBlockout() {
   statue.add(createLeafGuardianStatue());
   base(statue,2.2,3.2,2.2);
 
-  for(const [index,x,z]of [[0,-18,-16],[1,17.5,14]]) {
+  for(const [index,x,z]of [[0,-18,-14.5],[1,17.5,14]]) {
     const chime=group(`chime-${index}`,x,z);
     chime.add(createLeafChimePost());
     base(chime,1.1,2.2,1.1);
@@ -56,22 +51,22 @@ export function createBossCourtyardBlockout() {
   }
   channel.getObjectByName('leaf-channel-waterfall-preview')!.name='boss-blockout-waterfall';
 
-  const rack=group('weapon-rack',-11,-18);
+  const rack=group('weapon-rack',-14,-18);
   rack.add(createLeafWeaponRack());
   base(rack,2.8,2,1.3);
 
-  const camp=group('campfire',-15,-17.5);
+  const camp=group('campfire',-16,-16);
   camp.add(createCampfireRemains());
 
   const marker=group('marker',-15,17);
   marker.add(createLeafEmblemStele());base(marker,1.7,2.3,.85);
   const pots=group('pots',-12,18);
-  for(const x of [-.6,.6])part(pots,round,wood,x,.45,0,.45,.9,.45);
-  base(pots,2.1,.9,.9);
+  pots.add(createCourtyardGardenProps());
+  base(pots,2.5,.75,1.4);
 
   const shards=group('floating-rocks',15,-22);
-  for(let i=0;i<3;i++) {
-    const mesh=part(shards,cube,stone,i*2,6+i*3,0,1.3,2.2,1.1);mesh.rotation.z=.3+i*.2;
+  for(const [i,kind]of (['c','b','a'] as const).entries()) {
+    const rock=createFloatingRock(kind);rock.position.set(i*3,6+i*3.1,0);rock.rotation.set(.04,i*.55,(i-1)*.12);shards.add(rock);
   }
   return {root,colliders};
 }

@@ -1,0 +1,33 @@
+{
+  "old": [],
+  "underlayY": 0.03,
+  "hits": [
+    {
+      "name": "meadow-ground-cover",
+      "y": 0.03000000000000022
+    }
+  ],
+  "legacyLoaded": false,
+  "plazaMeshes": 10,
+  "groundHeights": [
+    0.017999999225139618,
+    0.019999999552965164,
+    0.026000000536441803
+  ],
+  "bodies": [
+    192,
+    265
+  ],
+  "resetBodies": [
+    192,
+    265
+  ],
+  "memory": {
+    "geometries": 605,
+    "textures": 24
+  },
+  "resetMemory": {
+    "geometries": 605,
+    "textures": 24
+  }
+}

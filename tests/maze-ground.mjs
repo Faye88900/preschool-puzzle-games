@@ -50,7 +50,7 @@ try {
     return {min:bounds.min.toArray(),max:bounds.max.toArray(),finite:[...positions.array,...normals.array].every(Number.isFinite),outward:normals.getX(0),clouds:root.getObjectByName('maze-island-clouds').count,before,after};
   });
   assert.ok(island.finite&&island.outward>0&&island.max[1]<0&&island.min[1]<-35);
-  assert.equal(island.clouds,120);assert.ok(island.after.calls-island.before.calls<=4);
+  assert.equal(island.clouds,120);assert.ok(island.after.calls-island.before.calls<=16,'Shell, clouds and six authored distant islands stay within 16 calls');
   await page.screenshot({path:'test-results/maze-floating-island-overview.png'});
   const views = [];
   for (const [spot, width, height] of [['spawn',1280,800],['gardener',1280,800],['tools',1280,800],['boss',1280,800],['spawn',390,844],['gardener',844,390]]) {

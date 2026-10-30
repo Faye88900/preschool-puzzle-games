@@ -50,7 +50,7 @@
   "glbBytes": 1465088,
   "gameplay": {
     "position": [
-      176.5,
+      173.5,
       0,
       -43
     ],
@@ -58,9 +58,9 @@
     "blockedOpacity": 0.16,
     "restoredOpacity": 1,
     "stop": {
-      "x": 176.5,
-      "y": 0.6498386263847351,
-      "z": -41.950050354003906
+      "x": 173.5016632080078,
+      "y": 0.649838924407959,
+      "z": -41.95000076293945
     },
     "bodies": [
       192,
@@ -72,15 +72,15 @@
     ],
     "shown": {
       "frame": 8,
-      "calls": 196,
-      "triangles": 244710,
+      "calls": 208,
+      "triangles": 284813,
       "points": 78,
       "lines": 0
     },
     "hidden": {
       "frame": 7,
-      "calls": 174,
-      "triangles": 234174,
+      "calls": 186,
+      "triangles": 274277,
       "points": 78,
       "lines": 0
     }

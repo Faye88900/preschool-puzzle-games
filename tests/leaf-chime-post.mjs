@@ -67,12 +67,12 @@ try {
     chimePlace(200,-15);g.world.step();posts.forEach(p=>p.visible=false);g.renderer.render(g.scene,g.camera);const hidden={...g.renderer.info.render};posts.forEach(p=>p.visible=true);g.renderer.render(g.scene,g.camera);const shown={...g.renderer.info.render};
     return {positions:posts.map(p=>p.getWorldPosition(new T.Vector3()).toArray()),hidden,shown,occluders:g.buildingOccluders.filter(o=>o.object.name.startsWith('boss-blockout-chime-')).length,geometries:g.renderer.info.memory.geometries,textures:g.renderer.info.memory.textures};
   });
-  assert.deepEqual(gameplay.positions,[[169.5,0,-41],[205,0,-11]]);assert.equal(gameplay.occluders,2);assert.ok(gameplay.shown.calls>gameplay.hidden.calls&&gameplay.shown.calls-gameplay.hidden.calls<=32);
+  assert.deepEqual(gameplay.positions,[[169.5,0,-39.5],[205,0,-11]]);assert.equal(gameplay.occluders,2);assert.ok(gameplay.shown.calls>gameplay.hidden.calls&&gameplay.shown.calls-gameplay.hidden.calls<=32);
   await page.screenshot({path:output+'/gameplay-desktop.png'});
   const travel=await page.evaluate(()=>{
     const g=game,stops=[],routes=[];chimePlace(165,-15);
     for(const [x,z]of [[175,-15],[200,-15],[200,-38],[175,-38],[175,-15],[165,-15]]){for(let i=0;i<900;i++){const p=g.body.translation();if(Math.hypot(x-p.x,z-p.z)<.2)break;g.keys.clear();if(Math.abs(x-p.x)>.1)g.keys.add(x>p.x?'KeyD':'KeyA');if(Math.abs(z-p.z)>.1)g.keys.add(z>p.z?'KeyS':'KeyW');g.step();}g.clearInput();const p=g.body.translation();routes.push({distance:Math.hypot(x-p.x,z-p.z),y:p.y});}
-    for(const [x,z,key]of [[173,-41,'KeyA'],[201.5,-11,'KeyD']]){chimePlace(x,z);g.keys.add(key);for(let i=0;i<120;i++)g.step();g.clearInput();stops.push({...g.body.translation()});}
+    for(const [x,z,key]of [[173,-39.5,'KeyA'],[201.5,-11,'KeyD']]){chimePlace(x,z);g.keys.add(key);for(let i=0;i<120;i++)g.step();g.clearInput();stops.push({...g.body.translation()});}
     chimePlace(205,-14);const opacity=g.buildingOccluders.find(o=>o.object.name==='boss-blockout-chime-1').opacity;
     const before=[g.world.bodies.len(),g.world.colliders.len()];g.reset();const after=[g.world.bodies.len(),g.world.colliders.len()];g.wand=g.treasure=true;g.invulnerable=1000;chimePlace(200,-15);return {routes,stops,opacity,before,after};
   });

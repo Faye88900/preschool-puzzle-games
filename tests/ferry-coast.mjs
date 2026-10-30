@@ -22,7 +22,7 @@ try {
     for(const [x,z] of [[0,0],[-60,20],[135,40],[135,-60]]) {ray.set(new T.Vector3(x,8,z),new T.Vector3(0,-1,0));outsideSeaHits.push(ray.intersectObject(sea).length);}
     const matrix=new T.Matrix4(),clouds=g.scene.getObjectByName('maze-island-clouds'),distant=g.scene.getObjectByName('maze-distant-islands');
     const cloudHeights=[0,5,10,15].map(i=>{clouds.getMatrixAt(i,matrix);return matrix.elements[13];});
-    const distantHeights=Array.from({length:6},(_,i)=>{distant.getMatrixAt(i,matrix);return matrix.elements[13];});
+    const distantHeights=distant.children.map(island=>island.position.y);
     ray.set(new T.Vector3(99.65,.8,-10),new T.Vector3(1,0,0));const dock=g.scene.getObjectByName('wind-garden-dock');
     const opening=ray.intersectObject(dock,true).filter(h=>h.point.x>100.2).length;
     window.coastPlace=(x,z)=>{g.body.setTranslation({x,y:.85,z},true);g.body.setLinvel({x:0,y:0,z:0},true);g.previous.copy(g.body.translation());g.clearInput();g.render(0);};

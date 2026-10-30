@@ -1,0 +1,199 @@
+{
+  "models": [
+    {
+      "kind": "a",
+      "meshes": 3,
+      "triangles": 2442,
+      "finite": true,
+      "materials": 2,
+      "textures": 1,
+      "min": [
+        -1.3186687231063843,
+        -4.507211208343506,
+        -1.169861912727356
+      ],
+      "size": [
+        2.7928032875061035,
+        4.743150666356087,
+        2.3723658323287964
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false",
+        "floating-limestone|ffffff|0.94|0|true"
+      ],
+      "closure": {
+        "volume": 8.524686331875147,
+        "badEdges": 0
+      },
+      "shared": true
+    },
+    {
+      "kind": "b",
+      "meshes": 3,
+      "triangles": 2330,
+      "finite": true,
+      "materials": 2,
+      "textures": 1,
+      "min": [
+        -1.348058819770813,
+        -3.175535202026367,
+        -1.0031307935714722
+      ],
+      "size": [
+        2.923810839653015,
+        3.411474660038948,
+        2.020422339439392
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false",
+        "floating-limestone|ffffff|0.94|0|true"
+      ],
+      "closure": {
+        "volume": 5.436133486316251,
+        "badEdges": 0
+      },
+      "shared": true
+    },
+    {
+      "kind": "c",
+      "meshes": 3,
+      "triangles": 2122,
+      "finite": true,
+      "materials": 2,
+      "textures": 1,
+      "min": [
+        -1.1595864295959473,
+        -1.8896843194961548,
+        -0.9070852994918823
+      ],
+      "size": [
+        2.2589993476867676,
+        2.1256237775087357,
+        1.850746214389801
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false",
+        "floating-limestone|ffffff|0.94|0|true"
+      ],
+      "closure": {
+        "volume": 4.829898812218231,
+        "badEdges": 0
+      },
+      "shared": true
+    },
+    {
+      "kind": "grass",
+      "meshes": 2,
+      "triangles": 445,
+      "finite": true,
+      "materials": 2,
+      "textures": 1,
+      "min": [
+        -0.9374129176139832,
+        -1.3722286224365234,
+        -0.7873234152793884
+      ],
+      "size": [
+        1.938356339931488,
+        1.417001400142908,
+        1.6704899072647095
+      ],
+      "palette": [
+        "distant-island-green|ffffff|1|0|false",
+        "floating-limestone|ffffff|0.94|0|true"
+      ],
+      "shared": true
+    },
+    {
+      "kind": "grove",
+      "meshes": 3,
+      "triangles": 989,
+      "finite": true,
+      "materials": 3,
+      "textures": 1,
+      "min": [
+        -0.9845859408378601,
+        -1.371384620666504,
+        -0.7384828329086304
+      ],
+      "size": [
+        2.0499953627586365,
+        2.378984570503235,
+        1.5446301698684692
+      ],
+      "palette": [
+        "distant-island-green|ffffff|1|0|false",
+        "distant-tree-bark|ffffff|0.96|0|false",
+        "floating-limestone|ffffff|0.94|0|true"
+      ],
+      "shared": true
+    },
+    {
+      "kind": "ridge",
+      "meshes": 2,
+      "triangles": 669,
+      "finite": true,
+      "materials": 2,
+      "textures": 1,
+      "min": [
+        -1.4697121381759644,
+        -1.3949999809265137,
+        -0.726946234703064
+      ],
+      "size": [
+        2.953433036804199,
+        1.4397727586328983,
+        1.348866879940033
+      ],
+      "palette": [
+        "distant-island-green|ffffff|1|0|false",
+        "floating-limestone|ffffff|0.94|0|true"
+      ],
+      "shared": true
+    }
+  ],
+  "near": {
+    "meshes": 9,
+    "triangles": 6894,
+    "finite": true,
+    "materials": 2,
+    "textures": 1,
+    "min": [
+      -5.218668723106385,
+      -4.507211208343506,
+      -1.169861912727356
+    ],
+    "size": [
+      10.218081641197205,
+      4.743150666356087,
+      2.3723658323287964
+    ],
+    "palette": [
+      "courtyard-foliage|ffffff|0.93|0|false",
+      "floating-limestone|ffffff|0.94|0|true"
+    ]
+  },
+  "far": {
+    "meshes": 7,
+    "triangles": 2103,
+    "finite": true,
+    "materials": 3,
+    "textures": 1,
+    "min": [
+      -4.937412917613983,
+      -1.3949999809265137,
+      -0.7873234152793884
+    ],
+    "size": [
+      10.421133816242218,
+      2.4025999307632446,
+      1.6704899072647095
+    ],
+    "palette": [
+      "distant-island-green|ffffff|1|0|false",
+      "distant-tree-bark|ffffff|0.96|0|false",
+      "floating-limestone|ffffff|0.94|0|true"
+    ]
+  },
+  "pixelRange": 196
+}

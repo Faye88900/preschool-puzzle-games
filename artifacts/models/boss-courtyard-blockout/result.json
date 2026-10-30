@@ -19,7 +19,7 @@
       "boss-blockout-floating-rocks"
     ],
     "finite": true,
-    "triangles": 135752,
+    "triangles": 156374,
     "open": [
       4.76837158203125e-7,
       0,
@@ -143,6 +143,12 @@
       2.1999998092651367,
       3.619999885559082
     ],
+    "vegetation": {
+      "zones": 4,
+      "placements": 117,
+      "triangles": 94426,
+      "meshes": 16
+    },
     "statues": [
       "leaf-guardian-statue-intact"
     ],
@@ -153,6 +159,12 @@
     "rack": "leaf-weapon-rack",
     "camp": "campfire-remains",
     "stele": "leaf-emblem-stele",
+    "pots": "courtyard-garden-props",
+    "rocks": [
+      "floating-rock-c",
+      "floating-rock-b",
+      "floating-rock-a"
+    ],
     "composition": {
       "center": [
         187.5,
@@ -277,23 +289,27 @@
     "z": -18.990367889404297
   },
   "occlusion": 0.16,
+  "warning": {
+    "visible": true,
+    "strongPixels": 5917
+  },
   "diagnostics": {
     "withBlockout": {
       "frame": 16,
-      "calls": 230,
-      "triangles": 281654,
-      "points": 78,
+      "calls": 255,
+      "triangles": 382459,
+      "points": 106,
       "lines": 0
     },
     "withoutBlockout": {
       "frame": 17,
-      "calls": 140,
-      "triangles": 199310,
-      "points": 0,
+      "calls": 159,
+      "triangles": 293257,
+      "points": 28,
       "lines": 0
     },
-    "geometries": 734,
-    "textures": 34
+    "geometries": 784,
+    "textures": 35
   },
   "errors": []
 }

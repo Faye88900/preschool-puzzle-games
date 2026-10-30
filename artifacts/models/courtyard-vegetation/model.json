@@ -1,0 +1,190 @@
+{
+  "kit": {
+    "meshes": 9,
+    "triangles": 4874,
+    "finite": true,
+    "materials": 4,
+    "textures": 0,
+    "min": [
+      -3.18580105304718,
+      -0.10174441337585449,
+      -2.433881461620331
+    ],
+    "size": [
+      6.507063615322113,
+      1.7499715983867645,
+      4.283861696720123
+    ],
+    "palette": [
+      "courtyard-foliage|ffffff|0.93|0|false",
+      "courtyard-moss|ffffff|0.93|0|false",
+      "courtyard-seed-heads|ffffff|0.93|0|false",
+      "courtyard-white-petals|ffffff|0.93|0|false"
+    ]
+  },
+  "layout": {
+    "meshes": 16,
+    "triangles": 94426,
+    "finite": true,
+    "materials": 4,
+    "textures": 0,
+    "min": [
+      -24.78008460998535,
+      -3.3836631774902344,
+      -25.0800838470459
+    ],
+    "size": [
+      49.86016845703125,
+      5.028249144554138,
+      50.1601676940918
+    ],
+    "palette": [
+      "courtyard-foliage|ffffff|0.93|0|false",
+      "courtyard-moss|ffffff|0.93|0|false",
+      "courtyard-seed-heads|ffffff|0.93|0|false",
+      "courtyard-white-petals|ffffff|0.93|0|false"
+    ]
+  },
+  "modules": [
+    {
+      "kind": "groundcover",
+      "meshes": 1,
+      "triangles": 702,
+      "finite": true,
+      "materials": 1,
+      "textures": 0,
+      "min": [
+        -3.18580105304718,
+        0.0043621668592095375,
+        -2.2697415947914124
+      ],
+      "size": [
+        1.5841383337974548,
+        0.36387026216834784,
+        1.5808839201927185
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false"
+      ]
+    },
+    {
+      "kind": "wildflowers",
+      "meshes": 3,
+      "triangles": 912,
+      "finite": true,
+      "materials": 3,
+      "textures": 0,
+      "min": [
+        -0.44310951232910156,
+        0.014999999664723873,
+        -1.9482740461826324
+      ],
+      "size": [
+        0.963348388671875,
+        0.7008815268054605,
+        0.8828200399875641
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false",
+        "courtyard-seed-heads|ffffff|0.93|0|false",
+        "courtyard-white-petals|ffffff|0.93|0|false"
+      ]
+    },
+    {
+      "kind": "fern",
+      "meshes": 1,
+      "triangles": 1620,
+      "finite": true,
+      "materials": 1,
+      "textures": 0,
+      "min": [
+        1.5449145078659057,
+        0.016563139855861664,
+        -2.433881461620331
+      ],
+      "size": [
+        1.776348054409027,
+        0.6704790964722633,
+        1.7523455619812012
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false"
+      ]
+    },
+    {
+      "kind": "wind-grass",
+      "meshes": 2,
+      "triangles": 560,
+      "finite": true,
+      "materials": 2,
+      "textures": 0,
+      "min": [
+        -2.5346407532691955,
+        -0.0007569097215309739,
+        1.1513423919677734
+      ],
+      "size": [
+        0.6946407556533813,
+        1.12706547009293,
+        0.698637843132019
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false",
+        "courtyard-seed-heads|ffffff|0.93|0|false"
+      ]
+    },
+    {
+      "kind": "trailing-ivy",
+      "meshes": 1,
+      "triangles": 900,
+      "finite": true,
+      "materials": 1,
+      "textures": 0,
+      "min": [
+        -0.40071386098861694,
+        -0.10174441337585449,
+        1.110152930021286
+      ],
+      "size": [
+        0.8851386904716492,
+        1.7499715983867645,
+        0.6660775542259216
+      ],
+      "palette": [
+        "courtyard-foliage|ffffff|0.93|0|false"
+      ]
+    },
+    {
+      "kind": "moss",
+      "meshes": 1,
+      "triangles": 180,
+      "finite": true,
+      "materials": 1,
+      "textures": 0,
+      "min": [
+        1.9568379759788512,
+        -0.011772777885198593,
+        1.1043558716773987
+      ],
+      "size": [
+        0.9684244990348816,
+        0.05954555422067642,
+        0.6631890535354614
+      ],
+      "palette": [
+        "courtyard-moss|ffffff|0.93|0|false"
+      ]
+    }
+  ],
+  "minRadius": 17.376434274861566,
+  "dockIntrusions": 0,
+  "placements": 117,
+  "zones": [
+    "courtyard-vegetation-rear",
+    "courtyard-vegetation-front",
+    "courtyard-vegetation-left",
+    "courtyard-vegetation-right"
+  ],
+  "shared": true,
+  "pixelRange": 188.66666666666666
+}

@@ -105,7 +105,7 @@ try {
       stats.push(await page.evaluate(visible => {
         const g = game, root = g.scene.getObjectByName('first-encounter-ruins'); root.visible = visible;
         for (const wall of g.walls) if (wall.mesh.name === 'ruins-hedge-base') {
-          const height = visible ? 1.35 : 3.25; wall.mesh.scale.y = height / 3.25; wall.mesh.position.y = height / 2; wall.bounds.setFromObject(wall.mesh);
+          const height = visible ? 4.5 : 3.25; wall.mesh.scale.y = height / 4.5; wall.mesh.position.y = height / 2; wall.bounds.setFromObject(wall.mesh);
         }
         g.render(0);
         const gl = g.renderer.getContext(), c = g.renderer.domElement;
@@ -188,7 +188,7 @@ try {
       let nearest=Infinity;for(let i=0;i<180;i++){game.step();nearest=Math.min(nearest,game.body.translation()[axis]);}return nearest;
     },axis);
     await page.keyboard.up(key);
-    assert.ok(boundary>=edge,'Lower hedge art must keep the original solid boundary even during a jump: '+boundary);
+    assert.ok(boundary>=edge,'Raised hedges must keep the solid boundary even during a jump: '+boundary);
   }
 
   await page.evaluate(() => {prepareEncounter(8.1,-4.2);game.enemies[0].hp=0;});

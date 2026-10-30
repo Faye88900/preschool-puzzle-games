@@ -36,4 +36,4 @@ npm run dev
 
 源码、运行素材、测试，以及 `artifacts`、`output`、`test-results` 中保留的概念图、生成记录、模型导出、截图和工作笔记均纳入 Git。`node_modules`、`dist`、日志、环境密钥和临时 ZIP 不纳入备份；换电脑后运行 `npm ci`，再运行 `npm run dev`。
 
-2026-10-29 最后完成 Boss 庭院第 12 项「叶纹徽碑与断石」，下一项为第 13 项「陶盆、浇水壶与嫩芽」。进度见 `artifacts/concepts/boss-courtyard/PROGRESS.md`，单项实现及验证见 `artifacts/models/leaf-emblem-stele/README.md`。历史测试结果代表当时验证，不代表每次备份均已重跑。
+2026-10-30 已完成 Boss 庭院第 13–16 项道具、植被、远景、环境动画，以及渡船视角和庭院配色修正；第 17 项整体验证仍待完成。进度见 `artifacts/concepts/boss-courtyard/PROGRESS.md`，单项记录在 `artifacts/models`。本次同时备份草地布局、渲染和地面稳定性改动及 `test-results` 下对应验证记录。历史测试结果代表当时验证，不代表每次备份均已重跑。

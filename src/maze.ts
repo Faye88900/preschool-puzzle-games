@@ -46,6 +46,8 @@ import { createFirstEncounterRuins } from './first-encounter-ruins';
 import { createWindGarden } from './wind-garden';
 import { createBossIsland } from './boss-island';
 import { createLeafChannelWater } from './leaf-channel-water';
+import { createCourtyardAmbience } from './courtyard-ambience';
+import { createMazeMeadow } from './painterly-grass';
 import { createFerryCoast } from './ferry-coast';
 import { BOSS_ARENA, FERRY_BOAT_Y, FERRY_BOAT_SCALE, FERRY_MOORING_DISTANCE, gardenCoastX, bossCoastX } from './ferry-shore-layout';
 import { windmill, windWand, treasureChest, gardenTools, goldKey, gardenerYard, signpost } from './maze-art';
@@ -60,6 +62,7 @@ const SCOUT_PORTRAITS: Partial<Record<MazeText, string>> = {
 type Enemy = { mesh: T.Group; home: T.Vector3; hp: number; maxHp: number; shielded: boolean; phase: KnightPhase; timer: number; aim: T.Vector3; ring: T.Mesh<T.RingGeometry, T.MeshBasicMaterial>; patrol: number; speed: number; alert: number; block: number; lastSeen: T.Vector3; memory: number; path: T.Vector3[]; repath: number };
 type Gate = { mesh: T.Group; body: R.RigidBody };
 const STEP = movement.step;
+const HEDGE_HEIGHT = 4.5;
 const DODGE_DURATION = .4, DODGE_SPEED = 10.4, DODGE_COOLDOWN = 1.6;
 const DODGE_ACCEL = .07, DODGE_DECEL = .13;
 const SHIELD_CHARGE_TIME = 1.1;
@@ -122,6 +125,8 @@ export class MazeAdventure {
   boatTrip?: { toBoss: boolean; elapsed: number; start: T.Vector3 };
   courtyardFloor!: T.Texture;
   leafChannelWater!: ReturnType<typeof createLeafChannelWater>;
+  courtyardAmbience!: ReturnType<typeof createCourtyardAmbience>;
+  meadow!: ReturnType<typeof createMazeMeadow>;
   courtyard!: ReturnType<typeof createWindGarden>['courtyard'];
   flowerChoir!: ReturnType<typeof createWindGarden>['flowerChoir'];
   guide = createGardener(); scout = createGardenScout();
@@ -176,7 +181,7 @@ export class MazeAdventure {
     const draco = new DRACOLoader().setDecoderPath(`${import.meta.env.BASE_URL}models/draco/`);
     const loader = new GLTFLoader().setDRACOLoader(draco);
     try {
-      await Promise.all(['tree-oak-01', 'apple-tree', 'bush-round-01', 'home-cottage-01', 'garden-shed', 'water-pond-01', 'bench-01', 'crate-01', 'barrel-01', 'cattail-reed-clump', 'wheelbarrow', 'terrain-grass-01', 'road-cobble-straight-01', 'streetlamp-01',
+      await Promise.all(['tree-oak-01', 'apple-tree', 'bush-round-01', 'home-cottage-01', 'garden-shed', 'water-pond-01', 'bench-01', 'crate-01', 'barrel-01', 'cattail-reed-clump', 'wheelbarrow', 'road-cobble-straight-01', 'streetlamp-01',
         'kenney-nature/pot_small', 'kenney-nature/pot_large', 'kenney-nature/plant_flatShort', 'kenney-nature/grass_leafs'].map(async name => {
         const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${name}.glb`);
         const bounds = new T.Box3().setFromObject(gltf.scene), size = bounds.getSize(new T.Vector3());
@@ -292,12 +297,6 @@ export class MazeAdventure {
     flowerCart.scale.setScalar(1.1); this.scene.add(flowerCart);
     const cartBounds = new T.Box3().setFromObject(flowerCart), cartSize = cartBounds.getSize(new T.Vector3()), cartCenter = cartBounds.getCenter(new T.Vector3());
     this.solid(cartCenter.x, cartCenter.y, cartCenter.z, cartSize.x, cartSize.y, cartSize.z);
-    for (const [x, z, width] of [
-      [well.x - 4.1, well.z - 2.8, 4.8], [well.x + 5.8, well.z - 1.8, 3.5],
-    ]) {
-      const turf = this.model('terrain-grass-01', x, z, width); turf.name = 'garden-turf';
-      turf.scale.y *= .15; turf.position.y = -.06;
-    }
     for (const [x, z, width, angle] of [
       [well.x + .3, well.z + 1.5, 1.2, 0], [well.x + 2.3, well.z + 1.5, 1.2, 0],
       [well.x + 4.3, well.z + 1.5, 1.2, 0],
@@ -382,9 +381,6 @@ export class MazeAdventure {
       const angle = i * Math.PI / 6, tile = paving.clone(true);
       tile.position.set(oak.x + Math.sin(angle) * 5.3, .042, oak.z + Math.cos(angle) * 5.3);
       tile.scale.set(2.85, .228, 2.85); tile.rotation.y = angle; planting.add(tile);
-    }
-    for (const [dx, dz, width] of [[-4.4, 1, 4.2], [4.4, 1, 4.2], [-14.2, 8.5, 3.7], [12, 8.5, 3.7]]) {
-      const turf = prop('terrain-grass-01', dx, dz, width); turf.scale.y *= .1; turf.position.y = -.055; planting.add(turf);
     }
     for (const [dx, dz] of [[-5.9, 2.4], [5.9, 2.4]]) {
       const pot = prop('kenney-nature/pot_large', dx, dz, .7);
@@ -486,21 +482,19 @@ export class MazeAdventure {
               .filter(([left, top, right, bottom]) => right - left > .04 && bottom - top > .04);
           });
         }
-        const parts = pieces.map(([x0, z0, x1, z1]) => rounded(x1 - x0, 3.25, z1 - z0, Math.min(.4, (x1 - x0) / 3, (z1 - z0) / 3))
+        const parts = pieces.map(([x0, z0, x1, z1]) => rounded(x1 - x0, HEDGE_HEIGHT, z1 - z0, Math.min(.4, (x1 - x0) / 3, (z1 - z0) / 3))
           .translate((x0 + x1) / 2 - p.x, 0, (z0 + z1) / 2 - p.z));
         if (parts.length) {
           const wall = new T.Mesh(mergeGeometries(parts)!, wallMaterial); parts.forEach(part => part.dispose());
-          wall.position.set(p.x, 1.625, p.z); wall.castShadow = wall.receiveShadow = true; this.scene.add(wall);
+          wall.position.set(p.x, HEDGE_HEIGHT / 2, p.z); wall.castShadow = wall.receiveShadow = true; this.scene.add(wall);
           if (ruinsBorder(start, r)) {
-            // Cut the backing around whole props; lowering it alone leaves urns and masonry buried.
-            wall.name = 'ruins-hedge-base'; wall.scale.y = 1.35 / 3.25; wall.position.y = 1.35 / 2;
+            wall.name = 'ruins-hedge-base';
           } else if (windGardenBorder(start, r)) {
-            wall.name = 'wind-garden-hedge'; wall.scale.y = 1.55 / 3.25; wall.position.y = 1.55 / 2;
+            wall.name = 'wind-garden-hedge';
           }
           this.walls.push({ mesh: wall, bounds: new T.Box3().setFromObject(wall) });
         }
-        const height = windGardenBorder(start,r) ? 1.55 : 3.4;
-        this.solid((p.x-width/2+coastRight)/2,height/2,p.z,coastRight-(p.x-width/2),height,CELL);
+        this.solid((p.x-width/2+coastRight)/2,HEDGE_HEIGHT/2,p.z,coastRight-(p.x-width/2),HEDGE_HEIGHT,CELL);
       }
     }
     this.dressPlaza();
@@ -534,6 +528,7 @@ export class MazeAdventure {
     this.leafChannelWater=createLeafChannelWater(bossIsland.root.getObjectByName('three-tier-leaf-water-channel')!);
     bossIsland.root.updateMatrixWorld(true);
     for(const object of bossIsland.occluders)this.trackBuildingOcclusion(object);
+    this.courtyardAmbience=createCourtyardAmbience(bossIsland.root);
     this.bossMooring = bossIsland.root.getObjectByName('dock-mooring-line') as T.Group;
     this.solidGeometry(bossIsland.terrain,bossIsland.root.position.x);
     for (const {x,y,z,width,height,depth} of bossIsland.colliders) {
@@ -619,6 +614,23 @@ export class MazeAdventure {
       mushroom.add(orb('#fff3d9', -.3, 1.48, .12, .15, .07, .15)); mushroom.position.set(p.x + 1.5, 0, p.z + 1.5); this.scene.add(mushroom);
     }
     this.scene.add(this.wind.mesh);
+    this.world.propagateModifiedBodyPositionsToColliders();
+    const grassObstacles: T.Box3[] = [];
+    this.world.forEachCollider(collider => {
+      const shape=collider.shape,half=new T.Vector3();
+      if(shape instanceof R.Cuboid)half.copy(shape.halfExtents);
+      else if(shape instanceof R.Cylinder)half.set(shape.radius,shape.halfHeight,shape.radius);
+      else if(shape instanceof R.Ball)half.setScalar(shape.radius);
+      else if(shape instanceof R.Capsule)half.set(shape.radius,shape.halfHeight+shape.radius,shape.radius);
+      else return;
+      const bounds=new T.Box3(half.clone().negate(),half).applyMatrix4(new T.Matrix4().compose(
+        new T.Vector3().copy(collider.translation()),new T.Quaternion().copy(collider.rotation()),new T.Vector3(1,1,1)));
+      if(bounds.max.y>.15&&bounds.min.y<6)grassObstacles.push(bounds.expandByVector(new T.Vector3(.18,0,.18)));
+    });
+    this.meadow = createMazeMeadow((x,z) => {
+      return !grassObstacles.some(bounds => x>=bounds.min.x&&x<=bounds.max.x&&z>=bounds.min.z&&z<=bounds.max.z);
+    },(this.scene.getObjectByName('maze-lawn') as T.Mesh<T.BufferGeometry,T.MeshStandardMaterial>).material.map!);
+    this.scene.add(this.meadow.root);
   }
 
   setupUI() {
@@ -1499,6 +1511,8 @@ export class MazeAdventure {
     this.sun.position.set(this.cameraLook.x - 28, 42, this.cameraLook.z + 22);
     this.flowerChoir.update(dt, this.active(), Math.hypot(p.x - at('choir').x, p.z - at('choir').z), this.settings, this.reducedMotion);
     this.leafChannelWater.update(this.ferryCoast.time.value,this.reducedMotion);
+    this.courtyardAmbience.update(this.ferryCoast.time.value,this.reducedMotion);
+    this.meadow.update(this.ferryCoast.time.value,this.reducedMotion,this.camera.position);
     this.updateUI(); this.renderer.render(this.scene, this.camera);
   }
   resize() { this.renderer.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); }

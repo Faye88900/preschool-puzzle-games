@@ -1,0 +1,39 @@
+{
+  "views": [
+    {
+      "name": "plaza",
+      "instances": 26915,
+      "triangles": 115262,
+      "calls": 53,
+      "medianMs": 27.600000001490116
+    },
+    {
+      "name": "well",
+      "instances": 26915,
+      "triangles": 41402,
+      "calls": 17,
+      "medianMs": 13.5
+    },
+    {
+      "name": "boss",
+      "instances": 26915,
+      "triangles": 54242,
+      "calls": 25,
+      "medianMs": 5.899999998509884
+    },
+    {
+      "name": "mobile",
+      "instances": 26915,
+      "triangles": 60434,
+      "calls": 27,
+      "medianMs": 16.5
+    }
+  ],
+  "culling": {
+    "far": 0,
+    "near": 40,
+    "total": 74,
+    "ground": true
+  },
+  "errors": []
+}

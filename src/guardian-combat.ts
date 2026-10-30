@@ -189,8 +189,8 @@ export class GuardianCombat {
   private hitStepDirection=new T.Vector3();
   private hitFlashTime=0;
   private hitFlash=new T.Group();
-  private warning=new T.Mesh(warnings[0],new T.MeshBasicMaterial({color:'#ed8847',transparent:true,opacity:.23,side:T.DoubleSide,depthWrite:false}));
-  private warningEdge=new T.LineSegments(new T.EdgesGeometry(warnings[0]),new T.LineBasicMaterial({color:'#ffd17c',transparent:true,opacity:.9,depthWrite:false}));
+  private warning=new T.Mesh(warnings[0],new T.MeshBasicMaterial({color:'#e45b22',transparent:true,opacity:.40,side:T.DoubleSide,depthWrite:false,toneMapped:false}));
+  private warningEdge=new T.LineSegments(new T.EdgesGeometry(warnings[0]),new T.LineBasicMaterial({color:'#b9471b',depthWrite:false,toneMapped:false}));
   private marker=new T.Group();
   private impact=new T.Mesh(new T.RingGeometry(.82,1,40),new T.MeshBasicMaterial({color:'#ffbd62',transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false}));
   private trail=createWeaponSmearEffect(T,{id:'weapon-smear',color:'#ff943e'},{size:.88,detail:.8,density:.375});
@@ -326,7 +326,7 @@ export class GuardianCombat {
       this.impact.position.set(tip.x,.015,tip.z);
     }
     this.warning.visible=this.warningEdge.visible=enemy.phase==='warn';
-    this.warning.material.opacity=reducedMotion?.26:.18+progress*.14;
+    this.warning.material.opacity=reducedMotion?.44:.36+progress*.14;
     if(this.wasSwinging&&enemy.phase!=='lunge'){this.trail.stop();this.wasSwinging=false;}
     this.trail.update(dt);this.trail.group.visible=!reducedMotion&&!this.trail.finished;
     this.hitFlashTime=Math.max(0,this.hitFlashTime-dt);this.hitFlash.visible=this.hitFlashTime>0;

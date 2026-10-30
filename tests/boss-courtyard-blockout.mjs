@@ -34,24 +34,32 @@ try {
     const floor=g.scene.getObjectByName('boss-courtyard-wind-mosaic'),earlier=g.scene.getObjectByName('courtyard-wind-mosaic');
     const center=floor.getWorldPosition(g.cameraGoal.clone()),sword=g.scene.getObjectByName('boss-blockout-sword').getWorldPosition(g.cameraGoal.clone());
     const names=[];root.traverse(c=>{if(c.name.startsWith('boss-blockout-'))names.push(c.name);});
+    const vegetation=g.scene.getObjectByName('courtyard-vegetation');let vegetationTriangles=0,vegetationMeshes=0;
+    vegetation?.traverse(m=>{if(m.isMesh){vegetationTriangles+=(m.geometry.index?.count??m.geometry.attributes.position.count)/3;vegetationMeshes++;}});
     return {stage:root.userData.stage,names,finite,triangles,open,bases,
+      vegetation:{zones:vegetation?.children.length,placements:vegetation?.userData.placements.length,triangles:vegetationTriangles,meshes:vegetationMeshes},
       statues:root.children.filter(c=>c.name.startsWith('boss-blockout-statue-')).map(c=>c.children[0]?.name),
       chimes:[0,1].map(i=>root.getObjectByName('boss-blockout-chime-'+i)?.getObjectByName('leaf-chime-post')?.name),
       rack:root.getObjectByName('boss-blockout-weapon-rack')?.getObjectByName('leaf-weapon-rack')?.name,
       camp:root.getObjectByName('boss-blockout-campfire')?.getObjectByName('campfire-remains')?.name,
       stele:root.getObjectByName('boss-blockout-marker')?.getObjectByName('leaf-emblem-stele')?.name,
+      pots:root.getObjectByName('boss-blockout-pots')?.getObjectByName('courtyard-garden-props')?.name,
+      rocks:root.getObjectByName('boss-blockout-floating-rocks')?.children.map(c=>c.name),
       composition:{center:center.toArray(),sword:sword.toArray(),boss:g.enemies[2].home.toArray(),heading:g.enemies[2].mesh.rotation.y},
       floor:{shared:floor.material.map===g.courtyardFloor&&floor.material.map===earlier.material.map,
         width:floor.material.map.image.width,uvs:floor.geometry.attributes.uv.count,vertices:floor.geometry.attributes.position.count,
         radius:floor.geometry.parameters.radius,repeat:floor.material.map.repeat.toArray(),offset:floor.material.map.offset.toArray()}};
   });
-  // Finished rack, campfire and 8,740-triangle stele replace their reserved placeholders.
-  assert.equal(layout.stage,'blockout');assert.ok(layout.finite&&layout.triangles<140000,JSON.stringify({finite:layout.finite,triangles:layout.triangles}));
+  // Authored rocks replace the last three cuboids; vegetation has its own independent budget.
+  assert.equal(layout.stage,'blockout');assert.ok(layout.finite&&layout.triangles<160000,JSON.stringify({finite:layout.finite,triangles:layout.triangles}));
   assert.deepEqual(layout.statues,['leaf-guardian-statue-intact']);
   assert.deepEqual(layout.chimes,['leaf-chime-post','leaf-chime-post']);
   assert.equal(layout.rack,'leaf-weapon-rack');
   assert.equal(layout.camp,'campfire-remains');
   assert.equal(layout.stele,'leaf-emblem-stele');
+  assert.equal(layout.pots,'courtyard-garden-props');
+  assert.deepEqual(layout.rocks,['floating-rock-c','floating-rock-b','floating-rock-a']);
+  assert.ok(layout.vegetation.zones===4&&layout.vegetation.placements>100&&layout.vegetation.triangles<95000&&layout.vegetation.meshes<=16,JSON.stringify(layout.vegetation));
   assert.ok(!layout.names.includes('boss-blockout-statue-1'));
   for(const name of ['sword','roots','statue-0','chime-0','chime-1','water-channel-0','water-channel-1','water-channel-2','waterfall','weapon-rack','campfire','marker','pots','floating-rocks'])assert.ok(layout.names.includes('boss-blockout-'+name),name);
   assert.ok(layout.open.length>70&&layout.open.every(y=>y!==null&&Math.abs(y)<.03),'Central combat floor must remain clear: '+JSON.stringify(layout.open));
@@ -102,9 +110,14 @@ try {
   const warning=await page.evaluate(()=>{
     const g=game,e=g.enemies[2];e.mesh.position.copy(e.home);e.phase='idle';g.guardian.reset(e.mesh,true);g.guardian.attack=1;
     courtyardPlace(e.home.x,e.home.z+2);g.step();g.render(0);
-    return g.scene.getObjectByName('guardian-sword-warning').children[0].visible;
+    const marker=g.scene.getObjectByName('guardian-sword-warning'),visible=marker.children[0].visible;
+    const gl=g.renderer.getContext(),size={x:gl.drawingBufferWidth,y:gl.drawingBufferHeight},before=new Uint8Array(size.x*size.y*4),after=new Uint8Array(before.length);
+    marker.visible=false;g.renderer.render(g.scene,g.camera);gl.readPixels(0,0,size.x,size.y,gl.RGBA,gl.UNSIGNED_BYTE,before);
+    marker.visible=true;g.renderer.render(g.scene,g.camera);gl.readPixels(0,0,size.x,size.y,gl.RGBA,gl.UNSIGNED_BYTE,after);
+    let strongPixels=0;for(let i=0;i<before.length;i+=4)if(Math.max(Math.abs(before[i]-after[i]),Math.abs(before[i+1]-after[i+1]),Math.abs(before[i+2]-after[i+2]))>40)strongPixels++;
+    return {visible,strongPixels};
   });
-  assert.ok(warning,'Sword warning must remain visible over the mosaic');
+  assert.ok(warning.visible&&warning.strongPixels>500,'Sword warning needs visible contrast over the mosaic: '+JSON.stringify(warning));
   await page.screenshot({path:output+'/desktop-floor-warning.png'});
   const occlusion=await page.evaluate(()=>{courtyardPlace(205,-14);return game.buildingOccluders.find(o=>o.object.name==='boss-blockout-chime-1').opacity;});
   assert.equal(occlusion,.16,'Foreground props must fade instead of hiding the player');
@@ -121,6 +134,6 @@ try {
   await page.setViewportSize({width:844,height:390});await page.evaluate(()=>{game.resize();courtyardPlace(game.enemies[2].home.x,game.enemies[2].home.z+6);});
   await page.screenshot({path:output+'/mobile-landscape.png'});
   assert.deepEqual(errors,[]);
-  await writeFile(output+'/result.json',JSON.stringify({pass:true,layout,routes,dodges,collision,occlusion,diagnostics,errors},null,2));
+  await writeFile(output+'/result.json',JSON.stringify({pass:true,layout,routes,dodges,collision,occlusion,warning,diagnostics,errors},null,2));
   console.log('PASS blockout layout, clear floor, prop collision, dock entry/return, eight-direction dodge, foreground fading and desktop/mobile rendering',JSON.stringify(diagnostics));
 }finally{await browser.close();}

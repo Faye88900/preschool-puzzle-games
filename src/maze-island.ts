@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { CELL, COLS, ROWS, MAP_CENTER } from './maze-map';
 import { gardenCoastX } from './ferry-shore-layout';
+import { createDistantIsland } from './floating-islands';
 
 export function createMazeIsland() {
   const root = new T.Group(); root.name = 'maze-island';
@@ -34,14 +35,13 @@ export function createMazeIsland() {
     }
   }
   clouds.computeBoundingSphere(); root.add(clouds);
-  const islands = [[-82, 8, -28, 7], [-75, -3, 45, 5], [78, 10, -48, 8], [90, 2, 32, 6], [-28, 5, -82, 6], [37, -6, 91, 7]];
-  const cliffs = new T.InstancedMesh(new T.CylinderGeometry(1, .12, 1.5, 9, 2).translate(0, -.75, 0), rock, islands.length);
-  const caps = new T.InstancedMesh(sphere, new T.MeshStandardMaterial({ color: '#86b85a', roughness: 1 }), islands.length);
-  cliffs.name = 'maze-distant-islands'; caps.name = 'maze-distant-lawns';
+  // Keep scenic islands beyond the bay and the turning boat camera's foreground.
+  const islands = [[-82, 8, -28, 7], [-75, -3, 45, 5], [78, 10, -110, 8], [90, 2, 95, 6], [-28, 5, -82, 6], [37, -6, 91, 7]];
+  const distant=new T.Group();distant.name='maze-distant-islands';
   islands.forEach(([x, y, z, size], i) => {
-    dummy.position.set(x > 0 ? x + MAP_CENTER.x * 2 : x, y, z); dummy.scale.set(size, size * .85, size * .8); dummy.updateMatrix(); cliffs.setMatrixAt(i, dummy.matrix);
-    dummy.scale.set(size, .85, size * .8); dummy.updateMatrix(); caps.setMatrixAt(i, dummy.matrix);
+    const island=createDistantIsland((['grass','grove','ridge'] as const)[i%3]);island.name=`maze-distant-island-${i}`;
+    island.position.set(x > 0 ? x + MAP_CENTER.x * 2 : x,y,z);island.scale.set(size,size*.85,size*.8);island.rotation.y=i*.7;distant.add(island);
   });
-  cliffs.computeBoundingSphere(); caps.computeBoundingSphere(); root.add(cliffs, caps);
+  root.add(distant);
   return root;
 }
