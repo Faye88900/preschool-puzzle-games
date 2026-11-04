@@ -22,14 +22,23 @@ export function setGuideExpression(root: T.Group, expression: Expression) {
         c.strokeStyle = '#332337'; c.lineWidth = 22; c.lineCap = 'round';
         c.beginPath(); c.moveTo(x - 48, 336); c.quadraticCurveTo(x, 250, x + 48, 336); c.stroke();
       } else {
-        oval(x, 310, 60, 100, '#332337'); oval(x - 13, 266, 18, 26, '#fffdf8');
+        const glance = expression === 'thinking' ? -10 : 0;
+        oval(x + glance, 310, 60, 100, '#332337'); oval(x - 13 + glance, 266, 18, 26, '#fffdf8');
+        if (expression === 'thinking' || expression === 'worried') {
+          const side = x < 512 ? 1 : -1;
+          c.strokeStyle = '#475c48'; c.lineWidth = 13; c.lineCap = 'round'; c.beginPath();
+          c.moveTo(x - side * 56, 190); c.quadraticCurveTo(x, 177, x + side * 45, expression === 'thinking' && x > 512 ? 187 : 154); c.stroke();
+        }
       }
     }
     c.fillStyle = '#5a2529'; c.beginPath();
-    if (expression === 'surprised') c.ellipse(512, 479, 36, 46, 0, 0, Math.PI * 2);
+    if (expression === 'thinking' || expression === 'worried') {
+      c.strokeStyle = '#5a2529'; c.lineWidth = 11; c.lineCap = 'round';
+      c.moveTo(482, 487); c.quadraticCurveTo(512, expression === 'worried' ? 457 : 477, 542, expression === 'worried' ? 487 : 480); c.stroke();
+    } else if (expression === 'surprised') c.ellipse(512, 479, 36, 46, 0, 0, Math.PI * 2);
     else { c.moveTo(458, 449); c.quadraticCurveTo(512, 471, 566, 449); c.bezierCurveTo(570, 553, 454, 553, 458, 449); }
     c.fill();
-    if (expression !== 'surprised') oval(512, 517, 33, 15, '#e98d77');
+    if (!['surprised', 'thinking', 'worried'].includes(expression)) oval(512, 517, 33, 15, '#e98d77');
     const map = new T.CanvasTexture(canvas); map.colorSpace = T.SRGBColorSpace;
     faces.set(expression, new T.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: .65, polygonOffset: true, polygonOffsetFactor: -1 }));
   }

@@ -12,6 +12,13 @@ import { createCourtyardGardenProps } from './courtyard-garden-props';
 import { createFloatingRock } from './floating-islands';
 
 export function createBossCourtyardBlockout() {
+  const steps = createBossCourtyardBlockoutSteps();
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* createBossCourtyardBlockoutSteps() {
   const root=new T.Group();root.name='boss-courtyard-blockout';root.userData.stage='blockout';
   const {left,right,top,bottom}=BOSS_ARENA;
   root.position.set((left+right)/2,0,(top+bottom)/2);
@@ -26,6 +33,7 @@ export function createBossCourtyardBlockout() {
   // Authored props replace their reserved silhouettes one group at a time.
   const sword=group('sword',5,-17),blade=createAncientWindSword();blade.rotation.z=-.25;sword.add(blade);
   base(sword,4.8,10,1.6);
+  yield;
 
   const roots=group('roots',sword.position.x,sword.position.z);roots.add(createWrappingSwordRoots());
   colliders.push(
@@ -34,16 +42,19 @@ export function createBossCourtyardBlockout() {
   );
 
   const statue=group('statue-0',-18,6);
+  yield;
   statue.add(createLeafGuardianStatue());
   base(statue,2.2,3.2,2.2);
 
   for(const [index,x,z]of [[0,-18,-14.5],[1,17.5,14]]) {
+    yield;
     const chime=group(`chime-${index}`,x,z);
     chime.add(createLeafChimePost());
     base(chime,1.1,2.2,1.1);
   }
 
   const channel=createLeafWaterChannel();channel.position.set(18.2,0,-13.8);channel.rotation.y=Math.PI/4;root.add(channel);
+  yield;
   for(const [i,floor]of LEAF_CHANNEL_FLOORS.entries()) {
     channel.getObjectByName(`leaf-water-tier-${i}`)!.name=`boss-blockout-water-channel-${i}`;
     const step=i*LEAF_CHANNEL_SPACING/Math.sqrt(2),height=floor+.50;
@@ -52,20 +63,25 @@ export function createBossCourtyardBlockout() {
   channel.getObjectByName('leaf-channel-waterfall-preview')!.name='boss-blockout-waterfall';
 
   const rack=group('weapon-rack',-14,-18);
+  yield;
   rack.add(createLeafWeaponRack());
   base(rack,2.8,2,1.3);
 
   const camp=group('campfire',-16,-16);
+  yield;
   camp.add(createCampfireRemains());
 
   const marker=group('marker',-15,17);
+  yield;
   marker.add(createLeafEmblemStele());base(marker,1.7,2.3,.85);
   const pots=group('pots',-12,18);
+  yield;
   pots.add(createCourtyardGardenProps());
   base(pots,2.5,.75,1.4);
 
   const shards=group('floating-rocks',15,-22);
   for(const [i,kind]of (['c','b','a'] as const).entries()) {
+    yield;
     const rock=createFloatingRock(kind);rock.position.set(i*3,6+i*3.1,0);rock.rotation.set(.04,i*.55,(i-1)*.12);shards.add(rock);
   }
   return {root,colliders};

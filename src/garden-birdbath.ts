@@ -4,6 +4,13 @@ import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometr
 let template: T.Group | undefined;
 
 export function createGardenBirdbath(): T.Group {
+  const steps = createGardenBirdbathSteps();
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* createGardenBirdbathSteps(): Generator<void, T.Group> {
   if (template) return template.clone(true);
   const root = new T.Group(); root.name = 'garden-birdbath';
   const material = (name: string, color: string, roughness = .88) => {
@@ -18,7 +25,9 @@ export function createGardenBirdbath(): T.Group {
   const spots = Array.from({ length: 58 }, (_, i) => ({ x: (Math.sin(i * 41.7) + 1) * .5, y: (Math.sin(i * 17.3 + 2) + 1) * .5,
     radius: .012 + (Math.sin(i * 12.1) + 1) * .012 }));
   const cells = Array.from({ length: 25 }, (_, i) => ({ x: (i % 5 + .5 + Math.sin(i * 2.7) * .27) / 5, y: (Math.floor(i / 5) + .5 + Math.cos(i * 3.1) * .27) / 5 }));
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+  for (let y = 0; y < size; y++) {
+    if (y % 4 === 0) yield;
+    for (let x = 0; x < size; x++) {
     const u = x / size, v = y / size, index = (y * size + x) * 4;
     let shade = 244 + Math.sin(x * .27 + Math.cos(y * .11)) * 2 + Math.sin(y * .43 + x * .7) * 1.5;
     for (const spot of spots) {
@@ -37,7 +46,9 @@ export function createGardenBirdbath(): T.Group {
     }
     const line = Math.exp(-(second - nearest) * 65), ripple = Math.sin(u * 30 + Math.cos(v * 25)) * 4;
     caustics.set([112 + line * 48 + ripple, 178 + line * 38 + ripple, 208 + line * 29 + ripple, 255], index);
+    }
   }
+  yield;
   const texture = (data: Uint8Array) => {
     const map = new T.DataTexture(data, size, size); map.colorSpace = T.SRGBColorSpace;
     map.magFilter = T.LinearFilter; map.minFilter = T.LinearMipmapLinearFilter; map.generateMipmaps = true;
@@ -89,6 +100,7 @@ export function createGardenBirdbath(): T.Group {
   });
   root.clear();
   for (const [surface, geometries] of batches) {
+    yield;
     const merged = mergeGeometries(geometries)!, mesh = new T.Mesh(mergeVertices(merged), surface); merged.dispose();
     mesh.name = surface.name; mesh.castShadow = surface !== water && surface !== glints; mesh.receiveShadow = true; root.add(mesh);
     geometries.forEach(g => g.dispose());

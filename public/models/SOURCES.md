@@ -1,5 +1,7 @@
 # Game model sources and licenses
 
+Delivery note (2026-11-04): source URLs, license terms and provenance below are retained, including historical implementation records. Development-only concepts, prompts, exported inspection models, tests and captures have been removed from this delivery. References to those files describe past work; current runtime models are authored in `src/` or loaded from `public/models/`. Scout dialogue now uses `public/images/poppy-dialogue/`; the older scout portraits described below have been removed.
+
 ## Leaf-emblem courtyard stele and broken fragments (2026-10-29)
 
 Original editable Three.js geometry in `src/leaf-emblem-stele.ts`, based on the approved project-generated `artifacts/concepts/boss-courtyard/leaf-emblem-stele-design-sheet-v1.png`. A thick limestone stele has an actual missing right shoulder, separate gray fracture faces, three jade inlays recessed into a pierced stone face over a solid back, aged-gold veins, carved wind curls and sparse moss. Two grounded thick fragments accompany it, one retaining a piece of the inlay. Six shared materials and one local 128x128 limestone texture form 12 meshes / 8,740 triangles. No third-party model, downloaded texture, external 3D service, new dependency or light was used.

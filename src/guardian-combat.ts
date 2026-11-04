@@ -5,12 +5,14 @@ import { animateGuardianFlames } from './guardian-flames';
 import { aimGuardianSword, holdGuardianSwordReady } from './ember-guardian';
 import { sampleGuardianClip } from './guardian-rig';
 import { plantGuardianFoot, poseGuardianSwordAttack } from './guardian-footwork';
+import { createGuardianFurnaceCore, FURNACE_CORE_CLIPS } from './guardian-furnace-core';
 
 export const GUARDIAN_ATTACKS=[
   {name:'cut',windup:1.25,active:.42,recovery:2.6,reach:2.5,angle:.95},
   {name:'sweep',windup:1.5,active:.6,recovery:2.8,reach:2.8,angle:1.35},
   {name:'slam',windup:1.7,active:.55,recovery:3.0,reach:3.2,angle:.25},
 ] as const;
+export const GUARDIAN_POLLEN_OPENING = 8;
 type GuardianMotion={mesh:T.Group;home:T.Vector3;aim:T.Vector3;hp:number;phase:KnightPhase;timer:number;block:number};
 type Point={x:number;z:number};
 
@@ -195,6 +197,11 @@ export class GuardianCombat {
   private impact=new T.Mesh(new T.RingGeometry(.82,1,40),new T.MeshBasicMaterial({color:'#ffbd62',transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false}));
   private trail=createWeaponSmearEffect(T,{id:'weapon-smear',color:'#ff943e'},{size:.88,detail:.8,density:.375});
   private sword:T.Object3D;
+  private core = createGuardianFurnaceCore();
+  private coreMixer = new T.AnimationMixer(this.core);
+  private coreActions = Object.fromEntries(this.core.animations.map(clip=>[clip.name,this.coreMixer.clipAction(clip)])) as Record<keyof typeof FURNACE_CORE_CLIPS,T.AnimationAction>;
+  private corePhase: keyof typeof FURNACE_CORE_CLIPS = 'closed';
+  get coreExposed() { return this.corePhase === 'exposed'; }
   constructor(model:T.Group) {
     this.homeHeading=model.rotation.y;
     model.traverse(bone=>{if(bone instanceof T.Bone){this.locomotionPose.push({bone,position:new T.Vector3(),rotation:new T.Quaternion()});this.hitPose.push({bone,position:new T.Vector3(),rotation:new T.Quaternion()});}});
@@ -208,10 +215,13 @@ export class GuardianCombat {
     this.impact.rotation.x=-Math.PI/2;this.impact.position.z=-2.05;this.impact.position.y=.015;
     this.marker.position.y=.06;
     this.sword=model.getObjectByName('ember-sword')!;
+    this.core.position.set(0,.14,-.27);this.core.rotation.y=Math.PI;this.core.scale.setScalar(.145);
+    model.getObjectByName('chest')!.add(this.core);this.playCore('closed');
     this.trail.attachWeapon(this.sword,{base:[0,.25,0],tip:[0,1.38,0]});this.trail.stop();
     this.warning.visible=this.warningEdge.visible=this.impact.visible=false;
   }
   reset(model:T.Group,reducedMotion:boolean) {
+    this.playCore('closed');
     model.rotation.y=this.homeHeading;
     this.attack=0;this.landed=false;this.impactTime=0;this.wasSwinging=false;this.walkTime=0;
     this.returning=false;this.moveSpeed=0;this.locomotionBlend=0;
@@ -224,6 +234,7 @@ export class GuardianCombat {
     poseEmberGuardian(model,'idle',0,0,0,reducedMotion);
   }
   reactToHit(model:T.Group,source:Point) {
+    if(this.coreExposed)this.playCore('hit');
     for(const pose of this.hitPose){pose.position.copy(pose.bone.position);pose.rotation.copy(pose.bone.quaternion);}
     const push=new T.Vector3(model.position.x-source.x,0,model.position.z-source.z).normalize().applyAxisAngle(new T.Vector3(0,1,0),-model.rotation.y);
     this.hitSide=push.x;this.hitActive=true;this.moveSpeed=0;
@@ -233,6 +244,30 @@ export class GuardianCombat {
     this.hitFlash.rotation.y=Math.atan2(source.x-model.position.x,source.z-model.position.z);this.hitFlash.scale.setScalar(1);
     (this.hitFlash.children[0] as T.Mesh<T.BufferGeometry,T.MeshBasicMaterial>).material.opacity=1;
     this.trail.stop();this.wasSwinging=false;
+  }
+  prepareForPollen(enemy:GuardianMotion) {
+    enemy.phase='rest';enemy.timer=3;enemy.block=0;this.moveSpeed=0;this.returning=false;
+    this.trail.reset();this.trail.stop();this.trail.group.visible=false;this.wasSwinging=false;
+    this.warning.visible=this.warningEdge.visible=this.impact.visible=false;this.impactTime=0;this.hitFlashTime=0;this.hitFlash.visible=false;
+  }
+  reactToPollen(enemy:GuardianMotion,player:Point) {
+    if(enemy.hp<=0)return;
+    this.prepareForPollen(enemy);enemy.phase='dazed';enemy.timer=GUARDIAN_POLLEN_OPENING+FURNACE_CORE_CLIPS.open;this.hitActive=false;
+    if(Math.hypot(player.x-enemy.mesh.position.x,player.z-enemy.mesh.position.z)>.01)
+      enemy.mesh.rotation.y=Math.atan2(enemy.mesh.position.x-player.x,enemy.mesh.position.z-player.z);
+    this.playCore('open');
+  }
+  private playCore(phase:keyof typeof FURNACE_CORE_CLIPS) {
+    this.coreMixer.stopAllAction();this.corePhase=phase;
+    const action=this.coreActions[phase],loop=phase==='closed'||phase==='exposed';
+    action.reset().setLoop(loop?T.LoopRepeat:T.LoopOnce,loop?Infinity:1);action.clampWhenFinished=true;action.play();this.coreMixer.update(0);
+  }
+  private updateCore(dt:number,reducedMotion:boolean) {
+    const loop=this.corePhase==='closed'||this.corePhase==='exposed';
+    this.coreMixer.update(loop&&reducedMotion?0:dt);
+    if(!loop&&this.coreActions[this.corePhase].time>=FURNACE_CORE_CLIPS[this.corePhase]-.000001)
+      this.playCore(this.corePhase==='open'?'exposed':this.corePhase==='hit'?'close':'closed');
+    if(reducedMotion){this.core.getObjectByName('furnace-energy')!.scale.setScalar(1);this.core.getObjectByName('furnace-hit')!.scale.setScalar(0);}
   }
   private turn(model:T.Group,heading:number,dt:number) {
     const delta=Math.atan2(Math.sin(heading-model.rotation.y),Math.cos(heading-model.rotation.y));
@@ -251,6 +286,7 @@ export class GuardianCombat {
     else for(const side of [-1,1]){next.set(p.x+direction.z*step*side,p.y,p.z-direction.x*step*side);if(canMove(p,next)){p.copy(next);break;}}
   }
   update(enemy:GuardianMotion,player:{x:number;y:number;z:number},dt:number,time:number,reducedMotion:boolean,canMove:(from:Point,to:Point)=>boolean) {
+    this.updateCore(dt,reducedMotion);
     if(enemy.hp<=0){
       this.root.visible=false;this.trail.stop();this.wasSwinging=false;
       enemy.timer=Math.max(0,enemy.timer-dt);enemy.mesh.visible=enemy.timer>0;
@@ -262,6 +298,18 @@ export class GuardianCombat {
       return false;
     }
     this.root.visible=true;
+    if(enemy.phase==='dazed') {
+      enemy.timer=Math.max(0,enemy.timer-dt);
+      const duration=GUARDIAN_POLLEN_OPENING+FURNACE_CORE_CLIPS.open,elapsed=duration-enemy.timer;
+      const sneeze=T.MathUtils.smoothstep(elapsed,.25,.45)*(1-T.MathUtils.smoothstep(elapsed,.55,.85));
+      const weight=1-T.MathUtils.smoothstep(elapsed,duration-.5,duration);
+      poseEmberGuardian(enemy.mesh,'rest',this.attack,1,time,reducedMotion);
+      enemy.mesh.getObjectByName('chest')!.rotation.x=-.06-(reducedMotion?0:sneeze*.32);
+      const head=enemy.mesh.getObjectByName('head')!;head.rotation.z=.22*weight;head.rotation.x=reducedMotion?0:-sneeze*.25;
+      enemy.mesh.getObjectByName('arm-1')!.rotation.x=1.1*weight;
+      if(enemy.timer===0){enemy.phase='idle';this.playCore('close');this.attack=(this.attack+1)%GUARDIAN_ATTACKS.length;}
+      return false;
+    }
     let hit=false,slamImpact=false;
     const p=enemy.mesh.position,distance=Math.hypot(player.x-p.x,player.z-p.z);
     const beforeX=p.x,beforeZ=p.z;
@@ -272,8 +320,8 @@ export class GuardianCombat {
     }
     if(enemy.phase==='idle'||enemy.phase==='chase') {
       const homeDistance=Math.hypot(p.x-enemy.home.x,p.z-enemy.home.z);
-      if(this.returning&&distance<6&&homeDistance<13)this.returning=false;
-      if(!this.returning&&distance<11&&homeDistance<15) {
+      if(this.returning&&distance<24&&homeDistance<18)this.returning=false;
+      if(!this.returning&&distance<24&&homeDistance<20) {
         enemy.aim.set(player.x-p.x,0,player.z-p.z).normalize();
         if(distance<=2.35) {
           enemy.mesh.rotation.y=Math.atan2(-enemy.aim.x,-enemy.aim.z);this.moveSpeed=0;

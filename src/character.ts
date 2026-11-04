@@ -1,7 +1,7 @@
 import * as T from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
-export type Expression = 'neutral' | 'happy' | 'surprised' | 'determined';
+export type Expression = 'neutral' | 'happy' | 'surprised' | 'determined' | 'thinking' | 'worried';
 const palette = { body: '#f2eaf7', rim: '#b5a1d5', inset: '#bfe5d9', feet: '#a68ac9' };
 const ball = new T.SphereGeometry(1, 40, 28);
 const skin = new T.MeshStandardMaterial({ color: palette.body, roughness: .44 });
@@ -41,17 +41,26 @@ function faceMaterial(expression: Expression) {
     ellipse(x, 303, 106, 146, '#fffaff');
     const iris = c.createLinearGradient(0, 167, 0, 435);
     iris.addColorStop(0, '#221639'); iris.addColorStop(.5, '#352565'); iris.addColorStop(1, '#8c9de5');
-    ellipse(x + (x < 512 ? 9 : -9), 300, 86, 139, iris);
-    ellipse(x, 295, 39, 85, '#231940');
-    ellipse(x - 14, 225, 28, 33, '#ffffff');
-    ellipse(x + 24, 405, 12, 16, '#bbf4f6');
+    const glance = expression === 'thinking' ? -16 : 0;
+    ellipse(x + (x < 512 ? 9 : -9) + glance, 300, 86, 139, iris);
+    ellipse(x + glance, 295, 39, 85, '#231940');
+    ellipse(x - 14 + glance, 225, 28, 33, '#ffffff');
+    ellipse(x + 24 + glance, 405, 12, 16, '#bbf4f6');
     c.restore();
+    if (expression === 'thinking' || expression === 'worried') {
+      const side = x < 512 ? 1 : -1;
+      c.strokeStyle = '#59447d'; c.lineWidth = 12; c.lineCap = 'round'; c.beginPath();
+      c.moveTo(x - side * 68, 145); c.quadraticCurveTo(x, 133, x + side * 60, expression === 'thinking' && x > 512 ? 137 : 100); c.stroke();
+    }
   }
   c.fillStyle = '#452345'; c.beginPath();
-  if (expression === 'surprised') c.ellipse(512, 492, 32, 43, 0, 0, Math.PI * 2);
+  if (expression === 'thinking' || expression === 'worried') {
+    c.strokeStyle = '#452345'; c.lineWidth = 10; c.lineCap = 'round';
+    c.moveTo(484, 510); c.quadraticCurveTo(512, expression === 'worried' ? 480 : 496, 540, expression === 'worried' ? 510 : 503); c.stroke();
+  } else if (expression === 'surprised') c.ellipse(512, 492, 32, 43, 0, 0, Math.PI * 2);
   else { c.moveTo(463, 470); c.quadraticCurveTo(512, 483, 561, 470); c.bezierCurveTo(558, 560, 466, 560, 463, 470); }
   c.fill();
-  if (expression !== 'surprised') ellipse(512, 526, 28, 15, '#d68fb8');
+  if (!['surprised', 'thinking', 'worried'].includes(expression)) ellipse(512, 526, 28, 15, '#d68fb8');
   const texture = new T.CanvasTexture(canvas); texture.colorSpace = T.SRGBColorSpace;
   const material = new T.MeshStandardMaterial({ map: texture, roughness: .44, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
   faceMaterials.set(expression, material); return material;

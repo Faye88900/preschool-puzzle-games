@@ -18,7 +18,7 @@ export function setGardenerExpression(root: T.Group, expression: Expression) {
     const material = face.material.clone(); material.map = new T.CanvasTexture(canvas);
     material.map.colorSpace = T.SRGBColorSpace; faces.set(expression, material);
   }
-  face.material = faces.get(expression)!; root.userData.gardenerExpression = expression;
+  face.material = faces.get(expression)!; root.userData.gardenerExpression = root.userData.expression = expression;
 }
 
 export function createGardener() {

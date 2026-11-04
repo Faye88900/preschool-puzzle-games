@@ -5,7 +5,7 @@ export const COLS = 31;
 export const ROWS = 23;
 export const spots = {
   spawn: [8, 20], tree: [9.5, 18.2], gardener: [3, 18], tools: [2, 11],
-  cart: [2.17, 13.2], flowerbed: [2.8, 19.28], pinwheel: [3.95, 17.2],
+  cart: [2.17, 13.2], flowerbed: [2.8, 19.28], pinwheel: [4, 18],
   bridge: [14, 18], windmill: [13, 18], practice: [17, 17],
   choir: [25, 9.12], pavilion: [27, 9], dock: [30, 8],
   scout: [27.6, 10.7], chest: [27, 9.7], shield: [15, 10], boss: [40.5+BOSS_ISLAND_OFFSET_X/CELL, 3.2], bossDock: [36+BOSS_ISLAND_OFFSET_X/CELL, 7],

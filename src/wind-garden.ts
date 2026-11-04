@@ -10,13 +10,23 @@ import { createRopeDock } from './rope-dock';
 import { FERRY_BOAT_Y, FERRY_BOAT_SCALE, FERRY_MOORING_DISTANCE } from './ferry-shore-layout';
 
 export function createWindGarden(floorTexture: T.Texture) {
+  const steps = createWindGardenSteps(floorTexture);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* createWindGardenSteps(floorTexture: T.Texture) {
   const root = new T.Group(); root.name = 'wind-garden';
   const colliders: { x: number; y: number; z: number; width: number; height: number; depth: number }[] = [];
   const group = (name: string) => { const g = new T.Group(); g.name = name; root.add(g); return g; };
   const paving = group('wind-garden-paving'), flowers = group('wind-garden-flowers');
   const foliage = group('wind-garden-ivy');
   const columns = group('wind-garden-pavilion-columns'), roof = group('wind-garden-pavilion-roof');
-  const dock = createRopeDock(4.4,3.3,FERRY_MOORING_DISTANCE+.35-1.76*FERRY_BOAT_SCALE), boat = createWindSailBoat();
+  const dock = createRopeDock(4.4,3.3,FERRY_MOORING_DISTANCE+.35-1.76*FERRY_BOAT_SCALE);
+  yield;
+  const boat = createWindSailBoat();
+  yield;
   dock.root.name='wind-garden-dock';
   const pavilionShift = at('pavilion').x-42, dockShift = at('dock').x-50, choir = at('choir');
   columns.position.x = roof.position.x = pavilionShift;
@@ -95,6 +105,7 @@ export function createWindGarden(floorTexture: T.Texture) {
   }
   leafSphere.dispose();
   const flowerChoir = new FlowerChoir(flowers);
+  yield;
   root.add(boat,dock.root);
   const courtyard=createShieldCourtyard(floorTexture);root.add(courtyard.root);colliders.push(...courtyard.colliders);
   return {root,colliders,courtyard,flowerChoir};

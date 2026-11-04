@@ -85,6 +85,31 @@ export function createGardenWindmill(): T.Group {
   batch(tower); batch(rotor); templates.set('mill',root); return root.clone(true);
 }
 
+export function createGardenBridgeDrive(): T.Group {
+  const { wood, frame, stone, gold, teal } = palette();
+  const root = new T.Group(); root.name = 'windmill-bridge-drive';
+  const base = new T.Group(); base.name = 'bridge-drive-housing'; root.add(base);
+  box(base, 1.15, .3, .8, stone, -1.1, .15, 2.1);
+  for (const x of [-1.65, -.55]) box(base, .18, .65, .65, wood, x, .48, 2.1);
+  const a = new T.Vector3(-2.5, .12, -.65), b = new T.Vector3(-1.6, .12, 2.1);
+  const input = add(base, new T.CylinderGeometry(.085, .085, a.distanceTo(b), 10), gold);
+  input.position.copy(a).add(b).multiplyScalar(.5); input.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), b.sub(a).normalize());
+  add(base, new T.CylinderGeometry(.1, .1, .58, 10), gold, -1.6, .41, 2.1);
+  const shaft = add(base, new T.CylinderGeometry(.085, .085, 1.73, 10), gold, -.735, .7, 2.1); shaft.rotation.z = Math.PI / 2;
+  box(base, .72, .8, .52, frame, .13, .4, 1.96);
+  const output = add(base, new T.CylinderGeometry(.09, .09, .7, 10), gold, .13, .2, 1.94); output.rotation.x = Math.PI / 2;
+  const wheel = new T.Group(); wheel.name = 'bridge-drive-wheel'; wheel.position.set(.13, .7, 2.3); root.add(wheel);
+  const rim = add(wheel, new T.TorusGeometry(.39, .065, 6, 24), gold);
+  rim.name = 'bridge-drive-gear';
+  for (let i = 0; i < 12; i++) {
+    const angle = i * Math.PI / 6, tooth = box(wheel, .13, .16, .13, gold, Math.sin(angle) * .46, Math.cos(angle) * .46, 0);
+    tooth.rotation.z = -angle;
+  }
+  for (const angle of [0, Math.PI / 3, -Math.PI / 3]) box(wheel, .075, .72, .1, wood, 0, 0, 0).rotation.z = angle;
+  const hub = add(wheel, new T.CylinderGeometry(.14, .14, .18, 12), teal); hub.rotation.x = Math.PI / 2;
+  batch(base); batch(wheel); return root;
+}
+
 export function createGardenBridge(): T.Group {
   const cached = templates.get('bridge'); if (cached) return cached.clone(true);
   const { wood, frame, stone, gold } = palette();

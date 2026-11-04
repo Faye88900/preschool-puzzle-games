@@ -1,6 +1,9 @@
 node_modules/
 dist/
 /outputs/
+/artifacts/
+/output/
+/test-results/
 *.log
 .DS_Store
 .env

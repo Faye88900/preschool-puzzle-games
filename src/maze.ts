@@ -7,56 +7,82 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { bean, mat, orb } from './models';
 import { rounded, gardenFlower, gardenFlowerBed, colorFlower } from './puzzle-art';
 import { movement, acceleration, animateWalk } from './movement';
-import { setCharacterExpression } from './character';
-import { createGardener } from './gardener';
+import { setCharacterExpression, type Expression } from './character';
+import { createGardener, setGardenerExpression } from './gardener';
 import { createPottingWorkbench } from './potting-workbench';
 import { createFlowerCart } from './flower-cart';
 import { createBirdhouse } from './birdhouse';
+import { createGardenCottage } from './garden-cottage';
 import { createStoneWell } from './stone-well';
 import { createVineTrellis } from './vine-trellis';
 import { createWoodWindChime, animateWoodWindChime } from './wood-wind-chime';
 import { createGardenShadeTree } from './garden-shade-tree';
+import { createPlazaOldOak } from './plaza-old-oak';
 import { createMossyStump } from './mossy-stump';
-import { createGardenBirdbath } from './garden-birdbath';
+import { createGardenBirdbathSteps } from './garden-birdbath';
 import { createGardenSongbird } from './garden-songbird';
 import { createTreeBench, treeBenchColliders } from './tree-bench';
 import { createPergolaRestNook, pergolaRestNookColliders } from './pergola-rest-nook';
 import { createWindLeafWaymarker, windLeafWaymarkerColliders } from './wind-leaf-waymarker';
 import { createFlowerbedBorder, flowerbedBorderColliders } from './flowerbed-edging';
-import { createGardenGate, createGardenBridge } from './plaza-mechanisms';
+import { createGardenGate, createGardenBridge, createGardenBridgeDrive } from './plaza-mechanisms';
 import { createBridgeWater } from './bridge-water';
 import { animateWindWand } from './wind-wand';
 import { createWindEffect } from './wind-effect';
 import { createDarkKnight, animateDarkKnight, KNIGHT_DEATH_TIME, KNIGHT_PILLAR_STUN_TIME, type KnightPhase } from './dark-knight';
 import { createEmberGuardian } from './ember-guardian';
 import { GuardianCombat } from './guardian-combat';
+import { SneezeFlowers } from './sneeze-flowers';
 import { loadGuardianFlameTexture } from './guardian-flames';
 import { createWellGardenDetails, wellGardenPots } from './well-garden-details';
 import { GardenerStory } from './gardener-story';
 import { GardenerQuest } from './gardener-quest';
 import { UI } from './ui';
-import { PuzzleAudio, type PuzzleSound } from './puzzle-audio';
+import { type PuzzleSound } from './puzzle-audio';
+import { MazeAudio } from './maze-audio';
 import { readSettings, saveSettings } from './settings';
 import { language, t } from './i18n';
 import { at, maze, position, CELL, COLS, ROWS, walkable, type SpotName } from './maze-map';
 import { mt, type MazeText } from './maze-text';
 import { createMazeGround } from './maze-ground';
 import { createMazeIsland } from './maze-island';
-import { createFirstEncounterRuins } from './first-encounter-ruins';
-import { createWindGarden } from './wind-garden';
-import { createBossIsland } from './boss-island';
+import { createFirstEncounterRuinsSteps } from './first-encounter-ruins';
+import { createWindGarden, createWindGardenSteps } from './wind-garden';
+import { createBossIslandSteps } from './boss-island';
 import { createLeafChannelWater } from './leaf-channel-water';
 import { createCourtyardAmbience } from './courtyard-ambience';
-import { createMazeMeadow } from './painterly-grass';
+import { createMazeMeadow, createMazeMeadowSteps } from './painterly-grass';
+import { runLoadingSteps } from './loading-steps';
 import { createFerryCoast } from './ferry-coast';
 import { BOSS_ARENA, FERRY_BOAT_Y, FERRY_BOAT_SCALE, FERRY_MOORING_DISTANCE, gardenCoastX, bossCoastX } from './ferry-shore-layout';
 import { windmill, windWand, treasureChest, gardenTools, goldKey, gardenerYard, signpost } from './maze-art';
 import { animateTreasureChest } from './treasure-chest';
-import { createGardenScout, animateGardenScout, resetGardenScout } from './garden-scout';
+import { createGardenScout, animateGardenScout, resetGardenScout, setGardenScoutExpression } from './garden-scout';
 
 const SCOUT_PORTRAITS: Partial<Record<MazeText, string>> = {
   scoutHello: 'greeting', scoutChest: 'thinking', scoutCollect: 'surprised', crystalFlying: 'surprised',
   scoutBoat: 'guiding', scoutKeyWaiting: 'encouraging', scoutKey: 'celebrating', scoutExit: 'celebrating',
+};
+const DIALOGUE_REACTIONS: Partial<Record<MazeText, { player: Expression; npc: Expression }>> = {
+  gardenerHello: { player: 'worried', npc: 'worried' },
+  playerTrail: { player: 'thinking', npc: 'surprised' },
+  playerWillLook: { player: 'determined', npc: 'happy' },
+  gardenerRemember: { player: 'thinking', npc: 'thinking' },
+  gardenerTogether: { player: 'happy', npc: 'happy' },
+  gardenerHint: { player: 'thinking', npc: 'thinking' },
+  gardenerPlant: { player: 'happy', npc: 'happy' },
+  gardenerFollow: { player: 'happy', npc: 'happy' },
+  gardenerThanks: { player: 'happy', npc: 'happy' },
+  gardenerAgain: { player: 'thinking', npc: 'happy' },
+  findBridge: { player: 'thinking', npc: 'happy' },
+  scoutHello: { player: 'happy', npc: 'happy' },
+  scoutChest: { player: 'thinking', npc: 'thinking' },
+  scoutCollect: { player: 'surprised', npc: 'surprised' },
+  crystalFlying: { player: 'surprised', npc: 'surprised' },
+  scoutBoat: { player: 'happy', npc: 'happy' },
+  scoutKeyWaiting: { player: 'determined', npc: 'happy' },
+  scoutKey: { player: 'happy', npc: 'happy' },
+  scoutExit: { player: 'happy', npc: 'happy' },
 };
 
 type Enemy = { mesh: T.Group; home: T.Vector3; hp: number; maxHp: number; shielded: boolean; phase: KnightPhase; timer: number; aim: T.Vector3; ring: T.Mesh<T.RingGeometry, T.MeshBasicMaterial>; patrol: number; speed: number; alert: number; block: number; lastSeen: T.Vector3; memory: number; path: T.Vector3[]; repath: number };
@@ -81,7 +107,7 @@ export class MazeAdventure {
   body!: R.RigidBody;
   player = bean('#ee5798', true);
   ui!: UI;
-  audio!: PuzzleAudio;
+  audio!: MazeAudio;
   models = new Map<string, T.Group>();
   walls: { mesh: T.Mesh<T.BufferGeometry, T.MeshStandardMaterial>; bounds: T.Box3 }[] = [];
   encounterObstacles: T.Box3[] = [];
@@ -89,7 +115,9 @@ export class MazeAdventure {
   buildingOccluders: { object: T.Object3D; bounds: T.Box3; opaqueMeshes?:T.Mesh[]; opacity: number; materials: { material: T.Material; opacity: number; depthWrite: boolean }[] }[] = [];
   cameraOcclusion = new T.Raycaster();
   enemies: Enemy[] = [];
+  practiceEnemies: Enemy[] = [];
   guardian!: GuardianCombat;
+  sneezeFlowers!: SneezeFlowers;
   guardianFlameTexture!: T.Texture;
   keys = new Set<string>();
   stick = { x: 0, y: 0 };
@@ -106,6 +134,8 @@ export class MazeAdventure {
   chargePillarReady = false;
   dodgeAura = new T.Mesh(new T.RingGeometry(.55,.72,32),new T.MeshBasicMaterial({color:'#9ef8e3',side:T.DoubleSide,transparent:true,opacity:.8,depthWrite:false}));
   quest = false; tools = false; wand = false; bridgeOpen = false; bridgeOpening = false; bridgeProgress = 0;
+  bridgeHintShown = false; bridgeHintTime = 0; bridgeRevealTime = 0; bridgeWaitTime = 0; bridgeHelpShown = false; bridgeCrossed = false;
+  pinwheelPracticed = false; pinwheelLookTime = 0;
   key = false; treasure = false; chestOpened = false; chestProgress = 0; exitOpen = false; hearts = 3; invulnerable = 0; cooldown = 0;
   crystalPickup?: { elapsed: number; start: T.Vector3; rotation: number };
   settings = readSettings();
@@ -113,6 +143,9 @@ export class MazeAdventure {
   toolMesh = gardenTools(); wandMesh = windWand(); mill = windmill(); chest = treasureChest(); keyMesh = goldKey();
   woodWindChime = createWoodWindChime();
   bridgeDeck = new T.Group(); bridgeBody!: R.RigidBody; bridgeSurface!: R.RigidBody; shortcut!: Gate; exit!: Gate;
+  bridgeDrive = createGardenBridgeDrive();
+  millCue = new T.Mesh(new T.RingGeometry(.53, .6, 48), new T.MeshBasicMaterial({ color: '#fff0bc', transparent: true, opacity: .8, side: T.DoubleSide, depthWrite: false }));
+  pinwheelCue = this.millCue.clone();
   encounterGate!: Gate; encounterGateProgress = 0;
   encounterCrest!: T.Object3D; encounterTrail!: T.Object3D;
   bridgeWater = createBridgeWater();
@@ -130,13 +163,17 @@ export class MazeAdventure {
   courtyard!: ReturnType<typeof createWindGarden>['courtyard'];
   flowerChoir!: ReturnType<typeof createWindGarden>['flowerChoir'];
   guide = createGardener(); scout = createGardenScout();
+  scoutPatrol = 0;
   gardenerStory!: GardenerStory;
   gardenQuest!: GardenerQuest;
+  cartHintShown = false;
+  cartHintTime = 0;
   ring = new T.Mesh(new T.RingGeometry(.8, 1, 32), new T.MeshBasicMaterial({ color: '#ffe58c', side: T.DoubleSide, transparent: true, depthWrite: false }));
   wind = createWindEffect(); windTime = 0; windHit = false; windTarget = new T.Vector3(); windOrigin = new T.Vector3();
   dialogue?: { lines: MazeText[]; index: number; gardenerIntro: boolean };
   message: MazeText = 'safe'; messageUntil = 0; uiMode = ''; hudState = '';
   root!: HTMLElement; dialogueBox!: HTMLElement; gardenerMutter!: HTMLElement;
+  routeMarker!: HTMLElement;
   chestQuiz!: HTMLDialogElement;
   enemyBars: HTMLElement[] = [];
   get muted() { return !this.settings.music && !this.settings.effects; }
@@ -156,12 +193,12 @@ export class MazeAdventure {
     sun.shadow.mapSize.setScalar(2048); Object.assign(sun.shadow.camera, { left: -42, right: 42, top: 42, bottom: -42, near: 1, far: 120 });
     sun.shadow.camera.updateProjectionMatrix(); sun.shadow.radius = 2;
     sun.shadow.normalBias = .035; sun.shadow.bias = -.00008; this.scene.add(sun, sun.target);
-    this.audio = new PuzzleAudio();
+    this.audio = new MazeAudio();
     const [ground,,,floor,guardianFlame] = await Promise.all([createMazeGround(this.renderer), this.loadModels(), this.audio.load(),new T.TextureLoader().loadAsync(`${import.meta.env.BASE_URL}textures/maze/courtyard-wind.webp`),loadGuardianFlameTexture()]);
     this.guardianFlameTexture=guardianFlame;
     floor.colorSpace=T.SRGBColorSpace;floor.anisotropy=Math.min(4,this.renderer.capabilities.getMaxAnisotropy());this.courtyardFloor=floor;
     this.scene.add(ground, createMazeIsland());
-    this.build();
+    await runLoadingSteps(this.build());
     await this.flowerChoir.load(this.audio);
     const spawn = at('spawn');
     this.body = this.world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(spawn.x, .8, spawn.z).lockRotations().setLinearDamping(movement.damping).setCcdEnabled(true));
@@ -181,7 +218,7 @@ export class MazeAdventure {
     const draco = new DRACOLoader().setDecoderPath(`${import.meta.env.BASE_URL}models/draco/`);
     const loader = new GLTFLoader().setDRACOLoader(draco);
     try {
-      await Promise.all(['tree-oak-01', 'apple-tree', 'bush-round-01', 'home-cottage-01', 'garden-shed', 'water-pond-01', 'bench-01', 'crate-01', 'barrel-01', 'cattail-reed-clump', 'wheelbarrow', 'road-cobble-straight-01', 'streetlamp-01',
+      await Promise.all(['tree-oak-01', 'apple-tree', 'bush-round-01', 'garden-shed', 'water-pond-01', 'bench-01', 'crate-01', 'barrel-01', 'cattail-reed-clump', 'wheelbarrow', 'road-cobble-straight-01', 'streetlamp-01',
         'kenney-nature/pot_small', 'kenney-nature/pot_large', 'kenney-nature/plant_flatShort', 'kenney-nature/grass_leafs'].map(async name => {
         const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${name}.glb`);
         const bounds = new T.Box3().setFromObject(gltf.scene), size = bounds.getSize(new T.Vector3());
@@ -249,7 +286,7 @@ export class MazeAdventure {
     root.updateMatrixWorld(true); this.trackBuildingOcclusion(root);
     return { mesh, body: this.solid(p.x, 2, p.z, CELL, 4, 1) };
   }
-  dressGarden() {
+  *dressGarden() {
     const house = at('gardener'), well = at('tools');
     const details = createWellGardenDetails(this.models); details.position.set(well.x, 0, well.z); this.scene.add(details);
     for (const [i, [dx, dz, width]] of wellGardenPots.entries()) {
@@ -269,30 +306,36 @@ export class MazeAdventure {
       const bounds = new T.Box3().setFromObject(prop), size = bounds.getSize(new T.Vector3()), center = bounds.getCenter(new T.Vector3());
       this.solid(center.x, center.y, center.z, size.x, size.y, size.z);
     }
+    yield;
     const trellis = createVineTrellis(); trellis.position.set(well.x - 4.2, 0, well.z - 6.8);
     trellis.scale.setScalar(1.4); this.scene.add(trellis);
     this.solid(trellis.position.x, 1.32, trellis.position.z, 2.62, 2.64, .32);
+    yield;
     const shadeTree = createGardenShadeTree(this.models.get('tree-oak-01')!);
     shadeTree.position.set(well.x - 6.8, 0, well.z - 5.4); shadeTree.scale.setScalar(5.2); this.scene.add(shadeTree);
     const treeBody = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(shadeTree.position.x, 1.3, shadeTree.position.z));
     this.world.createCollider(R.ColliderDesc.cylinder(1.3, .45).setFriction(.1), treeBody);
+    yield;
     const stump = createMossyStump(); stump.position.set(well.x - 6.6, 0, well.z - 2.2);
     stump.scale.setScalar(.55); this.scene.add(stump);
     const stumpBody = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(stump.position.x, .36, stump.position.z));
     this.world.createCollider(R.ColliderDesc.cylinder(.36, .44).setFriction(.1), stumpBody);
-    const birdbath = createGardenBirdbath(); birdbath.position.set(well.x + 6.3, 0, well.z - 5.9);
+    const birdbath = yield* createGardenBirdbathSteps(); birdbath.position.set(well.x + 6.3, 0, well.z - 5.9);
     birdbath.scale.setScalar(1.1); this.scene.add(birdbath);
     const bathBody = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(birdbath.position.x, 0, birdbath.position.z));
     this.world.createCollider(R.ColliderDesc.cylinder(.49, .53).setTranslation(0, .49, 0).setFriction(.1), bathBody);
     this.world.createCollider(R.ColliderDesc.cylinder(.26, .98).setTranslation(0, 1.33, 0).setFriction(.1), bathBody);
+    yield;
     const songbird = createGardenSongbird(); songbird.scale.setScalar(.68); songbird.rotation.y = Math.atan2(-.45, .64);
     songbird.position.copy(birdbath.localToWorld(new T.Vector3(.45, 1.455, -.64))); this.scene.add(songbird);
     shadeTree.getObjectByName('garden-chime-anchor')!.getWorldPosition(this.woodWindChime.position);
     this.woodWindChime.scale.setScalar(1.4); this.scene.add(this.woodWindChime);
+    yield;
     const workbench = createPottingWorkbench(); workbench.position.set(house.x - 11.45, 0, house.z + 2);
     workbench.scale.setScalar(1.6); workbench.rotation.y = Math.PI / 2; this.scene.add(workbench);
     const benchBounds = new T.Box3().setFromObject(workbench), benchSize = benchBounds.getSize(new T.Vector3()), benchCenter = benchBounds.getCenter(new T.Vector3());
     this.solid(benchCenter.x, benchCenter.y, benchCenter.z, benchSize.x, benchSize.y, benchSize.z);
+    yield;
     const flowerCart = createFlowerCart(); flowerCart.position.set(house.x + 1.2, 0, house.z - 5.8);
     flowerCart.scale.setScalar(1.1); this.scene.add(flowerCart);
     const cartBounds = new T.Box3().setFromObject(flowerCart), cartSize = cartBounds.getSize(new T.Vector3()), cartCenter = cartBounds.getCenter(new T.Vector3());
@@ -304,6 +347,7 @@ export class MazeAdventure {
       const paving = this.model('road-cobble-straight-01', x, z, width, angle);
       paving.name = 'garden-stones'; paving.scale.y *= .12; paving.position.y = .019;
     }
+    yield;
     const pink = gardenFlower(), yellow = gardenFlower();
     colorFlower(pink, '#efb2c3', true); colorFlower(yellow, '#f6d87b', true);
     const flower = (x: number, z: number, scale: number, template: T.Group) => {
@@ -329,17 +373,16 @@ export class MazeAdventure {
       const bush = this.model('bush-round-01', well.x + dx, well.z + dz, width, dz); bush.name = 'garden-border-bush';
     }
   }
-  dressPlaza() {
+  *dressPlaza() {
     const oak = at('tree'), plaza = new T.Group(), planting = new T.Group();
     plaza.name = 'old-oak-plaza'; planting.name = 'plaza-groundcover'; this.scene.add(plaza); plaza.add(planting);
     const prop = (name: string, dx: number, dz: number, width: number, angle = 0) => {
       const object = this.model(name, oak.x + dx, oak.z + dz, width, angle);
       object.name = 'plaza-' + name; plaza.add(object); return object;
     };
-    const tree = createGardenShadeTree(this.models.get('tree-oak-01')!);
-    tree.name = 'plaza-old-oak'; tree.position.set(oak.x, 0, oak.z); tree.scale.setScalar(8.2); plaza.add(tree);
+    const tree = createPlazaOldOak(); tree.position.set(oak.x, 0, oak.z); plaza.add(tree);
     tree.updateMatrixWorld(true);
-    const crown = tree.getObjectByName('garden-shade-crown')!; crown.name = 'plaza-oak-crown'; this.trackBuildingOcclusion(crown);
+    const crown = tree.getObjectByName('plaza-oak-crown')!; this.trackBuildingOcclusion(crown);
     const chime = createWoodWindChime(); chime.name = 'plaza-wind-chime'; chime.scale.setScalar(1.7);
     tree.getObjectByName('garden-chime-anchor')!.getWorldPosition(chime.position); plaza.add(chime);
     this.solid(oak.x, 1.3, oak.z, 1.5, 2.6, 1.5);
@@ -349,6 +392,7 @@ export class MazeAdventure {
       this.world.createCollider(R.ColliderDesc.cuboid(part.width / 2, .4, part.depth / 2).setTranslation(part.x, .4, part.z)
         .setRotation({ x: 0, y: Math.sin(part.angle / 2), z: 0, w: Math.cos(part.angle / 2) }).setFriction(.1), benchBody);
     }
+    yield;
     const nook = createPergolaRestNook(); nook.position.set(oak.x - 14.5, 0, oak.z - 5.6); plaza.add(nook);
     const nookBody = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(nook.position.x, 0, nook.position.z));
     for (const part of pergolaRestNookColliders) {
@@ -356,6 +400,7 @@ export class MazeAdventure {
         .setTranslation(part.x, part.y, part.z).setFriction(.1), nookBody);
     }
     nook.updateMatrixWorld(true); this.trackBuildingOcclusion(nook);
+    yield;
     const waymarker = createWindLeafWaymarker(); waymarker.position.set(oak.x + 9, 0, oak.z - 3.2); plaza.add(waymarker);
     const waymarkerBody = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(waymarker.position.x, 0, waymarker.position.z));
     for (const part of windLeafWaymarkerColliders) {
@@ -365,6 +410,7 @@ export class MazeAdventure {
     waymarker.updateMatrixWorld(true); this.trackBuildingOcclusion(waymarker);
     const ring = new T.Mesh(new T.RingGeometry(4.1, 6.5, 64), mat('#d9c89e'));
     ring.name = 'plaza-paving-ring'; ring.rotation.x = -Math.PI / 2; ring.position.set(oak.x, .035, oak.z); ring.receiveShadow = true; plaza.add(ring);
+    yield;
     const paving = this.models.get('road-cobble-straight-01')!.clone(true), stone = new T.Color('#e8d3ad'), grass = new T.Color('#8daa52');
     paving.traverse(node => {
       if (!(node instanceof T.Mesh)) return;
@@ -445,15 +491,20 @@ export class MazeAdventure {
     });
     planting.clear();
     for (const [material, geometries] of batches) {
+      yield;
       const mesh = new T.Mesh(mergeGeometries(geometries)!, material); mesh.receiveShadow = true; planting.add(mesh);
       geometries.forEach(geometry => geometry.dispose());
     }
   }
-  build() {
+  *build() {
     this.solidGeometry((this.scene.getObjectByName('maze-lawn') as T.Mesh).geometry);
     this.scene.add(this.ferryCoast.root);this.solidGeometry(this.ferryCoast.terrain);
     for(const c of this.ferryCoast.colliders)this.solid(c.x,c.y,c.z,c.width,c.height,c.depth);
-    const ruins = createFirstEncounterRuins(), encounter = at('practice'), windGarden = createWindGarden(this.courtyardFloor);
+    yield;
+    const ruins = yield* createFirstEncounterRuinsSteps(), encounter = at('practice');
+    yield;
+    const windGarden = yield* createWindGardenSteps(this.courtyardFloor);
+    yield;
     this.courtyard=windGarden.courtyard; this.flowerChoir=windGarden.flowerChoir;
     const hedgeClearings = (ruins.userData.hedgeClearings as number[][])
       .map(([x0, z0, x1, z1]) => [x0 + encounter.x, z0 + encounter.z, x1 + encounter.x, z1 + encounter.z]);
@@ -464,6 +515,7 @@ export class MazeAdventure {
     const windGardenBorder = (c: number, r: number) => c >= 13 && r >= 6 && r <= 14;
     // Only exposed wall cells need meshes; horizontal runs keep draw calls bounded.
     for (let r = 0; r < ROWS; r++) {
+      yield;
       // Past the locked exit, the path opens into lawn instead of another hedge pocket.
       const exposed = (c: number) => !(r >= 9 && r <= 13 && c >= 7 && c <= 9) && !(c === 30 && r === 7) && !maze[r][c] && [[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dc, dr]) => maze[r + dr]?.[c + dc]);
       for (let c = 0; c < COLS; c++) {
@@ -497,7 +549,7 @@ export class MazeAdventure {
         this.solid((p.x-width/2+coastRight)/2,HEDGE_HEIGHT/2,p.z,coastRight-(p.x-width/2),HEDGE_HEIGHT,CELL);
       }
     }
-    this.dressPlaza();
+    yield* this.dressPlaza();
     this.scene.add(windGarden.root);
     for (const collider of windGarden.colliders) {
       const {x,y,z,width,height,depth}=collider;
@@ -524,7 +576,7 @@ export class MazeAdventure {
       const buoy=this.box(this.scene,135+42*Math.cos(a),-.25,-12+32*Math.sin(a),.4,.7,.4,'#efbd53');buoy.name='sailing-boundary-buoy';
     }
     this.dockMooring = windGarden.root.getObjectByName('dock-mooring-line') as T.Group;
-    const bossIsland = createBossIsland(this.courtyardFloor); this.scene.add(bossIsland.root);
+    const bossIsland = yield* createBossIslandSteps(this.courtyardFloor); this.scene.add(bossIsland.root);
     this.leafChannelWater=createLeafChannelWater(bossIsland.root.getObjectByName('three-tier-leaf-water-channel')!);
     bossIsland.root.updateMatrixWorld(true);
     for(const object of bossIsland.occluders)this.trackBuildingOcclusion(object);
@@ -535,10 +587,12 @@ export class MazeAdventure {
       this.solid(x,y,z,width,height,depth);
       if(y>.5)this.encounterObstacles.push(new T.Box3(new T.Vector3(x-width/2-.5,0,z-depth/2-.5),new T.Vector3(x+width/2+.5,y+height/2,z+depth/2+.5)));
     }
-    const house = at('gardener'); const cottage = this.model('home-cottage-01', house.x - 9, house.z - 4, 6); cottage.name = 'garden-cottage';
+    yield;
+    const house = at('gardener'); const cottage = createGardenCottage(); cottage.position.set(house.x - 9, 0, house.z - 4); this.scene.add(cottage);
     const birdhouse = createBirdhouse(); birdhouse.position.set(house.x - 6.021, 2.2, house.z - 2.6);
     birdhouse.rotation.y = Math.PI / 2; this.scene.add(birdhouse);
-    this.dressGarden();
+    yield* this.dressGarden();
+    yield;
     const shed = this.model('garden-shed', house.x - 8, house.z + 7, 4.2, Math.PI / 2); shed.name = 'garden-shed';
     const shedBounds = new T.Box3().setFromObject(shed);
     const workbenchBounds = new T.Box3().setFromObject(this.scene.getObjectByName('garden-potting-workbench')!);
@@ -548,11 +602,13 @@ export class MazeAdventure {
     this.solid(shedCenter.x, shedCenter.y, shedCenter.z, shedSize.x, shedSize.y, shedSize.z);
     this.trackBuildingOcclusion(cottage); this.trackBuildingOcclusion(shed);
     this.trackBuildingOcclusion(this.scene.getObjectByName('garden-shade-crown')!);
+    yield;
     this.place(this.guide, 'gardener', .68); this.guide.rotation.y = Math.PI;
     this.place(gardenerYard(), 'gardener');
     this.place(this.scout, 'scout', .612); this.scout.rotation.y = Math.PI - .35; this.scout.scale.setScalar(.9);
     for (const [x,z] of [[55,23],[68,7],[82,20],[71,-8],[95.5,5],[60,-22]])
       this.model('tree-oak-01',x,z,4.2);
+    yield;
     const well = at('tools');
     const stoneWell = createStoneWell(); stoneWell.position.set(well.x + 1.4, 0, well.z - 1.5); this.scene.add(stoneWell);
     const wellBody = this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(stoneWell.position.x, .445, stoneWell.position.z));
@@ -561,7 +617,11 @@ export class MazeAdventure {
     this.place(this.toolMesh, 'tools'); this.place(this.mill, 'windmill'); this.mill.position.z -= 1.5; this.mill.rotation.y = Math.PI;
     const millBody=this.world.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(this.mill.position.x,1.4,this.mill.position.z));
     this.world.createCollider(R.ColliderDesc.cylinder(1.4,.9).setFriction(.1),millBody);
+    yield;
     this.gardenQuest = new GardenerQuest(this.scene, this.world, this.guide, this.toolMesh);
+    this.pinwheelCue.name = 'pinwheel-wind-cue'; this.pinwheelCue.position.set(0, 1.65, .22); this.pinwheelCue.scale.setScalar(.32);
+    this.gardenQuest.pinwheel.add(this.pinwheelCue);
+    yield;
     this.place(this.chest, 'chest'); this.chest.rotation.y = Math.PI; this.chest.scale.setScalar(.65);
     this.place(ruins, 'practice');
     this.encounterGate = { mesh: ruins.getObjectByName('ruins-gate') as T.Group,
@@ -576,9 +636,13 @@ export class MazeAdventure {
       this.encounterObstacles.push(new T.Box3(new T.Vector3(-width / 2, -height / 2, -depth / 2), new T.Vector3(width / 2, height / 2, depth / 2))
         .applyMatrix4(new T.Matrix4().compose(center, rotation, new T.Vector3(1, 1, 1))).expandByScalar(.55));
     }
+    yield;
     this.place(this.keyMesh, 'boss', 1.1); this.keyMesh.visible = false;
     this.exit = this.makeGate('exit'); this.shortcut = this.makeGate('shortcut');
     const bridge = at('bridge'), bridgeRoot=createGardenBridge(); bridgeRoot.position.set(bridge.x-2.5,0,bridge.z);this.scene.add(bridgeRoot);
+    bridgeRoot.add(this.bridgeDrive);
+    this.solid(bridge.x - 3.4, .6, bridge.z + 2.15, 2.7, 1.2, .9);
+    this.millCue.name = 'windmill-wind-cue'; this.millCue.position.set(0, 2.5, -1.1); this.mill.add(this.millCue);
     this.bridgeDeck=bridgeRoot.getObjectByName('bridge-deck') as T.Group;
     this.bridgeSurface = this.solid(bridge.x, this.bridgeDeck.position.y, bridge.z, CELL, .2, 4.1);
     for(const x of [0,5])for(const z of [-2,2])this.solid(bridgeRoot.position.x+x,.4,bridge.z+z,.46,.8,.46);
@@ -587,14 +651,22 @@ export class MazeAdventure {
     this.sign('checkpoint', 'guardian', 3.5, 2);
     this.gardenerStory = new GardenerStory(this.guide, this.player, this.camera, this.cameraLook,
       () => this.say('gardenerSearching'), () => { this.clearInput(); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); });
-    for (const [name, hp, shielded] of [['practice', 1, false], ['shield', 2, true], ['boss', 3, true]] as const) {
-      const p = at(name), mesh = name === 'boss' ? createEmberGuardian(this.guardianFlameTexture) : createDarkKnight(); mesh.position.set(p.x, 0, p.z); this.scene.add(mesh);
+    for (const [name, hp, shielded, dx, dz] of [['practice', 1, false, 0, 0], ['shield', 2, true, 0, 0], ['boss', 3, true, 0, 0], ['practice', 1, false, 5, -3], ['practice', 1, false, 5, 4]] as const) {
+      yield;
+      const p = at(name), mesh = name === 'boss' ? createEmberGuardian(this.guardianFlameTexture) : createDarkKnight(); mesh.position.set(p.x + dx, 0, p.z + dz); this.scene.add(mesh);
       if(name === 'boss'){mesh.scale.setScalar(1.6);mesh.rotation.y=Math.PI;}
       const ring = new T.Mesh(new T.RingGeometry(.85, 1, 32), new T.MeshBasicMaterial({ color: '#f0a252', transparent: true, opacity: .7, side: T.DoubleSide, depthWrite: false }));
       ring.rotation.x = -Math.PI / 2; this.scene.add(ring);
       this.enemies.push({ mesh, home: mesh.position.clone(), hp, maxHp: hp, shielded, phase: 'idle', timer: 0, aim: new T.Vector3(), ring, patrol: 1, speed: 0, alert: 0, block: 0, lastSeen: mesh.position.clone(), memory: 0, path: [], repath: 0 });
+      if (name === 'practice') this.practiceEnemies.push(this.enemies[this.enemies.length - 1]);
     }
+    yield;
     this.guardian=new GuardianCombat(this.enemies[2].mesh);this.scene.add(this.guardian.root);
+    this.sneezeFlowers=new SneezeFlowers();this.scene.add(this.sneezeFlowers.root);
+    for(const flower of this.sneezeFlowers.flowers){
+      const {x,z}=flower.root.position;this.solid(x,.5,z,.9,1,.9);
+      this.encounterObstacles.push(new T.Box3(new T.Vector3(x-1,0,z-1),new T.Vector3(x+1,1,z+1)));
+    }
     const laneLength=6.8*SHIELD_CHARGE_TIME*.8+1.3;
     const lane = new T.Shape([new T.Vector2(-.65,.4),new T.Vector2(.65,.4),new T.Vector2(.65,laneLength-1.3),new T.Vector2(1,laneLength-1.3),new T.Vector2(0,laneLength),new T.Vector2(-1,laneLength-1.3),new T.Vector2(-.65,laneLength-1.3)]);
     this.chargeLane = new T.Mesh(new T.ShapeGeometry(lane),new T.MeshBasicMaterial({color:'#e99935',side:T.DoubleSide,transparent:true,opacity:.55,depthWrite:false}));
@@ -627,7 +699,8 @@ export class MazeAdventure {
         new T.Vector3().copy(collider.translation()),new T.Quaternion().copy(collider.rotation()),new T.Vector3(1,1,1)));
       if(bounds.max.y>.15&&bounds.min.y<6)grassObstacles.push(bounds.expandByVector(new T.Vector3(.18,0,.18)));
     });
-    this.meadow = createMazeMeadow((x,z) => {
+    yield;
+    this.meadow = yield* createMazeMeadowSteps((x,z) => {
       return !grassObstacles.some(bounds => x>=bounds.min.x&&x<=bounds.max.x&&z>=bounds.min.z&&z<=bounds.max.z);
     },(this.scene.getObjectByName('maze-lawn') as T.Mesh<T.BufferGeometry,T.MeshStandardMaterial>).material.map!);
     this.scene.add(this.meadow.root);
@@ -651,15 +724,21 @@ export class MazeAdventure {
     this.dodgeButton.addEventListener('click', event => { if (event.detail === 0) this.dodge(); });
     this.root.insertAdjacentHTML('beforeend', `<div class="maze-inventory" aria-label="${mt('title')}"><span id="maze-hearts"></span><span id="maze-item"></span></div><div class="maze-dialogue workshop-dialogue" hidden role="dialog" aria-modal="true" aria-labelledby="maze-speaker" aria-describedby="maze-line"><div class="workshop-bubble"><strong id="maze-speaker" class="dialogue-speaker"></strong><button type="button" id="maze-close" class="workshop-leave" aria-label="${t('退出对话')}" title="${t('退出对话')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 16M20 4 4 20"/></svg></button><p id="maze-line" class="dialogue-line" aria-live="polite"></p><div class="workshop-dialogue-footer"><button type="button" id="maze-next" class="workshop-next"><kbd aria-hidden="true">Enter</kbd><span class="workshop-next-label">${mt('continue')}</span><span class="workshop-next-arrow" aria-hidden="true"></span></button></div></div></div>`);
     this.dialogueBox = this.root.querySelector('.maze-dialogue')!;
+    this.dialogueBox.insertAdjacentHTML('beforeend',
+      `<div class="maze-trowel-hint" hidden aria-hidden="true"><img src="${import.meta.env.BASE_URL}images/garden-trowel-silhouette.svg" alt="" draggable="false"><div><small>${mt('missingItem')}</small><strong>${mt('tools')}</strong></div></div>`);
     this.dialogueBox.querySelector('.workshop-bubble')!.insertAdjacentHTML('afterbegin',
       `<div class="workshop-portrait" aria-hidden="true"><img src="${import.meta.env.BASE_URL}images/gardener-dialogue.png" alt="" draggable="false"></div>`);
-    for (const portrait of ['player-dialogue/thinking.png', 'gardener-puzzled.png', 'gardener-remember.png', 'gardener-grateful.png',
-      ...[...new Set(Object.values(SCOUT_PORTRAITS))].map(expression => `garden-scout-dialogue/${expression}.webp`)]) {
+    for (const portrait of ['player-dialogue/thinking.png', 'player-dialogue/determined.png', 'gardener-puzzled.png', 'gardener-remember.png', 'gardener-grateful.png',
+      ...[...new Set(Object.values(SCOUT_PORTRAITS))].map(expression => `poppy-dialogue/${expression}.webp`)]) {
       const image = new Image();
       image.src = `${import.meta.env.BASE_URL}images/${portrait}`;
     }
     this.gardenerMutter = document.createElement('div'); this.gardenerMutter.className = 'gardener-mutter';
     this.gardenerMutter.textContent = mt('gardenerSearching'); this.gardenerMutter.hidden = true; this.root.append(this.gardenerMutter);
+    this.routeMarker = document.createElement('div'); this.routeMarker.className = 'maze-route-marker'; this.routeMarker.hidden = true;
+    this.routeMarker.setAttribute('role', 'status');
+    this.routeMarker.innerHTML = '<svg class="route-house" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8M5 10v11h14V10M10 21v-7h4v7"/></svg><svg class="route-mill" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 21 2-9h6l2 9ZM12 10V2l4 2-4 6 8-3v4l-8-1 3 8-4-1 1-7-8 3V9Z"/></svg><b></b><span class="route-arrow" aria-hidden="true">➜</span>';
+    this.root.append(this.routeMarker);
     this.enemyBars = this.enemies.map((enemy,index) => {
       const boss=index===2;
       const bar = document.createElement('div'); bar.className = boss?'knight-health boss-health':'knight-health'; bar.hidden = true;
@@ -742,7 +821,13 @@ export class MazeAdventure {
     this.dialogue = undefined; this.dialogueBox.hidden = true; this.message = 'safe'; this.messageUntil = 6;
     this.gardenerStory.reset();
     resetGardenScout(this.scout);
+    this.scoutPatrol = 0; this.scout.position.set(at('scout').x, .612, at('scout').z);
+    this.scout.rotation.y = Math.PI - .35;
     this.gardenQuest.reset();
+    this.cartHintShown = false; this.cartHintTime = 0;
+    this.bridgeHintShown = this.bridgeHelpShown = this.bridgeCrossed = false; this.bridgeHintTime = this.bridgeRevealTime = this.bridgeWaitTime = 0;
+    this.pinwheelPracticed = false; this.pinwheelLookTime = 0; this.pinwheelCue.visible = false;
+    this.millCue.visible = false; this.mill.getObjectByName('rotor')!.rotation.z = 0;
     this.ferryCoast.clearWake();this.boatSpeed=this.boatTurn=0;this.boatYaw=Math.PI/2;this.boat.rotation.set(0,Math.PI/2,0);this.boatWake.visible=false;this.boatTrip = undefined; this.boatAtBossIsland = false; this.boat.position.copy(this.boatMooring(false));
     this.body.setEnabled(true);this.ferryCoast.time.value=0;this.dockMooring.visible=true;this.bossMooring.visible=false;
     this.body.setTranslation({ ...at('spawn'), y: .8 }, true); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -754,6 +839,7 @@ export class MazeAdventure {
       enemy.patrol = 1; enemy.speed = enemy.alert = enemy.block = enemy.memory = enemy.repath = 0; enemy.path = []; enemy.lastSeen.copy(enemy.home);
       if (enemy !== this.enemies[2]) animateDarkKnight(enemy.mesh, 'idle', enemy.shielded, 0, 0, this.reducedMotion, enemy); }
     this.guardian.reset(this.enemies[2].mesh,this.reducedMotion);
+    this.sneezeFlowers.reset();
     this.uiMode = ''; this.hudState = ''; this.windTime = 0; this.last = performance.now(); this.audio.stop(); speechSynthesis?.cancel();
     if (play) { this.audio.resume(); (document.activeElement as HTMLElement)?.blur(); }
     this.render(0);
@@ -767,7 +853,7 @@ export class MazeAdventure {
   say(key: MazeText, sound?: PuzzleSound) {
     this.message = key; this.messageUntil = this.time + 6;
     if (sound) this.audio.play(sound);
-    if (this.settings.effects && 'speechSynthesis' in window && !(this.flowerChoir.performing && this.near('choir', 14) && !this.dialogue)) {
+    if (key !== 'sailing' && this.settings.effects && 'speechSynthesis' in window && !(this.flowerChoir.performing && this.near('choir', 14) && !this.dialogue)) {
       speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(mt(key));
       utterance.lang = language === 'zh' ? 'zh-CN' : language === 'ms' ? 'ms-MY' : 'en-US'; utterance.rate = .9; utterance.volume = .75; speechSynthesis.speak(utterance);
     }
@@ -782,19 +868,21 @@ export class MazeAdventure {
   }
   showLine() {
     const dialogue = this.dialogue!;
-    if (dialogue.gardenerIntro) {
-      this.gardenerStory.setStage(dialogue.index);
-      this.root.querySelector('#maze-speaker')!.textContent = mt(dialogue.index === 1 ? 'playerName' : 'gardenerName');
-    }
-    this.dialogueBox.dataset.speaker = dialogue.gardenerIntro && dialogue.index === 1 ? 'player' : 'guide';
     const line = dialogue.lines[dialogue.index];
+    const playerSpeaking = line === 'playerTrail' || line === 'playerWillLook';
+    if (dialogue.gardenerIntro) {
+      if (dialogue.index < 4) this.gardenerStory.setStage(dialogue.index);
+      this.root.querySelector('#maze-speaker')!.textContent = mt(playerSpeaking ? 'playerName' : 'gardenerName');
+    }
+    this.dialogueBox.dataset.speaker = playerSpeaking ? 'player' : 'guide';
     const gardenerPortrait = line === 'gardenerHello' ? 'gardener-puzzled'
       : line === 'gardenerRemember' ? 'gardener-remember'
       : line === 'gardenerThanks' || line === 'gardenerPlant' ? 'gardener-grateful' : 'gardener-dialogue';
-    const portraitPath = this.dialogueBox.dataset.npc === 'scout' ? `garden-scout-dialogue/${SCOUT_PORTRAITS[line] ?? 'greeting'}.webp`
-      : `${this.dialogueBox.dataset.speaker === 'player' ? 'player-dialogue/thinking' : gardenerPortrait}.png`;
+    const portraitPath = this.dialogueBox.dataset.npc === 'scout' ? `poppy-dialogue/${SCOUT_PORTRAITS[line] ?? 'greeting'}.webp`
+      : `${playerSpeaking ? line === 'playerWillLook' ? 'player-dialogue/determined' : 'player-dialogue/thinking' : gardenerPortrait}.png`;
     this.dialogueBox.querySelector<HTMLImageElement>('.workshop-portrait img')!.src = `${import.meta.env.BASE_URL}images/${portraitPath}`;
     this.root.querySelector('#maze-line')!.textContent = mt(dialogue.lines[dialogue.index]);
+    this.dialogueBox.querySelector<HTMLElement>('.maze-trowel-hint')!.hidden = line !== 'gardenerHello' || this.tools || this.gardenQuest.returned;
     this.root.querySelector('#maze-next .workshop-next-label')!.textContent = mt(dialogue.index === dialogue.lines.length - 1 ? line === 'gardenerFollow' ? 'followGardener' : 'close' : 'continue');
     this.say(dialogue.lines[dialogue.index]);
   }
@@ -805,17 +893,36 @@ export class MazeAdventure {
     if (this.dialogue.index < this.dialogue.lines.length) this.showLine();
     else this.closeDialogue(true);
   }
+  updateDialogueReaction(dt: number) {
+    if (!this.dialogue) return;
+    const line = this.dialogue.lines[this.dialogue.index];
+    const reaction = DIALOGUE_REACTIONS[line] ?? { player: 'neutral', npc: 'happy' };
+    const npc = this.dialogueBox.dataset.npc === 'scout' ? this.scout : this.guide;
+    setCharacterExpression(this.player, reaction.player);
+    if (npc === this.guide) setGardenerExpression(npc, reaction.npc);
+    else setGardenScoutExpression(npc, reaction.npc);
+    if (!this.paused && this.player.position.distanceToSquared(npc.position) > .01) {
+      for (const [actor, other] of [[this.player, npc], [npc, this.player]]) {
+        const yaw = Math.atan2(actor.position.x - other.position.x, actor.position.z - other.position.z);
+        const turn = Math.atan2(Math.sin(yaw - actor.rotation.y), Math.cos(yaw - actor.rotation.y));
+        actor.rotation.y += turn * (this.reducedMotion ? 1 : 1 - Math.exp(-7 * dt));
+      }
+      this.heading = this.player.rotation.y;
+    }
+  }
   closeDialogue(completed = false) {
     const intro = this.dialogue?.gardenerIntro;
     const followGardener = this.dialogue?.lines.includes('gardenerFollow') && this.gardenQuest.stage === 'walking';
+    const receivedWand = this.wand && this.dialogue?.lines.includes('gardenerThanks');
     if (intro) {
       this.gardenerStory.finish(completed);
     }
     this.dialogue = undefined; this.dialogueBox.hidden = true; this.clearInput(); (document.activeElement as HTMLElement)?.blur(); speechSynthesis?.cancel();
     if (intro && completed) this.say('findTools');
     if (followGardener) this.say('gardenerFollow');
+    if (receivedWand && !this.pinwheelPracticed && !this.bridgeOpen) { this.pinwheelLookTime = 3.4; this.say('tryPinwheel'); }
   }
-  near(name: SpotName, reach = 3) { const p = this.body.translation(), q = at(name); return Math.hypot(p.x - q.x, p.z - q.z) < reach; }
+  near(name: SpotName, reach = 3) { const p = this.body.translation(), q = name === 'scout' ? this.scout.position : at(name); return Math.hypot(p.x - q.x, p.z - q.z) < reach; }
   encounterGateBlocks(x: number, z: number, margin: number) {
     const p = this.encounterGate.body.translation();
     return this.encounterGate.body.isEnabled() && Math.abs(x - p.x) <= CELL / 2 + margin && Math.abs(z - p.z) <= .175 + margin;
@@ -834,18 +941,53 @@ export class MazeAdventure {
     if (this.exitOpen) return 'throughExit'; if (this.key) return this.boatAtBossIsland ? 'returnExit' : 'gardenExit';
     if (this.enemies[2].hp === 0) return 'collectKey';
     if (this.bridgeOpen) {
+      if (!this.bridgeCrossed) return 'bridgeLowered';
       if(this.encounterGateProgress<1)return 'practiceGate';
       if(this.enemies[1].hp>0&&this.near('shield',12))return 'pillarHint';
       return this.boatAtBossIsland ? 'findGuardian' : this.treasure ? 'findBoat' : this.chestOpened ? 'pickCrystalHint' : 'findCrystal';
     }
-    if (this.wand) return 'findBridge';
+    if (this.bridgeOpening) return 'bridgeTurning';
+    if (this.bridgeHintShown && this.near('windmill', 9) && (this.wand || !this.quest && !this.tools && !this.gardenQuest.returned)) return this.wand ? this.bridgeHelpShown ? 'bridgeWindHint' : 'bridgeNotice' : 'windNeeded';
+    if (this.wand) return this.pinwheelPracticed ? 'findBridge' : 'tryPinwheel';
     if (this.gardenQuest.stage === 'handoff') return 'gardenerPlant';
     if (this.gardenQuest.stage === 'walking') return 'gardenerFollow';
     if (this.gardenQuest.stage === 'digging') return 'gardenerDig';
     if (this.gardenQuest.stage === 'planting') return 'plantingFlowers';
     if (this.gardenQuest.returned) return 'plantHint';
     if (this.tools) return 'returnTools'; if (this.gardenQuest.stage === 'tool') return 'cartOpened';
-    if (this.quest) return 'findTools'; return 'safe';
+    if (this.quest) return 'findTools'; return this.bridgeHintShown ? 'windNeeded' : 'safe';
+  }
+  routeTarget(): 'gardener' | 'pinwheel' | 'windmill' | undefined {
+    if (this.bridgeOpen || this.bridgeOpening) return;
+    if (this.wand) return this.pinwheelPracticed || this.near('windmill', 9) ? 'windmill' : 'pinwheel';
+    if (this.tools || this.bridgeHintShown && !this.quest && !this.gardenQuest.returned) return 'gardener';
+  }
+  updateRouteMarker() {
+    const goal = this.routeTarget();
+    this.routeMarker.hidden = !this.active() || !goal;
+    if (!goal || !this.active()) return;
+    const target = goal === 'gardener' ? this.guide.position : goal === 'pinwheel' ? this.gardenQuest.pinwheel.position : this.mill.position;
+    const distance = Math.hypot(this.player.position.x - target.x, this.player.position.z - target.z);
+    this.routeMarker.hidden = distance < (goal === 'gardener' ? 5 : goal === 'windmill' ? 6.6 : 3);
+    if (this.routeMarker.hidden) return;
+    this.routeMarker.dataset.target = goal;
+    const label = mt(goal === 'gardener' ? 'cottage' : goal === 'pinwheel' ? 'littlePinwheel' : 'bigWindmill');
+    const caption = this.routeMarker.querySelector('b')!;
+    if (caption.textContent !== label) caption.textContent = label;
+    const point = target.clone().add(new T.Vector3(0, 2, 0)).project(this.camera);
+    if (point.z > 1) { point.x *= -1; point.y *= -1; }
+    const width = this.routeMarker.offsetWidth, height = this.routeMarker.offsetHeight;
+    const minY = (this.root.querySelector('.guidance')!.getBoundingClientRect().bottom || 90) + height / 2 + 12;
+    const left = T.MathUtils.clamp((point.x + 1) * innerWidth / 2, width / 2 + 16, innerWidth - width / 2 - 16);
+    let top = T.MathUtils.clamp((1 - point.y) * innerHeight / 2 - 28, minY, Math.max(minY, innerHeight * .66));
+    for (const selector of ['.action-controls', '#stick']) {
+      const controls = this.root.querySelector(selector)!.getBoundingClientRect();
+      if (controls.width && left + width / 2 > controls.left - 12 && left - width / 2 < controls.right + 12) top = Math.min(top, controls.top - height / 2 - 12);
+    }
+    top = Math.max(minY, top);
+    this.routeMarker.style.left = `${left}px`; this.routeMarker.style.top = `${top}px`;
+    const angle = Math.atan2((1 - point.y) * innerHeight / 2 - top, (point.x + 1) * innerWidth / 2 - left);
+    (this.routeMarker.querySelector('.route-arrow') as HTMLElement).style.transform = `rotate(${angle}rad)`;
   }
   scoutCue(): MazeText {
     if (this.exitOpen) return 'scoutExit';
@@ -859,9 +1001,12 @@ export class MazeAdventure {
     if (!this.active()) return;
     if (this.near('scout', 7)) { this.say(this.scoutCue(), 'hint'); return; }
     const enemy = this.enemies.find(e => e.hp > 0 && e.shielded && e.mesh.position.distanceTo(this.player.position) < 10);
+    if (!enemy && !this.bridgeOpen && !this.bridgeOpening && this.near('windmill', 9)) {
+      this.bridgeHelpShown = this.wand; this.say(this.wand ? 'bridgeWindHint' : 'windNeeded', 'hint'); return;
+    }
     this.say(enemy === this.enemies[2] ? 'bossSwordHint' : enemy === this.enemies[1] ? 'pillarHint' : enemy ? 'scoutHint' : !this.wand && this.quest ? this.gardenQuest.hint() : this.objective(), 'hint');
   }
-  target(): { spot: SpotName | 'seedling'; action: MazeText } | undefined {
+  target(): { spot: SpotName | 'seedling' | 'sneezeFlower'; action: MazeText } | undefined {
     const p = this.body.translation();
     const seedling = this.gardenQuest.seedling.position;
     if (this.gardenQuest.stage === 'plant' && Math.hypot(p.x - seedling.x, p.z - seedling.z) < 1.8) return { spot: 'seedling', action: 'plantSeedling' };
@@ -876,8 +1021,16 @@ export class MazeAdventure {
     if (!this.boatAtBossIsland && (this.near('dock', 3)||this.onBoat())) return { spot: 'dock', action: this.treasure ? 'sailToBoss' : 'inspect' };
     if (this.boatAtBossIsland && (this.near('bossDock', 3)||this.onBoat())) return { spot: 'bossDock', action: 'sailBack' };
     if (!this.key && this.enemies[2].hp === 0 && Math.hypot(p.x-this.keyMesh.position.x,p.z-this.keyMesh.position.z)<3) return { spot: 'boss', action: 'takeKey' };
+    if(this.wand&&this.enemies[2].hp>0&&this.enemies[2].phase!=='dazed'){
+      const flower=this.sneezeFlowers.nearby(p);
+      if(flower&&this.clearSight(flower.root.position)){
+        const boss=this.enemies[2];
+        const inRange=this.sneezeFlowers.contains(flower,boss.mesh.position);
+        return {spot:'sneezeFlower',action:this.sneezeFlowers.active?'flowerSneezing':flower.used?'flowerSpent':flower.cooldown>0?'flowerResting':inRange?'blowFlower':'lureGuardian'};
+      }
+    }
     if (!this.exitOpen && this.near('exit', 3.2)) return { spot: 'exit', action: this.key ? 'openGate' : 'inspect' };
-    if (!this.bridgeOpen && this.near('windmill', 6.6) && this.body.translation().x < at('bridge').x) return { spot: 'windmill', action: this.wand ? 'blow' : 'inspect' };
+    if (!this.bridgeOpen && this.near('windmill', 6.6) && this.body.translation().x < at('bridge').x) return { spot: 'windmill', action: this.bridgeOpening ? 'bridgeLowering' : this.wand ? 'blowWindmill' : 'inspect' };
     return undefined;
   }
   interact() {
@@ -891,8 +1044,8 @@ export class MazeAdventure {
         this.gardenQuest.give(this.body, this.player); this.say('gardenerPlant', 'pickup');
       }
       else if (this.gardenQuest.returned && !this.wand) this.talk('gardenerName', [this.gardenQuest.hint()]);
-      else if (!this.wand && !this.gardenerStory.introduced) this.talk('gardenerName', ['gardenerHello', 'playerTrail', 'gardenerRemember', 'gardenerTogether'], true);
-      else this.talk('gardenerName', this.wand ? ['gardenerAgain'] : ['gardenerHint']);
+      else if (!this.wand && !this.gardenerStory.introduced) this.talk('gardenerName', ['gardenerHello', 'playerTrail', 'gardenerRemember', 'gardenerTogether', 'playerWillLook'], true);
+      else this.talk('gardenerName', this.wand ? [this.bridgeOpen ? 'scoutHint' : this.pinwheelPracticed ? 'findBridge' : 'gardenerAgain'] : ['gardenerHint']);
     } else if (target?.spot === 'cart') {
       if (target.action === 'inspect') { this.quest = true; this.say('cartPushHint', 'hint'); return; }
       this.quest = true; this.clearInput(); this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -911,8 +1064,18 @@ export class MazeAdventure {
         if (this.flowerChoir.start(index)) speechSynthesis?.cancel();
         else this.say('choirUnavailable');
       }
+    } else if (target?.spot === 'sneezeFlower') {
+      if(this.cooldown>0)return;
+      const p=this.body.translation(),flower=this.sneezeFlowers.nearby(p);
+      if(flower&&!flower.used&&!this.sneezeFlowers.active&&flower.cooldown===0){
+        this.cast(flower.root.position);this.windTarget.y=1.7;
+        if(this.sneezeFlowers.trigger(flower,this.enemies[2].mesh.position)){
+          this.guardian.prepareForPollen(this.enemies[2]);this.say('flowerWindup','switch');
+        }else this.say('flowerLureHint','hint');
+      }
     } else if (target?.spot === 'pinwheel') {
-      this.cast(at('pinwheel')); this.gardenQuest.pinwheelTime = 4; this.say('pinwheelHint', 'bloom');
+      this.cast(at('pinwheel')); this.windTarget.y = 1.65; this.pinwheelPracticed = true; this.pinwheelLookTime = 0;
+      this.gardenQuest.pinwheelTime = 4; this.say('pinwheelHint', 'bloom');
     }
     else if (target?.spot === 'scout') { this.hearts = 3; this.talk('scoutName', ['scoutHello', this.scoutCue()]); }
     else if (target?.spot === 'chest') {
@@ -928,7 +1091,10 @@ export class MazeAdventure {
       if (this.key) { this.exitOpen = true; this.exit.body.setEnabled(false); this.say('throughExit', 'gate'); }
       else this.say('locked', 'hint');
     } else if (target?.spot === 'windmill') {
-      if (this.wand && !this.bridgeOpening) { this.cast(at('windmill')); this.bridgeOpening = true; this.say('practiceGate', 'gate'); }
+      if (this.wand && !this.bridgeOpening) {
+        this.cast(this.mill.position); this.windTarget.set(this.mill.position.x, 2.5, this.mill.position.z + .86);
+        this.bridgeOpening = true; this.bridgeHintTime = 0; this.bridgeRevealTime = 3.4; this.say('bridgeTurning', 'switch');
+      }
       else if (!this.wand) this.say('windNeeded', 'hint');
     } else if (this.wand) this.blow();
   }
@@ -1047,7 +1213,7 @@ export class MazeAdventure {
   dockBoat() {
     const trip=this.boatTrip;if(!trip)return;
     const destination=[false,true].find(boss=>{const p=this.boatMooring(boss);return Math.hypot(p.x-this.boat.position.x,p.z-this.boat.position.z)<2.4;});
-    if(destination===undefined){this.say('sailing','hint');return;}
+    if(destination===undefined){this.say('sailing');return;}
     trip.toBoss=destination;this.boatSpeed=this.boatTurn=0;this.boatYaw=Math.PI/2;this.boat.rotation.set(0,Math.PI/2,0);this.boatWake.visible=false;
     this.boat.position.copy(this.boatMooring(destination));
     const landing=at(destination?'bossDock':'dock');
@@ -1068,18 +1234,19 @@ export class MazeAdventure {
   blow() {
     if (this.cooldown > 0) return;
     const p = this.body.translation();
-    const enemy = this.enemies.filter(e => e.hp > 0 && Math.hypot(p.x - e.mesh.position.x, p.z - e.mesh.position.z) <= 7.5 && this.clearSight(e.mesh.position))
+    const enemy = this.enemies.filter(e => e.hp > 0 && Math.hypot(p.x - e.mesh.position.x, p.z - e.mesh.position.z) <= (e===this.enemies[2]&&e.phase==='dazed'?10:7.5) && this.clearSight(e.mesh.position))
       .sort((a, b) => a.mesh.position.distanceToSquared(this.player.position) - b.mesh.position.distanceToSquared(this.player.position))[0];
+    if(enemy===this.enemies[2]&&enemy.phase==='dazed'&&!this.guardian.coreExposed)return;
     this.cast(enemy?.mesh.position ?? { x: p.x - Math.sin(this.heading) * 6, z: p.z - Math.cos(this.heading) * 6 }, !!enemy && enemy.phase !== 'stun');
     if (!enemy || enemy.phase === 'stun') return;
     if (enemy.shielded && enemy.phase !== 'rest' && enemy.phase !== 'dazed') { enemy.block = .24; this.say(enemy===this.enemies[2]?'bossSwordGuard':'shielded', 'drop'); return; }
-    if(enemy.phase==='dazed'&&this.message==='pillarDazed')this.messageUntil=this.time;
+    if(enemy.phase==='dazed'&&(this.message==='pillarDazed'||this.message==='flowerOpening'))this.messageUntil=this.time;
     if(enemy===this.enemies[2])this.guardian.reactToHit(enemy.mesh,p);
     enemy.hp--; enemy.phase = 'stun'; enemy.timer = .8; this.audio.play('bloom');
     if (enemy.hp === 0) {
       if (enemy !== this.enemies[2]) enemy.timer = KNIGHT_DEATH_TIME;
       enemy.ring.visible = false;
-      if (enemy === this.enemies[2]) { this.keyMesh.position.copy(enemy.mesh.position).setY(1.1);this.keyMesh.visible = true;this.guardian.root.visible=false;enemy.timer=KNIGHT_DEATH_TIME;this.say('collectKey', 'key'); }
+      if (enemy === this.enemies[2]) { this.sneezeFlowers.reset();this.keyMesh.position.copy(enemy.mesh.position).setY(1.1);this.keyMesh.visible = true;this.guardian.root.visible=false;enemy.timer=KNIGHT_DEATH_TIME;this.say('collectKey', 'key'); }
       if (enemy === this.enemies[1]) this.say('findCrystal');
     }
   }
@@ -1119,6 +1286,7 @@ export class MazeAdventure {
         if (enemy !== this.enemies[2]) animateDarkKnight(enemy.mesh, 'idle', enemy.shielded, this.time, 0, this.reducedMotion, enemy);
       }
       this.guardian.reset(this.enemies[2].mesh,this.reducedMotion);
+      this.sneezeFlowers.reset();
       this.render(0);
     }
   }
@@ -1255,6 +1423,9 @@ export class MazeAdventure {
   }
   updateEnemies(dt: number) {
     const p = this.body.translation();
+    const boss=this.enemies[2],pollen=this.sneezeFlowers.update(dt,this.time,this.reducedMotion,boss.mesh,boss.hp>0);
+    if(pollen==='puff')this.audio.play('flow',1.2);
+    if(pollen==='hit'){this.guardian.reactToPollen(boss,p);this.say('coreOpeningHint');}
     for (const enemy of this.enemies) {
       const knight = enemy !== this.enemies[2];
       if (enemy.hp <= 0) {
@@ -1268,12 +1439,13 @@ export class MazeAdventure {
       }
       if (knight) this.updateKnight(enemy,dt);
       else {
-        const before=enemy.phase;
+        const before=enemy.phase,coreWasExposed=this.guardian.coreExposed;
         if(this.guardian.update(enemy,p,dt,this.time,this.reducedMotion,(from,to)=>this.knightClear(from,to)))this.hurt();
+        if(!coreWasExposed&&this.guardian.coreExposed)this.say('flowerOpening','bloom');
         if(before==='warn'&&enemy.phase==='lunge')this.audio.play('drop');
         if(before==='lunge'&&enemy.phase==='rest')this.say('bossSwordOpening');
       }
-      enemy.ring.visible = knight ? enemy.phase === 'warn' || enemy.phase === 'rest' || enemy.phase === 'dazed' : enemy.phase === 'rest';
+      enemy.ring.visible = knight ? enemy.phase === 'warn' || enemy.phase === 'rest' || enemy.phase === 'dazed' : enemy.phase === 'rest'||enemy.phase==='dazed';
       enemy.ring.material.color.set(enemy.phase === 'dazed' ? '#ffe08a' : enemy.phase === 'rest' ? '#9bead5' : '#e99a48');
       enemy.ring.position.copy(enemy.mesh.position); enemy.ring.position.y = .11; enemy.ring.scale.setScalar(enemy.maxHp === 3 ? 1.8 : 1.7);
     }
@@ -1313,11 +1485,25 @@ export class MazeAdventure {
     if (this.grounded && Math.floor(this.gait / Math.PI) !== footfall && length > .1) this.audio.footstep(false);
     if (this.bridgeOpening && !this.bridgeOpen) {
       this.bridgeProgress = Math.min(1, this.bridgeProgress + STEP / 1.4);
-      if (this.bridgeProgress === 1) { this.bridgeOpen = true; this.bridgeBody.setEnabled(false); this.bridgeSurface.setEnabled(true); this.checkpoint = at('practice'); this.checkpoint.z += 5; }
+      if (this.bridgeProgress === 1) { this.bridgeOpen = true; this.bridgeBody.setEnabled(false); this.bridgeSurface.setEnabled(true); this.checkpoint = at('practice'); this.checkpoint.z += 5; this.say('bridgeLowered', 'gate'); }
+    }
+    this.bridgeHintTime = Math.max(0, this.bridgeHintTime - STEP);
+    this.bridgeRevealTime = Math.max(0, this.bridgeRevealTime - STEP);
+    if (!this.near('bridge', 14)) this.bridgeRevealTime = 0;
+    const bridge = at('bridge'), pBridge = this.body.translation();
+    const approachingMill = !this.bridgeOpen && !this.bridgeOpening && this.near('windmill', 9)
+      && pBridge.x < bridge.x - 2.5 && Math.abs(pBridge.z - bridge.z) < 5;
+    if (approachingMill) {
+      if (!this.bridgeHintShown) { this.bridgeHintShown = true; this.bridgeHintTime = 3.4; this.say(this.wand ? 'bridgeNotice' : 'windNeeded', 'hint'); }
+      this.bridgeWaitTime += STEP;
+      if (this.bridgeWaitTime >= 8 && this.wand && !this.bridgeHelpShown) { this.bridgeHelpShown = true; this.say('bridgeWindHint', 'hint'); }
+    } else { this.bridgeWaitTime = 0; this.bridgeHintTime = 0; }
+    if (this.bridgeOpen && !this.bridgeCrossed && pBridge.x > bridge.x + 3.2 && this.near('bridge', 12)) {
+      this.bridgeCrossed = true; if (this.practiceEnemies.some(enemy => enemy.hp > 0)) this.say('practiceGate', 'hint');
     }
     if (this.bridgeOpen && this.near('checkpoint', 3)) this.checkpoint = at('checkpoint');
     this.updateEnemies(STEP);
-    if (this.enemies[0].hp === 0 && this.enemies[0].timer === 0 && this.encounterGateProgress < 1) {
+    if (this.practiceEnemies.every(enemy => enemy.hp === 0 && enemy.timer === 0) && this.encounterGateProgress < 1) {
       if (this.encounterGateProgress === 0) this.say('practiceCleared', 'gate');
       this.encounterGateProgress = Math.min(1, this.encounterGateProgress + STEP / (this.reducedMotion ? .4 : 1.3));
       if (this.encounterGateProgress === 1) this.encounterGate.body.setEnabled(false);
@@ -1327,12 +1513,16 @@ export class MazeAdventure {
   }
   updateUI() {
     const target = this.target();
+    const bossOpening=this.enemies[2].hp>0&&this.enemies[2].phase==='dazed'&&!this.guardian.coreExposed;
+    const bossExposed=this.enemies[2].hp>0&&this.enemies[2].phase==='dazed'&&this.guardian.coreExposed&&Math.hypot(this.player.position.x-this.enemies[2].mesh.position.x,this.player.position.z-this.enemies[2].mesh.position.z)<=10&&this.clearSight(this.enemies[2].mesh.position);
+    const flowerTarget=target?.spot==='sneezeFlower';
+    const flowerBusy=target?.action==='flowerSneezing'||target?.action==='flowerResting'||target?.action==='flowerSpent';
     const threat = this.active() && this.enemies.find(e => e.hp > 0 && e.shielded && this.player.position.distanceTo(e.mesh.position) < 11 && this.clearSight(e.mesh.position) && ['warn','lunge','rest','dazed'].includes(e.phase));
     const warning = threat && (threat.phase === 'warn' || threat.phase === 'lunge');
-    const cue = this.boatTrip ? 'sailing' : threat===this.enemies[2] ? warning ? 'bossSwordWarning' : 'bossSwordOpening' : threat ? warning ? this.dodgeCooldown <= 0 ? this.chargePillarReady ? 'pillarReady' : 'dodgeHint' : 'dodgeMove' : threat.phase === 'dazed' ? 'pillarDazed' : 'counterHint' : this.time < this.messageUntil ? this.message : this.objective();
+    const cue = this.boatTrip ? 'sailing' : bossOpening ? 'coreOpeningHint' : bossExposed ? 'flowerOpening' : flowerTarget ? target.action==='blowFlower'?'flowerHint':target.action==='lureGuardian'?'flowerLureHint':target.action==='flowerSneezing'?'flowerWindup':target.action==='flowerSpent'?'flowerSpentHint':'flowerRestingHint' : threat===this.enemies[2] ? warning ? 'bossSwordWarning' : 'bossSwordOpening' : threat ? warning ? this.dodgeCooldown <= 0 ? this.chargePillarReady ? 'pillarReady' : 'dodgeHint' : 'dodgeMove' : threat.phase === 'dazed' ? 'pillarDazed' : 'counterHint' : this.time < this.messageUntil ? this.message : this.objective();
     this.dodgeButton.disabled = !this.active() || this.dodgeCooldown > 0;
     this.dodgeButton.classList.toggle('action-required',!!warning && this.dodgeCooldown <= 0);
-    this.root.querySelector('#dive')!.classList.toggle('action-required',!!threat && !warning);
+    this.root.querySelector('#dive')!.classList.toggle('action-required',!bossOpening&&!flowerBusy&&(bossExposed||target?.action==='blowFlower'||!!threat && !warning || target?.action === 'blowWindmill' && this.bridgeHelpShown || target?.spot === 'pinwheel' && !this.pinwheelPracticed));
     this.dodgeButton.style.setProperty('--dodge-ready',`${(1-this.dodgeCooldown/DODGE_COOLDOWN)*100}%`);
     const cooldownLabel = this.dodgeCooldown > 0 ? `${this.dodgeCooldown.toFixed(1)}s` : '';
     this.dodgeButton.querySelector('small')!.textContent = cooldownLabel;
@@ -1353,10 +1543,11 @@ export class MazeAdventure {
         if(boss)bar.querySelector('small')!.textContent=`${enemy.hp} / ${enemy.maxHp}`;
       }
     });
-    this.ui.updatePuzzle(this.state, this.paused, this.muted, mt(cue), Number(this.key), mt(this.boatTrip ? 'dockBoat' : this.gardenQuest.stage === 'handoff' ? 'giveTools' : this.gardenQuest.stage === 'planting' ? 'plantSeedling' : target?.action ?? (this.gardenQuest.stage === 'moving' ? 'pushCart' : this.wand ? 'blow' : 'inspect')), !!this.dialogue || this.chestQuiz.open || this.gardenerStory.active || this.gardenQuest.busy);
+    this.ui.updatePuzzle(this.state, this.paused, this.muted, mt(cue), Number(this.key), mt(this.boatTrip ? 'dockBoat' : this.gardenQuest.stage === 'handoff' ? 'giveTools' : this.gardenQuest.stage === 'planting' ? 'plantSeedling' : bossOpening ? 'coreOpening' : target?.action ?? (this.gardenQuest.stage === 'moving' ? 'pushCart' : this.wand ? bossExposed?'blowCore':'blow' : 'inspect')), !!this.dialogue || this.chestQuiz.open || this.gardenerStory.active || this.gardenQuest.busy);
     if(this.boatTrip) { this.root.querySelector<HTMLButtonElement>('#jump')!.disabled=true;this.root.querySelector<HTMLButtonElement>('#hint')!.disabled=true; }
     this.root.classList.toggle('gardener-cinematic', this.gardenerStory.active && !this.paused);
-    if (target?.action === 'chestOpening' || target?.action === 'takingCrystal') this.root.querySelector<HTMLButtonElement>('#dive')!.disabled = true;
+    if (target?.action === 'chestOpening' || target?.action === 'takingCrystal' || target?.action === 'bridgeLowering') this.root.querySelector<HTMLButtonElement>('#dive')!.disabled = true;
+    if(flowerBusy||bossOpening)this.root.querySelector<HTMLButtonElement>('#dive')!.disabled=true;
     this.root.querySelector<HTMLButtonElement>('#maze-next')!.disabled = !!this.dialogue?.gardenerIntro && !this.gardenerStory.canAdvance;
     this.root.querySelector<HTMLAnchorElement>('.level-link')!.hidden = true;
     const mode = this.paused ? 'paused' : this.state;
@@ -1377,8 +1568,9 @@ export class MazeAdventure {
     this.root.querySelector('#finished')!.textContent = `${Number(this.key)} / 1`;
     this.dialogueBox.hidden = !this.dialogue || this.paused;
     this.root.querySelector<HTMLElement>('.maze-inventory')!.hidden = this.state !== 'racing' || this.paused;
+    this.updateRouteMarker();
     this.ring.visible = this.active() && !!target;
-    if (target) { const p = target.spot === 'boss' ? this.keyMesh.position : target.spot === 'gardener' ? this.guide.position : target.spot === 'cart' ? this.gardenQuest.pushPoint : target.spot === 'tools' ? this.toolMesh.position : target.spot === 'seedling' ? this.gardenQuest.seedling.position : at(target.spot); this.ring.position.set(p.x, .07, p.z); }
+    if (target) { const p = target.spot === 'sneezeFlower' ? this.sneezeFlowers.nearby(this.body.translation())!.root.position : target.spot === 'boss' ? this.keyMesh.position : target.spot === 'scout' ? this.scout.position : target.spot === 'gardener' ? this.guide.position : target.spot === 'cart' ? this.gardenQuest.pushPoint : target.spot === 'tools' ? this.toolMesh.position : target.spot === 'seedling' ? this.gardenQuest.seedling.position : at(target.spot); this.ring.position.set(p.x, .07, p.z); }
     const bubble = this.guide.position.clone().add(new T.Vector3(0, 1.4, 0)).project(this.camera);
     this.gardenerMutter.hidden = this.state !== 'racing' || this.paused || !!this.dialogue || this.gardenerStory.mutter <= 0 || Math.abs(bubble.x) > .9 || Math.abs(bubble.y) > .9 || bubble.z > 1;
     this.gardenerMutter.style.left = `${(bubble.x + 1) * 50}%`; this.gardenerMutter.style.top = `${(1 - bubble.y) * 50}%`;
@@ -1396,9 +1588,19 @@ export class MazeAdventure {
     if (!dt) this.player.position.set(p.x, p.y, p.z);
     const velocity = this.body.linvel();
     if (!this.paused) {
-      animateGardenScout(this.scout, this.time, this.near('scout', 6), this.reducedMotion, !!this.dialogue && this.dialogueBox.dataset.npc === 'scout');
+      const near = this.near('scout', 3.5);
+      let speed = 0;
+      if (this.active() && !this.reducedMotion && !near && dt > 0) {
+        this.scoutPatrol += Math.min(dt, .1) * .35;
+        const a = this.scoutPatrol, home = at('scout');
+        this.scout.position.set(home.x + Math.sin(a), .612, home.z + .6 * (1 - Math.cos(a)));
+        const yaw = Math.atan2(-Math.cos(a), -.6 * Math.sin(a));
+        this.scout.rotation.y += Math.atan2(Math.sin(yaw - this.scout.rotation.y), Math.cos(yaw - this.scout.rotation.y)) * (1 - Math.exp(-5 * dt));
+        speed = .35 * Math.hypot(Math.cos(a), .6 * Math.sin(a));
+      }
+      animateGardenScout(this.scout, this.time, near, this.reducedMotion, !!this.dialogue && this.dialogueBox.dataset.npc === 'scout', speed);
     }
-    if (!['moving', 'handoff', 'planting'].includes(this.gardenQuest.stage)) animateWalk(this.player, this.heading, this.gait, this.active() ? Math.hypot(velocity.x, velocity.z) : 0, this.grounded, this.reducedMotion, dt, this.wand || this.tools);
+    if (!['moving', 'handoff', 'planting'].includes(this.gardenQuest.stage)) animateWalk(this.player, this.dialogue ? this.player.rotation.y : this.heading, this.gait, this.active() ? Math.hypot(velocity.x, velocity.z) : 0, this.grounded, this.reducedMotion, dt, this.wand || this.tools);
     if(this.boatTrip)this.player.quaternion.copy(this.boat.quaternion).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI));
     else {this.player.rotation.x=0;this.player.rotation.z=0;}
     if (this.dodgeTime > 0 && !this.reducedMotion) {
@@ -1414,7 +1616,7 @@ export class MazeAdventure {
     this.chargeLane.material.color.set(this.chargePillarReady?'#edbf38':'#e99935');
     this.chargeLane.position.set(charging.mesh.position.x,.12,charging.mesh.position.z);
     this.chargeLane.rotation.y = Math.atan2(charging.aim.x,charging.aim.z);
-    setCharacterExpression(this.player, this.state === 'qualified' ? 'happy' : this.gardenQuest.stage === 'moving' ? 'determined' : this.invulnerable > 0 ? 'surprised' : 'neutral');
+    if (!this.dialogue) setCharacterExpression(this.player, this.state === 'qualified' ? 'happy' : this.gardenQuest.stage === 'moving' ? 'determined' : this.invulnerable > 0 ? 'surprised' : 'neutral');
     this.wandMesh.visible = this.wand;
     // Follow the hand's position while keeping the long staff upright during the carrying pose.
     this.wandMesh.quaternion.copy(this.wandMesh.parent!.quaternion).invert(); this.wandMesh.rotateZ(-.2);
@@ -1431,6 +1633,10 @@ export class MazeAdventure {
           this.talk('gardenerName', ['gardenerPlant', 'gardenerFollow']);
         } else this.say(cue, cue === 'wateringFlowers' ? 'water' : 'bloom');
       }
+    }
+    if (this.active()) {
+      this.pinwheelLookTime = Math.max(0, this.pinwheelLookTime - dt);
+      if (this.pinwheelPracticed || this.bridgeOpen || !this.near('pinwheel', 14)) this.pinwheelLookTime = 0;
     }
     const portrait = innerWidth < innerHeight, follow = dt === 0 ? 1 : 1 - Math.exp(-5 * dt);
     const focusPlayer = this.player.position;
@@ -1450,20 +1656,71 @@ export class MazeAdventure {
       this.cameraGoal.x += pan; lookGoal.x += pan;
     }
     if (this.gardenQuest.stage === 'moving') { this.cameraGoal.x += 1.3; lookGoal.x += 1.3; }
-    if (this.gardenQuest.stage === 'handoff' || this.dialogue?.lines.includes('gardenerFollow') && this.gardenQuest.stage === 'walking') {
-      lookGoal.copy(this.guide.position).add(this.player.position).multiplyScalar(.5);
-      const side = new T.Vector3(this.player.position.z - this.guide.position.z, 0, this.guide.position.x - this.player.position.x).normalize();
-      if (side.x < 0) side.negate();
-      this.cameraGoal.copy(lookGoal).addScaledVector(side, portrait ? 8.5 : 5.7); this.cameraGoal.y += 2.8;
+    if (this.gardenQuest.stage === 'handoff' || this.dialogue && !this.gardenerStory.active) {
+      const npc = this.dialogueBox.dataset.npc === 'scout' && this.dialogue ? this.scout : this.guide;
+      lookGoal.copy(npc.position).add(this.player.position).multiplyScalar(.5);
+      const side = new T.Vector3(this.player.position.z - npc.position.z, 0, npc.position.x - this.player.position.x);
+      if (side.lengthSq() < .01) side.copy(this.camera.position).sub(lookGoal).setY(0);
+      if (side.lengthSq() < .01) side.set(1, 0, 0);
+      side.normalize(); if (side.dot(this.camera.position.clone().sub(lookGoal)) < 0) side.negate();
+      const span = this.player.position.distanceTo(npc.position) + 2;
+      const distance = Math.max(portrait ? 8.5 : 5.7, span / (2 * Math.tan(T.MathUtils.degToRad(this.camera.fov / 2)) * this.camera.aspect) * 1.2);
+      this.cameraGoal.copy(lookGoal).addScaledVector(side, distance); this.cameraGoal.y += 2.8;
     } else if (['planting', 'watering'].includes(this.gardenQuest.stage)) {
       lookGoal.copy(this.gardenQuest.bed.position).add(new T.Vector3(-1.8, .6, .8));
       this.cameraGoal.copy(lookGoal).add(new T.Vector3(portrait ? 7.5 : 5.5, 3.5, portrait ? 4.5 : 3.2));
     }
-    if (!this.gardenerStory.active) { this.camera.position.lerp(this.cameraGoal, follow); this.cameraLook.lerp(lookGoal, follow); }
+    if (dt > 0 && this.active() && this.grounded && this.dodgeTime <= 0 && !this.cartHintShown
+      && this.gardenQuest.stage === 'search' && !this.tools && !this.wand
+      && p.z <= at('cart').z + 4 && this.near('cart', 12)) {
+      this.cartHintShown = true; this.cartHintTime = 6; this.say('cartNotice', 'hint');
+    }
+    if (this.cartHintTime > 0) {
+      if (!this.paused && (!this.active() || !this.near('cart', 16))) this.cartHintTime = 0;
+      else if (this.active()) this.cartHintTime = Math.max(0, this.cartHintTime - dt);
+      if (!this.reducedMotion && this.cartHintTime > 0) {
+        const elapsed = 6 - this.cartHintTime;
+        const weight = T.MathUtils.smoothstep(elapsed, .35, 1.1) * (1 - T.MathUtils.smoothstep(elapsed, 4.25, 6));
+        const push = T.MathUtils.smoothstep(elapsed, 1.5, 2.7);
+        const cartLook = this.gardenQuest.cart.position.clone().add(new T.Vector3(-.3, .65, .7));
+        const axis = this.cameraGoal.clone().sub(lookGoal).normalize();
+        const overviewLook = lookGoal.clone().lerp(cartLook, .45);
+        const overviewCamera = this.cameraGoal.clone().add(overviewLook.clone().sub(lookGoal));
+        overviewCamera.addScaledVector(overviewCamera.clone().sub(overviewLook), portrait ? .45 : .15);
+        overviewLook.lerp(cartLook, push);
+        overviewCamera.lerp(cartLook.clone().addScaledVector(axis, portrait ? 16 : 9), push);
+        this.cameraGoal.lerp(overviewCamera, weight); lookGoal.lerp(overviewLook, weight);
+      }
+    }
+    const practiceShot = this.pinwheelLookTime > 0;
+    const flowerFocus=this.sneezeFlowers.active?.flower??this.sneezeFlowers.nearby(p),boss=this.enemies[2];
+    const flowerShot=portrait&&this.wand&&!this.boatTrip&&boss.hp>0&&focusPlayer.distanceTo(boss.mesh.position)<32&&(!!flowerFocus||boss.phase==='dazed');
+    if (flowerShot || !this.reducedMotion && (practiceShot || this.bridgeHintTime > 0 || this.bridgeRevealTime > 0)) {
+      const remaining = practiceShot ? this.pinwheelLookTime : Math.max(this.bridgeHintTime, this.bridgeRevealTime), elapsed = 3.4 - remaining;
+      const weight = flowerShot?1:T.MathUtils.smoothstep(elapsed, 0, .7) * T.MathUtils.smoothstep(remaining, 0, .9);
+      const bounds = flowerShot?new T.Box3().setFromObject(this.player).expandByObject(boss.mesh):practiceShot ? new T.Box3().setFromObject(this.gardenQuest.pinwheel) : new T.Box3().setFromObject(this.bridgeDeck).expandByObject(this.mill);
+      if(flowerShot&&flowerFocus)bounds.expandByObject(flowerFocus.root);
+      bounds.expandByPoint(focusPlayer.clone().add(new T.Vector3(-.7, -.65, -.7)));
+      bounds.expandByPoint(focusPlayer.clone().add(new T.Vector3(.7, 1, .7)));
+      const shotLook = bounds.getCenter(new T.Vector3());
+      if (!flowerShot && !practiceShot && this.bridgeRevealTime > 0) shotLook.x += (this.bridgeProgress - .5) * 1.4;
+      const axis = new T.Vector3(0, .55, 1).normalize(), right = new T.Vector3(1, 0, 0), up = new T.Vector3().crossVectors(axis, right);
+      const tanY = Math.tan(T.MathUtils.degToRad(this.camera.fov / 2)), tanX = tanY * this.camera.aspect;
+      let distance = 0;
+      for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) {
+        const point = new T.Vector3(x, y, z).sub(shotLook), depth = point.dot(axis);
+        distance = Math.max(distance, depth + Math.abs(point.dot(right)) / (tanX * .8), depth + Math.abs(point.dot(up)) / (tanY * .7));
+      }
+      this.cameraGoal.lerp(shotLook.clone().addScaledVector(axis, Math.max(13, distance + 1)), weight);
+      lookGoal.lerp(shotLook, weight);
+    }
+    if (!this.gardenerStory.active && !this.paused) { this.camera.position.lerp(this.cameraGoal, follow); this.cameraLook.lerp(lookGoal, follow); }
     if (!this.gardenQuest.returned) this.gardenerStory.update(dt, this.paused, this.reducedMotion, this.active(), this.cameraGoal, lookGoal);
     this.camera.lookAt(this.cameraLook); this.camera.updateMatrixWorld();
     const toPlayer = (this.gardenerStory.active ? this.cameraLook.clone() : focusPlayer.clone().add(new T.Vector3(0, .4, 0))).sub(this.camera.position), ray = new T.Ray(this.camera.position, toPlayer.clone().normalize()), hit = new T.Vector3();
-    const focus = this.gardenQuest.stage === 'moving' ? this.gardenQuest.cart.position.clone().add(new T.Vector3(1, 1, 0))
+    const focus = !this.reducedMotion && practiceShot ? this.gardenQuest.pinwheel.position.clone().add(new T.Vector3(0, 1.65, .1))
+      : !this.reducedMotion && (this.bridgeHintTime > 0 || this.bridgeRevealTime > 0) ? this.mill.position.clone().add(new T.Vector3(0, 2.5, .86))
+      : this.gardenQuest.stage === 'moving' || (this.cartHintTime > 0 && !this.reducedMotion) ? this.gardenQuest.cart.position.clone().add(new T.Vector3(1, 1, 0))
       : this.gardenQuest.stage === 'plant' && this.target()?.spot === 'seedling' ? this.gardenQuest.seedling.position.clone().setY(.07) : undefined;
     const toFocus = focus?.sub(this.camera.position), focusRay = toFocus ? new T.Ray(this.camera.position, toFocus.clone().normalize()) : undefined;
     for (const wall of this.walls) {
@@ -1492,6 +1749,10 @@ export class MazeAdventure {
       }
     }
     this.bridgeDeck.rotation.z = (1 - T.MathUtils.smoothstep(this.bridgeProgress, 0, 1)) * 1.15;
+    this.bridgeDrive.getObjectByName('bridge-drive-wheel')!.rotation.z = -this.bridgeProgress * Math.PI * 4;
+    this.millCue.visible = this.active() && this.bridgeHintShown && !this.bridgeOpening && !this.bridgeOpen && this.near('windmill', 9);
+    this.millCue.scale.setScalar(this.reducedMotion ? 1 : 1 + Math.sin(this.time * 2) * .06);
+    this.pinwheelCue.visible = this.active() && this.wand && !this.pinwheelPracticed && !this.bridgeOpen && this.near('pinwheel', 12);
     const gateProgress = this.encounterGateProgress, gateSwing = T.MathUtils.smoothstep(gateProgress, 0, 1) * Math.PI / 2;
     this.encounterGate.mesh.getObjectByName('ruins-gate-left')!.rotation.y = gateSwing;
     this.encounterGate.mesh.getObjectByName('ruins-gate-right')!.rotation.y = -gateSwing;
@@ -1509,11 +1770,13 @@ export class MazeAdventure {
     this.wind.update(this.windTime, this.windOrigin, this.windTarget, this.reducedMotion, this.windHit);
     this.sun.target.position.set(this.cameraLook.x, 0, this.cameraLook.z);
     this.sun.position.set(this.cameraLook.x - 28, 42, this.cameraLook.z + 22);
+    this.audio.setCombat(this.state === 'racing' && !this.boatTrip && this.enemies.some(enemy => enemy.hp > 0 && enemy.phase !== 'idle' && enemy.phase !== 'return'));
     this.flowerChoir.update(dt, this.active(), Math.hypot(p.x - at('choir').x, p.z - at('choir').z), this.settings, this.reducedMotion);
+    this.audio.music.volume = this.flowerChoir.ducking ? .035 : window.speechSynthesis?.speaking ? .07 : .22;
     this.leafChannelWater.update(this.ferryCoast.time.value,this.reducedMotion);
     this.courtyardAmbience.update(this.ferryCoast.time.value,this.reducedMotion);
     this.meadow.update(this.ferryCoast.time.value,this.reducedMotion,this.camera.position);
-    this.updateUI(); this.renderer.render(this.scene, this.camera);
+    this.updateUI(); this.updateDialogueReaction(dt); this.renderer.render(this.scene, this.camera);
   }
   resize() { this.renderer.setSize(innerWidth, innerHeight); this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); }
   tick(now: number) {

@@ -6,6 +6,8 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5188,
     strictPort: true,
+    // Windows native file events can miss external edits and serve mismatched game modules.
+    watch: { usePolling: true, interval: 250 },
   },
   preview: {
     host: '127.0.0.1',

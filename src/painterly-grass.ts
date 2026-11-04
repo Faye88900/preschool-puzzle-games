@@ -176,9 +176,17 @@ export function createPainterlyGrass(patches: GrassPatch[], isClear: (x: number,
 }
 
 export function createMazeMeadow(isClear: (x: number, z: number) => boolean, grassTexture: THREE.Texture) {
+  const steps = createMazeMeadowSteps(isClear, grassTexture);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* createMazeMeadowSteps(isClear: (x: number, z: number) => boolean, grassTexture: THREE.Texture) {
   const root = new THREE.Group(); root.name = 'maze-meadow';
   const regions: { grass: ReturnType<typeof createPainterlyGrass>; x: number; z: number }[] = [];
   for (let z=MEADOW_BOUNDS.top;z<MEADOW_BOUNDS.bottom;z+=10) for (let x=MEADOW_BOUNDS.left;x<MEADOW_BOUNDS.right;x+=10) {
+    yield;
     let planted=false;
     for (let dz=1;dz<10&&!planted;dz+=2) for (let dx=1;dx<10;dx+=2) if (meadowCoverageAt(x+dx,z+dz)>.1) {planted=true;break;}
     if (!planted) continue;
@@ -187,9 +195,12 @@ export function createMazeMeadow(isClear: (x: number, z: number) => boolean, gra
   }
   const width=MEADOW_BOUNDS.right-MEADOW_BOUNDS.left,depth=MEADOW_BOUNDS.bottom-MEADOW_BOUNDS.top;
   const maskWidth=1024,maskHeight=512,data=new Uint8Array(maskWidth*maskHeight*4);
-  for(let z=0;z<maskHeight;z++)for(let x=0;x<maskWidth;x++){
-    const value=Math.round(255*meadowCoverageAt(MEADOW_BOUNDS.left+(x+.5)/maskWidth*width,MEADOW_BOUNDS.top+(z+.5)/maskHeight*depth));
-    const i=(z*maskWidth+x)*4;data[i]=data[i+1]=data[i+2]=value;data[i+3]=255;
+  for(let z=0;z<maskHeight;z++){
+    if(z%8===0)yield;
+    for(let x=0;x<maskWidth;x++){
+      const value=Math.round(255*meadowCoverageAt(MEADOW_BOUNDS.left+(x+.5)/maskWidth*width,MEADOW_BOUNDS.top+(z+.5)/maskHeight*depth));
+      const i=(z*maskWidth+x)*4;data[i]=data[i+1]=data[i+2]=value;data[i+3]=255;
+    }
   }
   const mask=new THREE.DataTexture(data,maskWidth,maskHeight);mask.magFilter=mask.minFilter=THREE.LinearFilter;mask.needsUpdate=true;
   const turf=grassTexture.clone();turf.repeat.set(width/5,depth/5);turf.needsUpdate=true;

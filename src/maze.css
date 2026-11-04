@@ -3,7 +3,7 @@
 .maze-ui #maze-item{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #game-ui.maze-ui .race-stats{display:none!important}
 #game-ui.maze-ui[data-state="racing"] .guidance{top:94px;max-width:min(560px,calc(100% - 32px));font-size:15px;line-height:1.5;white-space:normal;text-align:center;background:#fffbeded;color:#3e6253}
-#game-ui.maze-ui .guidance>span{color:#679b7c}
+#game-ui.maze-ui .guidance>span{display:none}
 .maze-ui .maze-dialogue{z-index:8;overflow:visible;pointer-events:auto;cursor:pointer}
 .maze-ui .maze-dialogue[hidden],.maze-ui .maze-inventory[hidden]{display:none}
 .maze-ui:has(.maze-dialogue:not([hidden]))>:not(.maze-dialogue){visibility:hidden}
@@ -11,6 +11,13 @@
 .maze-ui .workshop-next:disabled{opacity:.55;cursor:wait}
 .gardener-mutter{position:absolute;z-index:5;max-width:min(260px,70vw);padding:10px 16px;border-radius:18px;background:#fffbed;color:#3e6253;font-size:17px;font-weight:700;box-shadow:0 3px 0 #36584320;transform:translate(-50%,-100%);pointer-events:none}
 .gardener-mutter[hidden]{display:none}
+.maze-route-marker{position:absolute;z-index:4;display:flex;align-items:center;gap:7px;width:max-content;max-width:min(180px,calc(100vw - 32px));padding:8px 11px;border:2px solid #c5ab70;border-radius:12px;background:#fffbed;color:#355c4d;box-shadow:0 3px 0 #36584326;transform:translate(-50%,-50%);font-size:15px;line-height:1.3;pointer-events:none}
+.maze-route-marker[hidden]{display:none}
+.maze-route-marker svg{width:25px;height:25px;flex:none;fill:none;stroke:#678e6b;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.maze-route-marker b{font-weight:800;overflow-wrap:anywhere}
+.maze-route-marker .route-arrow{display:block;flex:none;color:#a47736;font-size:20px;line-height:1}
+.maze-route-marker[data-target="gardener"] .route-mill,.maze-route-marker:not([data-target="gardener"]) .route-house{display:none}
+@media(max-width:700px){.maze-route-marker{font-size:14px;padding:7px 9px}}
 .choir-lyrics{position:absolute;z-index:4;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(520px,calc(100% - 380px));padding:16px 28px;border:2px solid #fff9;border-radius:20px;background:#fffbed;color:#44634d;text-align:center;box-shadow:0 4px 12px #36584326;pointer-events:none}
 .choir-lyrics[hidden]{display:none}
 .maze-ui:has(.choir-lyrics:not([hidden])) .keyboard-guide{display:none}
@@ -47,6 +54,14 @@
 .maze-ui .workshop-dialogue .workshop-bubble{padding-left:32px}
 .maze-ui #maze-speaker{left:30px}
 .maze-ui #maze-line{min-height:0;overflow-y:auto;font-size:22px;line-height:1.5}
+.maze-trowel-hint{position:fixed;left:50%;translate:-50% 0;top:max(16px,env(safe-area-inset-top));display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1fr);align-items:center;gap:16px;width:min(344px,calc(100vw - 48px));height:clamp(96px,18dvh,148px);padding:14px 20px;border:2px solid #b9a372;border-radius:14px;pointer-events:none;background:radial-gradient(ellipse at 24% 50%,#e4ecd8,#fffaf0 70%);box-shadow:0 4px 0 #c4ad7833,0 8px 20px #243f4026;animation:trowel-reveal .25s ease-out both}
+.maze-trowel-hint[hidden]{display:none}
+.maze-trowel-hint:before{content:"";position:absolute;inset:6px;border:1px solid #ddd2b5;border-radius:9px}
+.maze-trowel-hint img{display:block;min-height:0;width:100%;height:100%;object-fit:contain}
+.maze-trowel-hint small{display:block;margin-bottom:8px;color:#7b765d;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.maze-trowel-hint strong{display:block;color:#344d49;font-size:22px;line-height:1.25}
+@keyframes trowel-reveal{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.maze-trowel-hint{animation:none}}
 .maze-ui .maze-dialogue{--portrait-space:226px}
 .maze-ui .maze-dialogue[data-portrait="true"] .workshop-bubble{padding-left:var(--portrait-space)}
 .maze-ui .maze-dialogue[data-portrait="true"] #maze-speaker{left:var(--portrait-space)}

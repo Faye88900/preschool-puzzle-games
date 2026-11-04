@@ -6,6 +6,13 @@ import { rounded, gardenFlower, colorFlower } from './puzzle-art';
 let template: T.Group | undefined;
 
 export function createFirstEncounterRuins(): T.Group {
+  const steps = createFirstEncounterRuinsSteps();
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* createFirstEncounterRuinsSteps(): Generator<void, T.Group> {
   if (template) return template.clone(true);
   const root = new T.Group(); root.name = 'first-encounter-ruins';
   const hedgeClearings: number[][] = []; root.userData.hedgeClearings = hedgeClearings;
@@ -47,6 +54,7 @@ export function createFirstEncounterRuins(): T.Group {
   // The hedge is cut around the stonework, including the open arch and its climbing leaves.
   arch.position.z = .35;
   for (const x of [1.65, 8.35]) {
+    yield;
     add(arch, rounded(1.68, .36, 1.24, .1), shade, x, .18, -8.3);
     for (let course = 0; course < 4; course++) {
       const block = add(arch, rounded(1.56 + (course % 2) * .08, .65, 1.18, .09), course % 2 ? pale : stone,
@@ -85,6 +93,7 @@ export function createFirstEncounterRuins(): T.Group {
     -6.85 + row * 2.25 + (row === 0 || row === 10 ? 0 : jitter(row * 9 + col + 100) * .59),
   )));
   for (let row = 0; row < 10; row++) for (let col = 0; col < 8; col++) {
+    yield;
     const points = [corners[row][col], corners[row][col + 1], corners[row + 1][col + 1], corners[row + 1][col]];
     const center = points.reduce((sum, p) => sum.add(p), new T.Vector2()).multiplyScalar(.25);
     if (center.length() < 3.65 || (row === 9 && (col === 0 || col === 7))) continue;
@@ -290,6 +299,7 @@ export function createFirstEncounterRuins(): T.Group {
   clearHedge(pavilion);
   // Batch within named components so camera occlusion can fade tall scenery independently.
   for (const component of root.children) {
+    yield;
     component.updateMatrixWorld(true);
     const inverse = component.matrixWorld.clone().invert(), batches = new Map<T.Material, T.BufferGeometry[]>(), originals = new Set<T.BufferGeometry>();
     component.traverse(node => {
@@ -302,6 +312,7 @@ export function createFirstEncounterRuins(): T.Group {
     });
     component.clear();
     for (const [surface, geometries] of batches) {
+      yield;
       const merged = mergeGeometries(geometries)!, mesh = new T.Mesh(mergeVertices(merged), surface); merged.dispose();
       mesh.name = surface.name; mesh.castShadow = component !== paving; mesh.receiveShadow = true; component.add(mesh);
       geometries.forEach(geometry => geometry.dispose());

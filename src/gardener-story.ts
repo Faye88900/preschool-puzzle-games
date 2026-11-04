@@ -69,7 +69,7 @@ export class GardenerStory {
           this.noticed = true; this.mutter = 4; this.onMutter();
         }
       }
-    } else if (this.stage < 4 && this.stage !== 1) this.turnTo(this.stage >= 3 ? this.home.clone().add(new T.Vector3(5, 0, -5)) : this.player.position, dt);
+    }
 
     const pose = this.stage === 2 ? 'nod' : 'idle';
     animateWorkshopGuide(this.guide, pose, this.elapsed, dt, reduced);
@@ -98,28 +98,19 @@ export class GardenerStory {
     const portrait = innerWidth < innerHeight;
     const position = this.guide.position.clone().add(new T.Vector3(portrait ? 3.5 : 2.7, 1.9, portrait ? 5.0 : 3.4));
     const aim = this.guide.position.clone().add(new T.Vector3(0, -.18, 0));
-    if (this.stage === 1) {
+    if (this.stage <= 2) {
       const middle = this.player.position.clone().add(this.guide.position).multiplyScalar(.5);
       const side = new T.Vector3(this.player.position.z - this.guide.position.z, 0, this.guide.position.x - this.player.position.x);
       if (side.lengthSq() < .01) side.set(1, 0, 0);
-      side.normalize(); if (side.x < 0) side.negate();
+      side.normalize(); if (side.dot(this.from.clone().sub(middle)) < 0) side.negate();
       const span = this.player.position.distanceTo(this.guide.position) + 2;
       const distance = Math.max(portrait ? 8.5 : 5.3, span / (2 * Math.tan(T.MathUtils.degToRad(this.camera.fov / 2)) * this.camera.aspect) * 1.2);
       position.copy(middle).addScaledVector(side, distance); position.y = middle.y + 2;
       aim.copy(middle); aim.y -= .3;
-      const glance = well.clone().sub(this.player.position).setY(0).normalize().multiplyScalar(.35)
-        .add(position.clone().sub(this.player.position).setY(0).normalize());
-      this.player.rotation.y = Math.atan2(-glance.x, -glance.z);
-      const listen = this.player.position.clone().sub(this.guide.position).setY(0).normalize()
-        .add(position.clone().sub(this.guide.position).setY(0).normalize());
-      this.turnTo(this.guide.position.clone().add(listen), dt);
-    } else if (this.stage === 2) {
-      position.copy(this.guide.position).add(new T.Vector3(portrait ? 2.8 : 2.1, 1.3, portrait ? 4.2 : 2.7));
-      aim.y += .12;
     } else if (this.stage === 3) {
-      const path = this.home.clone().add(new T.Vector3(5, 0, -5));
-      position.copy(path).add(new T.Vector3(3, portrait ? 10 : 8, portrait ? 17 : 13));
-      aim.copy(path);
+      const shortScreen = innerHeight < 550;
+      aim.copy(well).add(new T.Vector3(0, shortScreen ? -7.68 : -3.68, shortScreen ? 8 : 6));
+      position.copy(aim).add(new T.Vector3(portrait ? 7 : 8, portrait ? 23 : shortScreen ? 25 : 20, portrait ? 26 : 18));
     } else if (this.stage >= 4) { position.copy(followPosition); aim.copy(followLook); }
     const blendTime = this.stage === 4 ? 2.7 : this.stage === 5 ? .8 : .95;
     const t = reduced ? 1 : T.MathUtils.smoothstep(this.elapsed, 0, blendTime);

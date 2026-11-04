@@ -2,12 +2,19 @@ import * as T from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mat } from './models';
 import { createRopeDock } from './rope-dock';
-import { createBossCourtyardBlockout } from './boss-courtyard-blockout';
+import { createBossCourtyardBlockoutSteps } from './boss-courtyard-blockout';
 import { createBossIslandStonework } from './boss-island-stonework';
 import { createCourtyardVegetation } from './courtyard-vegetation';
 import { BOSS_ARENA, BOSS_ISLAND_OFFSET_X, FERRY_BOAT_SCALE, FERRY_MOORING_DISTANCE, bossCoastX } from './ferry-shore-layout';
 
 export function createBossIsland(floorTexture:T.Texture) {
+  const steps = createBossIslandSteps(floorTexture);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* createBossIslandSteps(floorTexture:T.Texture) {
   const root=new T.Group();root.name='boss-island';
   const colliders:{x:number;y:number;z:number;width:number;height:number;depth:number}[]=[];
   const add=(geometry:T.BufferGeometry,material:T.Material,x:number,y:number,z:number)=>{
@@ -33,6 +40,7 @@ export function createBossIsland(floorTexture:T.Texture) {
   paving.customProgramCacheKey=()=> 'boss-slate-paving-v1';
   const ground=add(terrain,paving,0,0,0);ground.name='boss-island-ground';
   const stonework=createBossIslandStonework();root.add(stonework.root);
+  yield;
   // The arena and landing have physical edges; the empty water gap has no ground collider.
   for(const [x,z,w,d]of [[centerX,top-2.5,width+5,5],[centerX,bottom+2.5,width+5,5],[right+2.5,centerZ,5,depth],
     [left-2.5,(top-17.5)/2,5,-17.5-top],[left-2.5,(bottom-12.5)/2,5,bottom+12.5]])
@@ -54,8 +62,10 @@ export function createBossIsland(floorTexture:T.Texture) {
   const dock=createRopeDock(4.4,4.6,FERRY_MOORING_DISTANCE-1.69*FERRY_BOAT_SCALE);dock.root.name='boss-island-dock';
   dock.root.position.set(130,0,-15);dock.root.rotation.y=Math.PI;root.add(dock.root);
   colliders.push(...dock.colliders.map(c=>({...c,x:130-c.x,z:-15-c.z})));
-  const blockout=createBossCourtyardBlockout();root.add(blockout.root);colliders.push(...blockout.colliders);
+  const blockout=yield* createBossCourtyardBlockoutSteps();root.add(blockout.root);colliders.push(...blockout.colliders);
+  yield;
   const vegetation=createCourtyardVegetation();vegetation.position.set(centerX,0,centerZ);root.add(vegetation);
+  yield;
   // Cached prop kits also serve previews and other islands; tint only this island's copies.
   const palette:Record<string,string>={
     'island-sandstone':'#b99c72','island-capstone':'#e3c28c','island-limestone':'#718479',
@@ -81,7 +91,7 @@ export function createBossIsland(floorTexture:T.Texture) {
     const geometry=child.geometry.index?child.geometry.toNonIndexed():child.geometry.clone();geometry.applyMatrix4(child.matrixWorld);geometry.deleteAttribute('uv');
     const surface=child.material as T.Material;if(!batches.has(surface))batches.set(surface,[]);batches.get(surface)!.push(geometry);root.remove(child);
   }
-  for(const [surface,geometries]of batches){const mesh=new T.Mesh(mergeGeometries(geometries)!,surface);mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);geometries.forEach(g=>g.dispose());}
+  for(const [surface,geometries]of batches){yield;const mesh=new T.Mesh(mergeGeometries(geometries)!,surface);mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);geometries.forEach(g=>g.dispose());}
   root.position.x=BOSS_ISLAND_OFFSET_X;
   for(const collider of colliders)collider.x+=BOSS_ISLAND_OFFSET_X;
   const courtyardOccluders=blockout.root.children.flatMap(object=>object.name==='three-tier-leaf-water-channel'

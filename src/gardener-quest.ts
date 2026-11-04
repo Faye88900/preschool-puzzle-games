@@ -93,7 +93,7 @@ export class GardenerQuest {
     const spout = new T.Mesh(new T.CylinderGeometry(.045, .065, .4, 8), mat('#83b4a3'));
     spout.rotation.z = -.85; spout.position.set(.25, .08, 0); this.can.add(spout);
     const handle = new T.Mesh(new T.TorusGeometry(.2, .025, 6, 16), mat('#c7dfb7'));
-    handle.position.set(-.1, .1, 0); this.can.add(handle); scene.add(this.can);
+    handle.position.set(-.1, .1, 0); this.can.add(handle); this.guide.getObjectByName('arm1')!.add(this.can);
     for (let i = 0; i < 8; i++) this.drops.add(orb('#b9f3ff', 0, 0, 0, .055));
     scene.add(this.drops); this.reset();
     const sleeve = new T.CapsuleGeometry(.10, .8, 3, 8);
@@ -254,7 +254,7 @@ export class GardenerQuest {
         this.guide.position.addScaledVector(delta, travel / distance); this.guideGait += travel * 7; speed = dt ? travel / dt : 0;
       } else if (this.walkLeg === 0) this.walkLeg = 1;
       else { this.stage = 'digging'; this.elapsed = 0; return 'gardenerDig'; }
-    } else this.guide.rotation.y = -Math.PI / 2;
+    } else if (this.stage !== 'grown') this.guide.rotation.y = -Math.PI / 2;
     animateGuideWalk(this.guide, this.guideGait, speed, dt, reduced);
     const working = this.stage === 'walking' || this.stage === 'digging';
     if (working) {
@@ -316,10 +316,14 @@ export class GardenerQuest {
     this.can.visible = this.drops.visible = this.stage === 'watering';
     if (this.stage === 'watering') {
       const planted = this.bed.localToWorld(this.flower.position.clone());
-      this.can.position.copy(this.guide.position).add(new T.Vector3(.55, .4, 0)); this.can.rotation.z = -.35;
+      const arm = this.guide.getObjectByName('arm1')!, hand = arm.children[0];
+      arm.rotation.set(0, 0, 0); hand.position.set(.11, .2, -.45);
+      // Keep the top of the handle in the hand, with the spout facing the flowerbed.
+      this.can.position.copy(hand.position).add(new T.Vector3(0, -.3, 0)); this.can.rotation.set(0, Math.PI / 2, -.35);
+      const spout = this.can.localToWorld(new T.Vector3(.4, .21, 0));
       this.drops.children.forEach((drop, i) => {
         const t = (this.elapsed * 1.6 + i / 8) % 1;
-        drop.position.lerpVectors(this.can.position.clone().add(new T.Vector3(.35, 0, 0)), planted.clone().setY(.3), t);
+        drop.position.lerpVectors(spout, planted.clone().setY(.3), t);
       });
       const growth = reduced ? 1 : T.MathUtils.smoothstep(this.elapsed, .6, 2.4);
       this.flower.scale.setScalar((1 + .2 * growth) / this.bed.scale.x);
@@ -327,6 +331,7 @@ export class GardenerQuest {
       this.flower.getObjectByName('bud')!.scale.setScalar(1 - .99 * growth);
       if (this.elapsed >= (reduced ? .8 : 2.8)) {
         this.stage = 'grown'; this.can.visible = this.drops.visible = false;
+        hand.position.set(.11, 0, -.015);
         this.bed.getObjectByName('planting-hole')!.visible = false; return 'gardenerThanks';
       }
     }

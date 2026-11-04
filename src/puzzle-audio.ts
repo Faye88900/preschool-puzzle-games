@@ -8,7 +8,7 @@ const levels = {
 export type PuzzleSound = keyof typeof levels;
 
 export class PuzzleAudio {
-  music = new Audio(`${import.meta.env.BASE_URL}audio/puzzle/Puzzle Time.mp3`);
+  music: HTMLAudioElement;
   context = new AudioContext();
   master = this.context.createGain();
   effects = this.context.createGain();
@@ -20,7 +20,8 @@ export class PuzzleAudio {
   muted = false;
   stepIndex = 0;
 
-  constructor() {
+  constructor(musicPath = 'audio/puzzle/Puzzle Time.mp3') {
+    this.music = new Audio(`${import.meta.env.BASE_URL}${musicPath}`);
     this.music.loop = true; this.music.volume = .22; this.music.preload = 'auto';
     this.effects.connect(this.master); this.waterGain.connect(this.master);
     this.master.connect(this.context.destination);
